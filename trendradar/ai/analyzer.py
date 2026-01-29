@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from trendradar.ai.client import AIClient
+from SHEFerRadar.ai.client import AIClient
 
 
 @dataclass

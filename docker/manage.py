@@ -33,7 +33,7 @@ def manual_run():
     print("🔄 手动执行爬虫...")
     try:
         result = subprocess.run(
-            ["python", "-m", "trendradar"], cwd="/app", capture_output=False, text=True
+            ["python", "-m", "SHEFerRadar"], cwd="/app", capture_output=False, text=True
         )
         if result.returncode == 0:
             print("✅ 执行完成")
@@ -259,15 +259,15 @@ def show_status():
         if pid1_cmdline:
             print(f"    📋 当前 PID 1: {pid1_cmdline}")
         print("    💡 建议操作:")
-        print("       • 重启容器: docker restart trendradar")
-        print("       • 检查容器日志: docker logs trendradar")
+        print("       • 重启容器: docker restart SHEFerRadar")
+        print("       • 检查容器日志: docker logs SHEFerRadar")
 
     # 显示日志检查建议
     print("  📋 运行状态检查:")
-    print("    • 查看完整容器日志: docker logs trendradar")
-    print("    • 查看实时日志: docker logs -f trendradar")
+    print("    • 查看完整容器日志: docker logs SHEFerRadar")
+    print("    • 查看实时日志: docker logs -f SHEFerRadar")
     print("    • 手动执行测试: python manage.py run")
-    print("    • 重启容器服务: docker restart trendradar")
+    print("    • 重启容器服务: docker restart SHEFerRadar")
 
 
 def show_config():
@@ -414,13 +414,13 @@ def show_logs():
                 subprocess.run(["tail", "-f", log_file], check=True)
                 break
         else:
-            print("📋 无法找到标准日志文件，建议使用: docker logs trendradar")
+            print("📋 无法找到标准日志文件，建议使用: docker logs SHEFerRadar")
             
     except KeyboardInterrupt:
         print("\n👋 退出日志查看")
     except Exception as e:
         print(f"❌ 查看日志失败: {e}")
-        print("💡 建议使用: docker logs trendradar")
+        print("💡 建议使用: docker logs SHEFerRadar")
 
 
 def restart_supercronic():
@@ -437,14 +437,14 @@ def restart_supercronic():
         if "supercronic" in pid1_cmdline.lower():
             print("  ✅ PID 1 是 supercronic")
             print("  💡 要重启 supercronic，需要重启整个容器:")
-            print("    docker restart trendradar")
+            print("    docker restart SHEFerRadar")
         else:
             print("  ❌ PID 1 不是 supercronic，这是异常状态")
             print("  💡 建议重启容器以修复问题:")
-            print("    docker restart trendradar")
+            print("    docker restart SHEFerRadar")
     except Exception as e:
         print(f"  ❌ 无法检查 PID 1: {e}")
-        print("  💡 建议重启容器: docker restart trendradar")
+        print("  💡 建议重启容器: docker restart SHEFerRadar")
 
 
 def start_webserver():
@@ -583,7 +583,7 @@ def webserver_status():
 def show_help():
     """显示帮助信息"""
     help_text = """
-🐳 TrendRadar 容器管理工具
+🐳 SHEFerRadar 容器管理工具
 
 📋 命令列表:
   run              - 手动执行一次爬虫
@@ -605,10 +605,10 @@ def show_help():
   python manage.py start_webserver
 
   # 在宿主机执行
-  docker exec -it trendradar python manage.py run
-  docker exec -it trendradar python manage.py status
-  docker exec -it trendradar python manage.py start_webserver
-  docker logs trendradar
+  docker exec -it SHEFerRadar python manage.py run
+  docker exec -it SHEFerRadar python manage.py status
+  docker exec -it SHEFerRadar python manage.py start_webserver
+  docker logs SHEFerRadar
 
 💡 常用操作指南:
   1. 检查运行状态: status
@@ -622,11 +622,11 @@ def show_help():
 
   3. 查看日志: logs
      - 实时监控运行情况
-     - 也可使用: docker logs trendradar
+     - 也可使用: docker logs SHEFerRadar
 
   4. 重启服务: restart
      - 由于 supercronic 是 PID 1，需要重启整个容器
-     - 使用: docker restart trendradar
+     - 使用: docker restart SHEFerRadar
 
   5. Web 服务器管理:
      - 启动: start_webserver

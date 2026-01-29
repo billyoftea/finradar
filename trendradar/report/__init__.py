@@ -13,14 +13,14 @@
 - generator: 报告生成器
 """
 
-from trendradar.report.helpers import (
+from SHEFerRadar.report.helpers import (
     clean_title,
     html_escape,
     format_rank_display,
 )
-from trendradar.report.formatter import format_title_for_platform
-from trendradar.report.html import render_html_content
-from trendradar.report.generator import (
+from SHEFerRadar.report.formatter import format_title_for_platform
+from SHEFerRadar.report.html import render_html_content
+from SHEFerRadar.report.generator import (
     prepare_report_data,
     generate_html_report,
 )

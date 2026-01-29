@@ -17,26 +17,26 @@
 - dispatcher: 多账号通知调度器
 """
 
-from trendradar.notification.push_manager import PushRecordManager
-from trendradar.notification.formatters import (
+from SHEFerRadar.notification.push_manager import PushRecordManager
+from SHEFerRadar.notification.formatters import (
     strip_markdown,
     convert_markdown_to_mrkdwn,
 )
-from trendradar.notification.batch import (
+from SHEFerRadar.notification.batch import (
     get_batch_header,
     get_max_batch_header_size,
     truncate_to_bytes,
     add_batch_headers,
 )
-from trendradar.notification.renderer import (
+from SHEFerRadar.notification.renderer import (
     render_feishu_content,
     render_dingtalk_content,
 )
-from trendradar.notification.splitter import (
+from SHEFerRadar.notification.splitter import (
     split_content_into_batches,
     DEFAULT_BATCH_SIZES,
 )
-from trendradar.notification.senders import (
+from SHEFerRadar.notification.senders import (
     send_to_feishu,
     send_to_dingtalk,
     send_to_wework,
@@ -47,7 +47,7 @@ from trendradar.notification.senders import (
     send_to_slack,
     SMTP_CONFIGS,
 )
-from trendradar.notification.dispatcher import NotificationDispatcher
+from SHEFerRadar.notification.dispatcher import NotificationDispatcher
 
 __all__ = [
     # 推送记录管理

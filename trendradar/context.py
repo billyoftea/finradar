@@ -9,14 +9,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from trendradar.utils.time import (
+from SHEFerRadar.utils.time import (
     get_configured_time,
     format_date_folder,
     format_time_filename,
     get_current_time_display,
     convert_time_for_display,
 )
-from trendradar.core import (
+from SHEFerRadar.core import (
     load_frequency_words,
     matches_word_groups,
     save_titles_to_file,
@@ -24,21 +24,21 @@ from trendradar.core import (
     detect_latest_new_titles,
     count_word_frequency,
 )
-from trendradar.report import (
+from SHEFerRadar.report import (
     clean_title,
     prepare_report_data,
     generate_html_report,
     render_html_content,
 )
-from trendradar.notification import (
+from SHEFerRadar.notification import (
     render_feishu_content,
     render_dingtalk_content,
     split_content_into_batches,
     NotificationDispatcher,
     PushRecordManager,
 )
-from trendradar.ai import AITranslator
-from trendradar.storage import get_storage_manager
+from SHEFerRadar.ai import AITranslator
+from SHEFerRadar.storage import get_storage_manager
 
 
 class AppContext:

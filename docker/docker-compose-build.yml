@@ -1,9 +1,9 @@
 services:
-  trendradar:
+  SHEFerRadar:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: trendradar
+    container_name: SHEFerRadar
     restart: unless-stopped
 
     ports:
@@ -58,11 +58,11 @@ services:
       - RUN_MODE=${RUN_MODE:-cron}
       - IMMEDIATE_RUN=${IMMEDIATE_RUN:-true}
 
-  trendradar-mcp:
+  SHEFerRadar-mcp:
     build:
       context: ..
       dockerfile: docker/Dockerfile.mcp
-    container_name: trendradar-mcp
+    container_name: SHEFerRadar-mcp
     restart: unless-stopped
 
     ports:

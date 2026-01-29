@@ -1,7 +1,7 @@
 services:
-  trendradar:
-    image: wantcat/trendradar:latest
-    container_name: trendradar
+  SHEFerRadar:
+    image: wantcat/SHEFerRadar:latest
+    container_name: SHEFerRadar
     restart: unless-stopped
 
     ports:
@@ -56,9 +56,9 @@ services:
       - RUN_MODE=${RUN_MODE:-cron}
       - IMMEDIATE_RUN=${IMMEDIATE_RUN:-true}
 
-  trendradar-mcp:
-    image: wantcat/trendradar-mcp:latest
-    container_name: trendradar-mcp
+  SHEFerRadar-mcp:
+    image: wantcat/SHEFerRadar-mcp:latest
+    container_name: SHEFerRadar-mcp
     restart: unless-stopped
 
     ports:
