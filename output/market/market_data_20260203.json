@@ -1,0 +1,2378 @@
+{
+  "timestamp": "2026-02-03T21:30:22.802400",
+  "data": {
+    "stock_cn": {
+      "indices": [
+        {
+          "name": "上证指数",
+          "code": "000001",
+          "price": 4067.738,
+          "change": 51.991999999999734,
+          "change_pct": 1.29,
+          "volume": 63768424900.0,
+          "open": 4043.906,
+          "high": 4069.418,
+          "low": 4002.782
+        },
+        {
+          "name": "深证成指",
+          "code": "399001",
+          "price": 14127.105,
+          "change": 302.7529999999988,
+          "change_pct": 2.19,
+          "volume": 78291093443.0,
+          "open": 13986.895,
+          "high": 14129.597,
+          "low": 13815.229
+        },
+        {
+          "name": "沪深300",
+          "code": "000300",
+          "price": 4660.107,
+          "change": 54.12700000000041,
+          "change_pct": 1.18,
+          "volume": 26554940500.0,
+          "open": 4648.357,
+          "high": 4662.126,
+          "low": 4578.209
+        },
+        {
+          "name": "创业板指",
+          "code": "399006",
+          "price": 3324.892,
+          "change": 60.78099999999995,
+          "change_pct": 1.86,
+          "volume": 23061644766.0,
+          "open": 3318.06,
+          "high": 3332.477,
+          "low": 3249.061
+        },
+        {
+          "name": "科创50",
+          "code": "000688",
+          "price": 1471.069,
+          "change": 20.17100000000005,
+          "change_pct": 1.39,
+          "volume": 1389145900.0,
+          "open": 1475.568,
+          "high": 1478.051,
+          "low": 1430.004
+        },
+        {
+          "name": "中证500",
+          "code": "000905",
+          "price": 8286.701,
+          "change": 249.65499999999884,
+          "change_pct": 3.11,
+          "volume": 27222713600.0,
+          "open": 8135.87,
+          "high": 8286.701,
+          "low": 8075.374
+        }
+      ],
+      "north_flow": {
+        "net_flow": 0.0,
+        "date": "2026-02-03",
+        "hu_net_flow": 0.0,
+        "shen_net_flow": 0.0
+      },
+      "sectors": [
+        {
+          "name": "船舶制造",
+          "change_pct": 6.52,
+          "turnover": 5.56,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "海兰信",
+          "category": "other"
+        },
+        {
+          "name": "光伏设备",
+          "change_pct": 6.28,
+          "turnover": 5.38,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "双良节能",
+          "category": "other"
+        },
+        {
+          "name": "小金属",
+          "change_pct": 4.6,
+          "turnover": 4.13,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "东方钽业",
+          "category": "other"
+        },
+        {
+          "name": "玻璃玻纤",
+          "change_pct": 4.24,
+          "turnover": 4.77,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "金晶科技",
+          "category": "other"
+        },
+        {
+          "name": "工程机械",
+          "change_pct": 3.95,
+          "turnover": 2.31,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "建设机械",
+          "category": "other"
+        },
+        {
+          "name": "通信设备",
+          "change_pct": 3.93,
+          "turnover": 6.61,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "通宇通讯",
+          "category": "other"
+        },
+        {
+          "name": "航天航空",
+          "change_pct": 3.91,
+          "turnover": 3.91,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "航发控制",
+          "category": "other"
+        },
+        {
+          "name": "游戏",
+          "change_pct": 3.48,
+          "turnover": 5.65,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "顺网科技",
+          "category": "other"
+        },
+        {
+          "name": "电源设备",
+          "change_pct": 3.45,
+          "turnover": 2.46,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "金时科技",
+          "category": "other"
+        },
+        {
+          "name": "能源金属",
+          "change_pct": 3.42,
+          "turnover": 3.98,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "盛屯矿业",
+          "category": "other"
+        },
+        {
+          "name": "非金属材料",
+          "change_pct": 3.4,
+          "turnover": 4.75,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "天通股份",
+          "category": "other"
+        },
+        {
+          "name": "光学光电子",
+          "change_pct": 3.15,
+          "turnover": 2.35,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "沃格光电",
+          "category": "other"
+        },
+        {
+          "name": "专用设备",
+          "change_pct": 3.03,
+          "turnover": 2.75,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "冀东装备",
+          "category": "other"
+        },
+        {
+          "name": "电池",
+          "change_pct": 3.03,
+          "turnover": 2.17,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "安孚科技",
+          "category": "other"
+        },
+        {
+          "name": "半导体",
+          "change_pct": 3.01,
+          "turnover": 3.88,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "炬光科技",
+          "category": "other"
+        },
+        {
+          "name": "钢铁行业",
+          "change_pct": 2.96,
+          "turnover": 1.69,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "常宝股份",
+          "category": "other"
+        },
+        {
+          "name": "电子元件",
+          "change_pct": 2.95,
+          "turnover": 3.04,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "世运电路",
+          "category": "other"
+        },
+        {
+          "name": "电子化学品",
+          "change_pct": 2.94,
+          "turnover": 4.01,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "广钢气体",
+          "category": "other"
+        },
+        {
+          "name": "互联网服务",
+          "change_pct": 2.94,
+          "turnover": 7.0,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "华胜天成",
+          "category": "other"
+        },
+        {
+          "name": "消费电子",
+          "change_pct": 2.87,
+          "turnover": 2.49,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "凯旺科技",
+          "category": "other"
+        },
+        {
+          "name": "化肥行业",
+          "change_pct": 2.87,
+          "turnover": 2.23,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "藏格矿业",
+          "category": "other"
+        },
+        {
+          "name": "医疗服务",
+          "change_pct": 2.81,
+          "turnover": 2.51,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "华康洁净",
+          "category": "other"
+        },
+        {
+          "name": "化学制品",
+          "change_pct": 2.81,
+          "turnover": 3.17,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "红 宝 丽",
+          "category": "other"
+        },
+        {
+          "name": "风电设备",
+          "change_pct": 2.77,
+          "turnover": 4.36,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "天顺风能",
+          "category": "other"
+        },
+        {
+          "name": "化纤行业",
+          "change_pct": 2.74,
+          "turnover": 1.79,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "尤夫股份",
+          "category": "other"
+        },
+        {
+          "name": "计算机设备",
+          "change_pct": 2.69,
+          "turnover": 2.47,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "纳睿雷达",
+          "category": "other"
+        },
+        {
+          "name": "电网设备",
+          "change_pct": 2.64,
+          "turnover": 6.39,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "泰豪科技",
+          "category": "other"
+        },
+        {
+          "name": "软件开发",
+          "change_pct": 2.53,
+          "turnover": 3.17,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "*ST云创",
+          "category": "other"
+        },
+        {
+          "name": "通用设备",
+          "change_pct": 2.51,
+          "turnover": 3.36,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "宇晶股份",
+          "category": "other"
+        },
+        {
+          "name": "化学原料",
+          "change_pct": 2.51,
+          "turnover": 2.31,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "万丰股份",
+          "category": "other"
+        },
+        {
+          "name": "通信服务",
+          "change_pct": 2.5,
+          "turnover": 1.06,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "南凌科技",
+          "category": "other"
+        },
+        {
+          "name": "专业服务",
+          "change_pct": 2.47,
+          "turnover": 4.15,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "南网能源",
+          "category": "other"
+        },
+        {
+          "name": "塑料制品",
+          "change_pct": 2.4,
+          "turnover": 3.67,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "神剑股份",
+          "category": "other"
+        },
+        {
+          "name": "文化传媒",
+          "change_pct": 2.39,
+          "turnover": 5.23,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "横店影视",
+          "category": "other"
+        },
+        {
+          "name": "水泥建材",
+          "change_pct": 2.39,
+          "turnover": 1.75,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "金隅集团",
+          "category": "other"
+        },
+        {
+          "name": "仪器仪表",
+          "change_pct": 2.31,
+          "turnover": 2.59,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "思看科技",
+          "category": "other"
+        },
+        {
+          "name": "教育",
+          "change_pct": 2.25,
+          "turnover": 3.69,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "创业黑马",
+          "category": "other"
+        },
+        {
+          "name": "珠宝首饰",
+          "change_pct": 2.2,
+          "turnover": 4.89,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "菜百股份",
+          "category": "other"
+        },
+        {
+          "name": "有色金属",
+          "change_pct": 2.17,
+          "turnover": 4.98,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "宏达股份",
+          "category": "cyclical"
+        },
+        {
+          "name": "装修装饰",
+          "change_pct": 2.09,
+          "turnover": 2.1,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "名雕股份",
+          "category": "other"
+        },
+        {
+          "name": "贸易行业",
+          "change_pct": 2.02,
+          "turnover": 2.89,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "润贝航科",
+          "category": "other"
+        },
+        {
+          "name": "汽车零部件",
+          "change_pct": 1.99,
+          "turnover": 2.94,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "晋拓股份",
+          "category": "other"
+        },
+        {
+          "name": "房地产服务",
+          "change_pct": 1.99,
+          "turnover": 3.83,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "电子城",
+          "category": "other"
+        },
+        {
+          "name": "工程咨询服务",
+          "change_pct": 1.97,
+          "turnover": 2.08,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "深圳瑞捷",
+          "category": "other"
+        },
+        {
+          "name": "电机",
+          "change_pct": 1.89,
+          "turnover": 2.94,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "兆威机电",
+          "category": "other"
+        },
+        {
+          "name": "综合行业",
+          "change_pct": 1.88,
+          "turnover": 2.08,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "东阳光",
+          "category": "other"
+        },
+        {
+          "name": "工程建设",
+          "change_pct": 1.87,
+          "turnover": 1.54,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "上海建工",
+          "category": "other"
+        },
+        {
+          "name": "多元金融",
+          "change_pct": 1.87,
+          "turnover": 0.92,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "九鼎投资",
+          "category": "other"
+        },
+        {
+          "name": "橡胶制品",
+          "change_pct": 1.84,
+          "turnover": 2.1,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "海南橡胶",
+          "category": "other"
+        },
+        {
+          "name": "生物制品",
+          "change_pct": 1.82,
+          "turnover": 1.48,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "万泽股份",
+          "category": "other"
+        },
+        {
+          "name": "美容护理",
+          "change_pct": 1.8,
+          "turnover": 1.9,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "倍加洁",
+          "category": "other"
+        },
+        {
+          "name": "交运设备",
+          "change_pct": 1.8,
+          "turnover": 0.95,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "朗进科技",
+          "category": "other"
+        },
+        {
+          "name": "农药兽药",
+          "change_pct": 1.78,
+          "turnover": 2.27,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "广信股份",
+          "category": "other"
+        },
+        {
+          "name": "航空机场",
+          "change_pct": 1.75,
+          "turnover": 1.09,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "南方航空",
+          "category": "other"
+        },
+        {
+          "name": "环保行业",
+          "change_pct": 1.73,
+          "turnover": 2.19,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "赛恩斯",
+          "category": "other"
+        },
+        {
+          "name": "房地产开发",
+          "change_pct": 1.62,
+          "turnover": 1.99,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "京投发展",
+          "category": "other"
+        },
+        {
+          "name": "医药商业",
+          "change_pct": 1.61,
+          "turnover": 1.75,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "合富中国",
+          "category": "other"
+        },
+        {
+          "name": "纺织服装",
+          "change_pct": 1.6,
+          "turnover": 2.09,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "聚杰微纤",
+          "category": "other"
+        },
+        {
+          "name": "装修建材",
+          "change_pct": 1.6,
+          "turnover": 2.53,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "万里石",
+          "category": "other"
+        },
+        {
+          "name": "化学制药",
+          "change_pct": 1.59,
+          "turnover": 1.61,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "苑东生物",
+          "category": "other"
+        },
+        {
+          "name": "医疗器械",
+          "change_pct": 1.59,
+          "turnover": 1.77,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "宝莱特",
+          "category": "other"
+        },
+        {
+          "name": "造纸印刷",
+          "change_pct": 1.52,
+          "turnover": 2.05,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "凯恩股份",
+          "category": "other"
+        },
+        {
+          "name": "汽车整车",
+          "change_pct": 1.5,
+          "turnover": 1.26,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "动力新科",
+          "category": "other"
+        },
+        {
+          "name": "家电行业",
+          "change_pct": 1.39,
+          "turnover": 1.66,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "民爆光电",
+          "category": "other"
+        },
+        {
+          "name": "家用轻工",
+          "change_pct": 1.34,
+          "turnover": 2.89,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "好太太",
+          "category": "other"
+        },
+        {
+          "name": "采掘行业",
+          "change_pct": 1.32,
+          "turnover": 4.05,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "通源石油",
+          "category": "other"
+        },
+        {
+          "name": "汽车服务",
+          "change_pct": 1.21,
+          "turnover": 1.12,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "德众汽车",
+          "category": "other"
+        },
+        {
+          "name": "商业百货",
+          "change_pct": 1.2,
+          "turnover": 1.95,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "新华百货",
+          "category": "other"
+        },
+        {
+          "name": "物流行业",
+          "change_pct": 1.15,
+          "turnover": 1.11,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "宏川智慧",
+          "category": "other"
+        },
+        {
+          "name": "电力行业",
+          "change_pct": 1.13,
+          "turnover": 1.15,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "廊坊发展",
+          "category": "other"
+        },
+        {
+          "name": "包装材料",
+          "change_pct": 1.12,
+          "turnover": 2.85,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "王子新材",
+          "category": "other"
+        },
+        {
+          "name": "航运港口",
+          "change_pct": 1.09,
+          "turnover": 0.97,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "招商轮船",
+          "category": "other"
+        },
+        {
+          "name": "中药",
+          "change_pct": 1.07,
+          "turnover": 1.2,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "易明医药",
+          "category": "other"
+        },
+        {
+          "name": "煤炭行业",
+          "change_pct": 0.92,
+          "turnover": 1.24,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "华阳股份",
+          "category": "other"
+        },
+        {
+          "name": "燃气",
+          "change_pct": 0.76,
+          "turnover": 1.69,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "万憬能源",
+          "category": "other"
+        },
+        {
+          "name": "贵金属",
+          "change_pct": 0.66,
+          "turnover": 8.34,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "湖南黄金",
+          "category": "other"
+        },
+        {
+          "name": "石油行业",
+          "change_pct": 0.57,
+          "turnover": 0.44,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "和顺石油",
+          "category": "other"
+        },
+        {
+          "name": "旅游酒店",
+          "change_pct": 0.5,
+          "turnover": 3.14,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "华天酒店",
+          "category": "other"
+        },
+        {
+          "name": "农牧饲渔",
+          "change_pct": 0.45,
+          "turnover": 3.27,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "华英农业",
+          "category": "other"
+        },
+        {
+          "name": "食品饮料",
+          "change_pct": 0.36,
+          "turnover": 1.95,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "安琪酵母",
+          "category": "consumption"
+        },
+        {
+          "name": "铁路公路",
+          "change_pct": 0.29,
+          "turnover": 0.6,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "湖南投资",
+          "category": "other"
+        },
+        {
+          "name": "公用事业",
+          "change_pct": 0.21,
+          "turnover": 1.55,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "京能热力",
+          "category": "other"
+        },
+        {
+          "name": "证券",
+          "change_pct": 0.17,
+          "turnover": 1.01,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "华林证券",
+          "category": "other"
+        },
+        {
+          "name": "酿酒行业",
+          "change_pct": -0.01,
+          "turnover": 2.09,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "皇台酒业",
+          "category": "other"
+        },
+        {
+          "name": "保险",
+          "change_pct": -0.25,
+          "turnover": 0.36,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "中国平安",
+          "category": "other"
+        },
+        {
+          "name": "银行",
+          "change_pct": -0.81,
+          "turnover": 0.34,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "青岛银行",
+          "category": "finance"
+        }
+      ],
+      "market_stats": {
+        "limit_up_count": 69,
+        "limit_down_count": 9
+      },
+      "timestamp": "2026-02-03 21:30:07.616177"
+    },
+    "precious_metal": {
+      "metals": {
+        "gold": {
+          "symbol": "GC=F",
+          "name": "黄金",
+          "name_en": "Gold",
+          "price": 4942.7,
+          "change": 320.2,
+          "change_pct": 6.93,
+          "open": 4691.0,
+          "high": 4975.5,
+          "low": 4690.2,
+          "volume": 116140,
+          "unit": "美元/盎司",
+          "prev_close": 4622.5
+        },
+        "silver": {
+          "symbol": "SI=F",
+          "name": "白银",
+          "name_en": "Silver",
+          "price": 88.0,
+          "change": 11.22,
+          "change_pct": 14.62,
+          "open": 79.22,
+          "high": 88.25,
+          "low": 79.01,
+          "volume": 51030,
+          "unit": "美元/盎司",
+          "prev_close": 76.78
+        }
+      },
+      "timestamp": "2026-02-03 21:30:06.141513"
+    },
+    "crypto": {
+      "coins": [
+        {
+          "id": "bitcoin",
+          "symbol": "BTC",
+          "name": "Bitcoin",
+          "price": 78231,
+          "market_cap": 1563214444123,
+          "market_cap_rank": 1,
+          "volume_24h": 54109941242,
+          "change_24h": 0.36441,
+          "change_7d": -10.96678445807131,
+          "high_24h": 79131,
+          "low_24h": 77642,
+          "ath": 126080,
+          "ath_change_pct": -37.95162,
+          "is_meme": false,
+          "category": "mainstream",
+          "image": "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png?1696501400"
+        },
+        {
+          "id": "ethereum",
+          "symbol": "ETH",
+          "name": "Ethereum",
+          "price": 2299.87,
+          "market_cap": 277577744443,
+          "market_cap_rank": 2,
+          "volume_24h": 31477718565,
+          "change_24h": -0.69354,
+          "change_7d": -21.080371159302704,
+          "high_24h": 2387.64,
+          "low_24h": 2271.56,
+          "ath": 4946.05,
+          "ath_change_pct": -53.50087,
+          "is_meme": false,
+          "category": "mainstream",
+          "image": "https://coin-images.coingecko.com/coins/images/279/large/ethereum.png?1696501628"
+        },
+        {
+          "id": "solana",
+          "symbol": "SOL",
+          "name": "Solana",
+          "price": 102.93,
+          "market_cap": 58309537349,
+          "market_cap_rank": 7,
+          "volume_24h": 4190876484,
+          "change_24h": -0.06277,
+          "change_7d": -16.84124344417248,
+          "high_24h": 105.45,
+          "low_24h": 102.33,
+          "ath": 293.31,
+          "ath_change_pct": -64.90783,
+          "is_meme": false,
+          "category": "mainstream",
+          "image": "https://coin-images.coingecko.com/coins/images/4128/large/solana.png?1718769756"
+        }
+      ],
+      "timestamp": "2026-02-03 21:30:06.468500"
+    },
+    "futures": {
+      "commodity": [
+        {
+          "code": "AU",
+          "name": "沪金",
+          "exchange": "SHFE",
+          "price": 1064.1,
+          "spot_price": 1076.87,
+          "dominant_contract": "au2604",
+          "basis_rate": -1.19,
+          "change": 0,
+          "change_pct": 0,
+          "type": "commodity"
+        },
+        {
+          "code": "AG",
+          "name": "沪银",
+          "exchange": "SHFE",
+          "price": 21140.0,
+          "spot_price": 22571.67,
+          "dominant_contract": "ag2604",
+          "basis_rate": -6.34,
+          "change": 0,
+          "change_pct": 0,
+          "type": "commodity"
+        },
+        {
+          "code": "CU",
+          "name": "沪铜",
+          "exchange": "SHFE",
+          "price": 101630.0,
+          "spot_price": 101388.33,
+          "dominant_contract": "cu2603",
+          "basis_rate": 0.24,
+          "change": 0,
+          "change_pct": 0,
+          "type": "commodity"
+        },
+        {
+          "code": "RB",
+          "name": "螺纹钢",
+          "exchange": "SHFE",
+          "price": 3106.0,
+          "spot_price": 3181.0,
+          "dominant_contract": "rb2605",
+          "basis_rate": -2.36,
+          "change": 0,
+          "change_pct": 0,
+          "type": "commodity"
+        },
+        {
+          "code": "I",
+          "name": "铁矿石",
+          "exchange": "DCE",
+          "price": 784.0,
+          "spot_price": 805.56,
+          "dominant_contract": "i2605",
+          "basis_rate": -2.68,
+          "change": 0,
+          "change_pct": 0,
+          "type": "commodity"
+        }
+      ],
+      "index_futures": [
+        {
+          "code": "IF",
+          "name": "沪深300期货",
+          "underlying": "沪深300",
+          "price": 4653.0,
+          "change": 59.0,
+          "change_pct": 1.28,
+          "type": "index"
+        },
+        {
+          "code": "IC",
+          "name": "中证500期货",
+          "underlying": "中证500",
+          "price": 8282.0,
+          "change": 305.0,
+          "change_pct": 3.82,
+          "type": "index"
+        },
+        {
+          "code": "IH",
+          "name": "上证50期货",
+          "underlying": "上证50",
+          "price": 3033.0,
+          "change": 27.4,
+          "change_pct": 0.91,
+          "type": "index"
+        },
+        {
+          "code": "IM",
+          "name": "中证1000期货",
+          "underlying": "中证1000",
+          "price": 8183.0,
+          "change": 228.2,
+          "change_pct": 2.87,
+          "type": "index"
+        }
+      ],
+      "international": [
+        {
+          "code": "CL=F",
+          "name": "WTI原油",
+          "price": 62.41,
+          "change": 0.27,
+          "change_pct": 0.43,
+          "unit": "美元/桶",
+          "type": "international"
+        },
+        {
+          "code": "BZ=F",
+          "name": "布伦特原油",
+          "price": 66.47,
+          "change": 0.17,
+          "change_pct": 0.26,
+          "unit": "美元/桶",
+          "type": "international"
+        },
+        {
+          "code": "NG=F",
+          "name": "天然气",
+          "price": 3.27,
+          "change": 0.03,
+          "change_pct": 0.87,
+          "unit": "美元/MMBtu",
+          "type": "international"
+        },
+        {
+          "code": "HG=F",
+          "name": "COMEX铜",
+          "price": 6.07,
+          "change": 0.27,
+          "change_pct": 4.63,
+          "unit": "美元/磅",
+          "type": "international"
+        }
+      ],
+      "timestamp": "2026-02-03 21:30:08.381676"
+    },
+    "github": {
+      "trending": [
+        {
+          "name": "beautiful-mermaid",
+          "full_name": "lukilabs/beautiful-mermaid",
+          "description": "",
+          "url": "https://github.com/lukilabs/beautiful-mermaid",
+          "stars": 5590,
+          "forks": 157,
+          "language": "TypeScript",
+          "topics": [],
+          "created_at": "2026-01-28T16:31:46+00:00",
+          "updated_at": "2026-02-03T13:27:42+00:00",
+          "owner": "lukilabs",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/54435313?v=4"
+        },
+        {
+          "name": "nanoclaw",
+          "full_name": "gavrielc/nanoclaw",
+          "description": "My personal Claude assistant that runs in Apple containers. Lightweight, secure, and built to be understood and customized for your own needs.",
+          "url": "https://github.com/gavrielc/nanoclaw",
+          "stars": 3732,
+          "forks": 318,
+          "language": "TypeScript",
+          "topics": [],
+          "created_at": "2026-01-31T15:47:22+00:00",
+          "updated_at": "2026-02-03T13:29:03+00:00",
+          "owner": "gavrielc",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/20087851?v=4"
+        },
+        {
+          "name": "nanobot",
+          "full_name": "HKUDS/nanobot",
+          "description": "\"🐈 nanobot: The Ultra-Lightweight Clawdbot\"",
+          "url": "https://github.com/HKUDS/nanobot",
+          "stars": 3435,
+          "forks": 434,
+          "language": "Python",
+          "topics": [],
+          "created_at": "2026-02-01T07:16:15+00:00",
+          "updated_at": "2026-02-03T13:29:43+00:00",
+          "owner": "HKUDS",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/118165258?v=4"
+        },
+        {
+          "name": "skills",
+          "full_name": "antfu/skills",
+          "description": "Anthony Fu's curated collection of agent skills.",
+          "url": "https://github.com/antfu/skills",
+          "stars": 2802,
+          "forks": 115,
+          "language": "TypeScript",
+          "topics": [
+            "agent-skills",
+            "skills"
+          ],
+          "created_at": "2026-01-28T05:59:03+00:00",
+          "updated_at": "2026-02-03T13:24:40+00:00",
+          "owner": "antfu",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/11247099?v=4"
+        },
+        {
+          "name": "lingbot-world",
+          "full_name": "Robbyant/lingbot-world",
+          "description": "Advancing Open-source World Models",
+          "url": "https://github.com/Robbyant/lingbot-world",
+          "stars": 2282,
+          "forks": 168,
+          "language": "Python",
+          "topics": [
+            "aigc",
+            "image-to-video",
+            "lingbot-world",
+            "video-generation",
+            "world-models"
+          ],
+          "created_at": "2026-01-28T04:52:50+00:00",
+          "updated_at": "2026-02-03T13:29:11+00:00",
+          "owner": "Robbyant",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/212647524?v=4"
+        },
+        {
+          "name": "awesome-ai-research-writing",
+          "full_name": "Leey21/awesome-ai-research-writing",
+          "description": "Elevate your AI research writing, no more tedious polishing ✨ ",
+          "url": "https://github.com/Leey21/awesome-ai-research-writing",
+          "stars": 2114,
+          "forks": 177,
+          "language": "Unknown",
+          "topics": [],
+          "created_at": "2026-01-30T07:59:30+00:00",
+          "updated_at": "2026-02-03T13:30:01+00:00",
+          "owner": "Leey21",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/112166430?v=4"
+        },
+        {
+          "name": "Qwen3-ASR",
+          "full_name": "QwenLM/Qwen3-ASR",
+          "description": "Qwen3-ASR is an open-source series of ASR models developed by the Qwen team at Alibaba Cloud, supporting stable multilingual speech/music/song recognition, language detection and timestamp prediction.",
+          "url": "https://github.com/QwenLM/Qwen3-ASR",
+          "stars": 1177,
+          "forks": 87,
+          "language": "Python",
+          "topics": [],
+          "created_at": "2026-01-28T05:44:59+00:00",
+          "updated_at": "2026-02-03T13:20:17+00:00",
+          "owner": "QwenLM",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/141221163?v=4"
+        },
+        {
+          "name": "OpenClawInstaller",
+          "full_name": "miaoxworld/OpenClawInstaller",
+          "description": "ClawdBot 一键部署工具",
+          "url": "https://github.com/miaoxworld/OpenClawInstaller",
+          "stars": 1065,
+          "forks": 173,
+          "language": "Shell",
+          "topics": [
+            "clawdbot",
+            "moltbot",
+            "openclaw"
+          ],
+          "created_at": "2026-01-29T14:43:02+00:00",
+          "updated_at": "2026-02-03T12:36:06+00:00",
+          "owner": "miaoxworld",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/189187993?v=4"
+        },
+        {
+          "name": "dingtalk-moltbot-connector",
+          "full_name": "DingTalk-Real-AI/dingtalk-moltbot-connector",
+          "description": "将钉钉机器人连接到 OpenClaw Gateway 的OpenClaw Plugin，支持 AI Card 流式响应",
+          "url": "https://github.com/DingTalk-Real-AI/dingtalk-moltbot-connector",
+          "stars": 944,
+          "forks": 59,
+          "language": "TypeScript",
+          "topics": [],
+          "created_at": "2026-01-28T09:51:24+00:00",
+          "updated_at": "2026-02-03T13:27:58+00:00",
+          "owner": "DingTalk-Real-AI",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/257675475?v=4"
+        },
+        {
+          "name": "frontend-slides",
+          "full_name": "zarazhangrui/frontend-slides",
+          "description": "Create beautiful slides on the web using Claude's frontend skills",
+          "url": "https://github.com/zarazhangrui/frontend-slides",
+          "stars": 764,
+          "forks": 73,
+          "language": "Unknown",
+          "topics": [],
+          "created_at": "2026-01-28T00:42:34+00:00",
+          "updated_at": "2026-02-03T11:51:05+00:00",
+          "owner": "zarazhangrui",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/153693696?v=4"
+        }
+      ],
+      "ai_trending": [
+        {
+          "name": "agent-browser",
+          "full_name": "vercel-labs/agent-browser",
+          "description": "Browser automation CLI for AI agents",
+          "url": "https://github.com/vercel-labs/agent-browser",
+          "stars": 12344,
+          "forks": 688,
+          "language": "TypeScript",
+          "topics": [],
+          "created_at": "2026-01-11T05:38:15+00:00",
+          "updated_at": "2026-02-03T13:23:35+00:00",
+          "owner": "vercel-labs",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/108547162?v=4"
+        },
+        {
+          "name": "json-render",
+          "full_name": "vercel-labs/json-render",
+          "description": "AI → JSON → UI",
+          "url": "https://github.com/vercel-labs/json-render",
+          "stars": 9894,
+          "forks": 531,
+          "language": "TypeScript",
+          "topics": [],
+          "created_at": "2026-01-14T17:22:39+00:00",
+          "updated_at": "2026-02-03T12:27:07+00:00",
+          "owner": "vercel-labs",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/108547162?v=4"
+        },
+        {
+          "name": "ralph",
+          "full_name": "snarktank/ralph",
+          "description": "Ralph is an autonomous AI agent loop that runs repeatedly until all PRD items are complete. ",
+          "url": "https://github.com/snarktank/ralph",
+          "stars": 9249,
+          "forks": 1084,
+          "language": "TypeScript",
+          "topics": [],
+          "created_at": "2026-01-07T14:45:10+00:00",
+          "updated_at": "2026-02-03T13:00:54+00:00",
+          "owner": "snarktank",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/152063952?v=4"
+        },
+        {
+          "name": "daily_stock_analysis",
+          "full_name": "ZhuLinsen/daily_stock_analysis",
+          "description": "LLM驱动的 A/H/美股智能分析器，多数据源行情 + 实时新闻 + Gemini 决策仪表盘 + 多渠道推送，零成本，纯白嫖，定时运行",
+          "url": "https://github.com/ZhuLinsen/daily_stock_analysis",
+          "stars": 9166,
+          "forks": 9616,
+          "language": "Python",
+          "topics": [
+            "agent",
+            "ai",
+            "aigc",
+            "gemini",
+            "llm",
+            "quant",
+            "quantitative-trading",
+            "rag",
+            "stock"
+          ],
+          "created_at": "2026-01-10T06:43:20+00:00",
+          "updated_at": "2026-02-03T13:29:21+00:00",
+          "owner": "ZhuLinsen",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/42829555?v=4"
+        },
+        {
+          "name": "huobao-drama",
+          "full_name": "chatfire-AI/huobao-drama",
+          "description": "🎬 火宝短剧 - 基于AI的一站式短剧生成平台 《一句话生成完整短剧，从剧本到成片全自动化》  Huobao Drama - An AI-Powered End-to-End Short Drama Generator \"One Sentence to Complete Drama: Fully Automated from Script to Final Video\"",
+          "url": "https://github.com/chatfire-AI/huobao-drama",
+          "stars": 7067,
+          "forks": 1303,
+          "language": "Vue",
+          "topics": [],
+          "created_at": "2026-01-05T11:38:30+00:00",
+          "updated_at": "2026-02-03T13:26:29+00:00",
+          "owner": "chatfire-AI",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/248649058?v=4"
+        },
+        {
+          "name": "antigravity-awesome-skills",
+          "full_name": "sickn33/antigravity-awesome-skills",
+          "description": "The Ultimate Collection of 600+ Agentic Skills for Claude Code/Antigravity/Cursor. Battle-tested, high-performance skills for AI agents including official skills from Anthropic and Vercel.",
+          "url": "https://github.com/sickn33/antigravity-awesome-skills",
+          "stars": 6688,
+          "forks": 1443,
+          "language": "Python",
+          "topics": [
+            "agentic-skills",
+            "ai-agents",
+            "antigravity",
+            "autonomous-coding",
+            "claude-code",
+            "mcp",
+            "react-patterns",
+            "security-auditing"
+          ],
+          "created_at": "2026-01-14T17:48:09+00:00",
+          "updated_at": "2026-02-03T13:27:32+00:00",
+          "owner": "sickn33",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/184072420?v=4"
+        },
+        {
+          "name": "marketingskills",
+          "full_name": "coreyhaines31/marketingskills",
+          "description": "Marketing skills for Claude Code and AI agents. CRO, copywriting, SEO, analytics, and growth engineering.",
+          "url": "https://github.com/coreyhaines31/marketingskills",
+          "stars": 5651,
+          "forks": 623,
+          "language": "Unknown",
+          "topics": [
+            "claude",
+            "codex",
+            "marketing"
+          ],
+          "created_at": "2026-01-15T19:45:23+00:00",
+          "updated_at": "2026-02-03T13:29:09+00:00",
+          "owner": "coreyhaines31",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/34802794?v=4"
+        },
+        {
+          "name": "humanizer",
+          "full_name": "blader/humanizer",
+          "description": "Claude Code skill that removes signs of AI-generated writing from text",
+          "url": "https://github.com/blader/humanizer",
+          "stars": 3833,
+          "forks": 329,
+          "language": "Unknown",
+          "topics": [],
+          "created_at": "2026-01-18T05:30:15+00:00",
+          "updated_at": "2026-02-03T12:55:34+00:00",
+          "owner": "blader",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/1672?v=4"
+        },
+        {
+          "name": "Claude-Cowork",
+          "full_name": "DevAgentForge/Claude-Cowork",
+          "description": "OpenSource Claude Cowork. A desktop AI assistant that helps you with programming, file management, and any task you can describe.",
+          "url": "https://github.com/DevAgentForge/Claude-Cowork",
+          "stars": 2671,
+          "forks": 368,
+          "language": "TypeScript",
+          "topics": [],
+          "created_at": "2026-01-13T09:34:40+00:00",
+          "updated_at": "2026-02-03T09:32:10+00:00",
+          "owner": "DevAgentForge",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/253069662?v=4"
+        },
+        {
+          "name": "Humanizer-zh",
+          "full_name": "op7418/Humanizer-zh",
+          "description": "Humanizer 的汉化版本，Claude Code Skills，旨在消除文本中 AI 生成的痕迹。",
+          "url": "https://github.com/op7418/Humanizer-zh",
+          "stars": 2412,
+          "forks": 234,
+          "language": "Unknown",
+          "topics": [],
+          "created_at": "2026-01-19T04:23:44+00:00",
+          "updated_at": "2026-02-03T12:52:34+00:00",
+          "owner": "op7418",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/13505770?v=4"
+        }
+      ],
+      "timestamp": "2026-02-03 21:30:07.429217"
+    },
+    "twitter": {
+      "tweets": [
+        {
+          "id": "2018676671969182041",
+          "text": "Top Overnight News\n\nRepublican opposition to Trump’s deal with Democrats to end the partial US government shutdown began to crumble late Monday. The president told House holdouts via social media to pass the measure “IMMEDIATELY!” A chamber vote is expected today. BBG\n\nElon Musk is merging SpaceX and xAI in a deal valuing the new entity at $1.25 trillion, with SpaceX still planning an IPO later this year, according to people familiar. BBG\n\nReports out Monday afternoon said OpenAI is unsatisfied with some of Nvidia’s latest artificial intelligence chips, and it has sought alternatives since last year, eight sources familiar with the matter said, potentially complicating the relationship between the two highest-profile players in the AI boom. RTRS\n\nUS President Trump said announcing the creation of US strategic critical minerals reserve. We are launching Project Vault today. USD 2bln from the private sector. USD 10bln funding from US Exim Bank.\n\nAustralia’s central bank has lifted interest rates for the first time since 2023,one of the first big economies to tighten its monetary policy, in an effort to combat inflation. The Bank increased rates by 25bps to 3.85%. FT\n\nChina has let the interest rate on a one-year policy loan to banks drop to a record low, according to people familiar with the situation, lowering funding costs so as to revive economic growth. BBG\n\nDemand softened at Japan’s 10-year bond auction as investors grew cautious ahead of a snap election, keeping yields elevated amid equity gains and ongoing fiscal concerns. BBG\n\nUkraine has agreed with western partners that persistent Russian violations of any future ceasefire agreement would be met by a coordinated military response from Europe and the US. FT\n\nFrench inflation fell more sharply than expected last month to a 5 year low, raising further possibility that eurozone inflation could be below the European Central Bank’s target for longer this year. Consumer prices were 0.4% higher than in January 2025, down from a 0.7% increase in December. WSJ\n\nEuro-zone banks unexpectedly tightened corporate credit standards at the end of 2025, the ECB said in its quarterly Bank Lending Survey. BBG\n\nPresident Trump said he is seeking USD 1bln of damages from Harvard.\n\nHouse Rules panel advances the Senate funding package.",
+          "username": "zerohedge",
+          "user_name": "zerohedge",
+          "created_at": "2026-02-03T13:23:18+00:00",
+          "url": "https://twitter.com/zerohedge/status/2018676671969182041",
+          "nitter_url": "http://localhost/zerohedge/status/2018676671969182041#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018675872933241054",
+          "text": "A Month Of Shock And Awe: These Were The Best And Worst Performing Assets In January https://www.zerohedge.com/markets/month-shock-and-awe-these-were-best-and-worst-performing-assets-january",
+          "username": "zerohedge",
+          "user_name": "zerohedge",
+          "created_at": "2026-02-03T13:20:07+00:00",
+          "url": "https://twitter.com/zerohedge/status/2018675872933241054",
+          "nitter_url": "http://localhost/zerohedge/status/2018675872933241054#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018675085960221093",
+          "text": "US Commerce Secretary Howard Lutnick said the Trump administration believes globalization is “a failed policy” that left America behind.",
+          "username": "unusual_whales",
+          "user_name": "unusual_whales",
+          "created_at": "2026-02-03T13:17:00+00:00",
+          "url": "https://twitter.com/unusual_whales/status/2018675085960221093",
+          "nitter_url": "http://localhost/unusual_whales/status/2018675085960221093#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018672097506029997",
+          "text": "Musk's X Office In Paris Raided By Cybercrime Unit As Brussels Becomes More Unhinged https://www.zerohedge.com/geopolitical/musks-x-office-paris-raided-cybercrime-unit-brussels-becomes-more-unhinged",
+          "username": "zerohedge",
+          "user_name": "zerohedge",
+          "created_at": "2026-02-03T13:05:07+00:00",
+          "url": "https://twitter.com/zerohedge/status/2018672097506029997",
+          "nitter_url": "http://localhost/zerohedge/status/2018672097506029997#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018670851701563738",
+          "text": "*ZELENSKIY: UKRAINE IN TALKS WITH US FOR MORE PATRIOT MISSILES",
+          "username": "zerohedge",
+          "user_name": "zerohedge",
+          "created_at": "2026-02-03T13:00:10+00:00",
+          "url": "https://twitter.com/zerohedge/status/2018670851701563738",
+          "nitter_url": "http://localhost/zerohedge/status/2018670851701563738#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018670491301446001",
+          "text": "Premarket movers\n\nMag 7 stocks are all higher ex-Apple which is again depressed by soaring memory prices (Alphabet +1.2%, Tesla +1.1%, Amazon +0.7%, Microsoft +0.2%, Nvidia +0.7%, Meta +0.1%, Apple -0.7%)\n\nGold and silver miners including Newmont (NEM) gain as precious metal prices climb out of a three-day slide. Newmont rises 4%.\n\nAES Corp. (AES) rises 8% after BlackRock Inc.’s Global Infrastructure Partners is said to team up with EQT AB in a bid to acquire the power company.\n\nEaton Corp. (ETN) falls 5% after the power equipment company forecast adjusted earnings per share for 2026 of $13.00 to $13.50, a range with a midpoint below analysts’ expectations.\n\nFabrinet (FN) falls 4% after the engineering and manufacturing services company’s results showed component constraints pressuring the datacom business. However, analysts are broadly positive on the prospects going forward.\n\nHP Inc. (HPQ) slips 2% as CEO Enrique Lores stepped down to lead PayPal Holdings.\n\nPalantir Technologies Inc. (PLTR) rises 11% after the company forecast revenue for fiscal 2026 that significantly exceeded Wall Street expectations, a boost for the data analytics company after its shares have gotten off to a lackluster start so far this year.\n\nPayPal Holdings (PYPL) falls 15% after the fintech reported profit and revenue that fell short of expectations. The company also said Chief Executive Officer Alex Chriss will be replaced by HP Inc. CEO Enrique Lores.\n\nRambus (RMBS) slides 8% after analysts note that a supply chain hiccup weighed on the semiconductor device company’s first-quarter outlook. The stock has performed strongly of late, rising about 24% so far this year.\n\nSoFi Technologies (SOFI) climbs 3% after JPMorgan upgraded to overweight. The bank is positive about the company’s execution and “more tenable valuation.”\n\nTeradyne (TER) soars 20% after the semiconductor manufacturing company forecast revenue for the first quarter that exceeded the average analyst estimate.",
+          "username": "zerohedge",
+          "user_name": "zerohedge",
+          "created_at": "2026-02-03T12:58:44+00:00",
+          "url": "https://twitter.com/zerohedge/status/2018670491301446001",
+          "nitter_url": "http://localhost/zerohedge/status/2018670491301446001#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018670052543774929",
+          "text": "\"European investors own roughly $10.4 trillion in US stocks and some are considering diversifying away from the US due to Trump,\" per Bloomberg.",
+          "username": "unusual_whales",
+          "user_name": "unusual_whales",
+          "created_at": "2026-02-03T12:57:00+00:00",
+          "url": "https://twitter.com/unusual_whales/status/2018670052543774929",
+          "nitter_url": "http://localhost/unusual_whales/status/2018670052543774929#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018667063720423584",
+          "text": "Nintendo Profit Misses As Soaring Memory Prices Could Become Major Headache https://www.zerohedge.com/markets/nintendo-profit-misses-soaring-memory-prices-could-become-major-headache",
+          "username": "zerohedge",
+          "user_name": "zerohedge",
+          "created_at": "2026-02-03T12:45:07+00:00",
+          "url": "https://twitter.com/zerohedge/status/2018667063720423584",
+          "nitter_url": "http://localhost/zerohedge/status/2018667063720423584#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018666487490429035",
+          "text": "We have deflation: PepsiCo Cuts Lay’s, Doritos Prices as Much as 15% to Boost Sales",
+          "username": "zerohedge",
+          "user_name": "zerohedge",
+          "created_at": "2026-02-03T12:42:50+00:00",
+          "url": "https://twitter.com/zerohedge/status/2018666487490429035",
+          "nitter_url": "http://localhost/zerohedge/status/2018666487490429035#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018665019836133755",
+          "text": "In 2025, homeownership among Millennials rose to 55.4%, up from 54.9% the year prior, per Redfin.",
+          "username": "unusual_whales",
+          "user_name": "unusual_whales",
+          "created_at": "2026-02-03T12:37:00+00:00",
+          "url": "https://twitter.com/unusual_whales/status/2018665019836133755",
+          "nitter_url": "http://localhost/unusual_whales/status/2018665019836133755#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018664122033074549",
+          "text": "*MIRAN: I THINK WE NEED TO CUT RATES MORE THAN A POINT THIS YEAR",
+          "username": "zerohedge",
+          "user_name": "zerohedge",
+          "created_at": "2026-02-03T12:33:26+00:00",
+          "url": "https://twitter.com/zerohedge/status/2018664122033074549",
+          "nitter_url": "http://localhost/zerohedge/status/2018664122033074549#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018662576411058542",
+          "text": "PAYPAL SHARES SINK 16% AFTER 4Q PROFIT MISS, NAMING NEW CEO",
+          "username": "zerohedge",
+          "user_name": "zerohedge",
+          "created_at": "2026-02-03T12:27:17+00:00",
+          "url": "https://twitter.com/zerohedge/status/2018662576411058542",
+          "nitter_url": "http://localhost/zerohedge/status/2018662576411058542#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018661743963332691",
+          "text": "Still Waiting on NVDA? Asia AI Has Already Moved On\n\nhttps://www.zerohedge.com/the-market-ear/asia-ai-sweet-spot-nvda-yesterdays-trade",
+          "username": "zerohedge",
+          "user_name": "zerohedge",
+          "created_at": "2026-02-03T12:23:59+00:00",
+          "url": "https://twitter.com/zerohedge/status/2018661743963332691",
+          "nitter_url": "http://localhost/themarketear/status/2018661743963332691#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018659986612568224",
+          "text": "Billionaire wealth now nearly matches that of the poorest half of the world and is increasingly being converted into political power, according to Oxfam.",
+          "username": "unusual_whales",
+          "user_name": "unusual_whales",
+          "created_at": "2026-02-03T12:17:00+00:00",
+          "url": "https://twitter.com/unusual_whales/status/2018659986612568224",
+          "nitter_url": "http://localhost/unusual_whales/status/2018659986612568224#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018654953083183186",
+          "text": "Sam Altman has said said he hopes to remain a “gigantic customer” of Nvidia, http://localhost/search?q=%23NVDA, for years",
+          "username": "unusual_whales",
+          "user_name": "unusual_whales",
+          "created_at": "2026-02-03T11:57:00+00:00",
+          "url": "https://twitter.com/unusual_whales/status/2018654953083183186",
+          "nitter_url": "http://localhost/unusual_whales/status/2018654953083183186#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018651015395066354",
+          "text": "Open interest data is updated in the premarket, nearly three hours before the open. Complete open interest data is available with an Unusual Whales subscription.\n\nGet started today: https://unusualwhales.com/pricing?utm_source=twitter&utm_medium=social&utm_campaign=snorlax&utm_content=promo\n\nunusualwhales.com Snorlax (๑❛ ڡ ❛๑) (@snorlax_uw)\n\nGet a notification informing you of the change in open interest for any contracts you're interested in\n\nhttps://unusualwhales.com/pricing?utm_source=twitter&utm_medium=social&utm_campaign=snorlax&utm_content=promo\n\n— http://localhost/snorlax_uw/status/2018650089733132434#m",
+          "username": "unusual_whales",
+          "user_name": "unusual_whales",
+          "created_at": "2026-02-03T11:41:21+00:00",
+          "url": "https://twitter.com/unusual_whales/status/2018651015395066354",
+          "nitter_url": "http://localhost/unusual_whales/status/2018651015395066354#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018581923212439973",
+          "text": "Anything less than K2 is feeble\n\nSawyer Merritt (@SawyerMerritt)\n\nThis is probably one of the wildest sentences I've ever read.\n\nIn Elon's new letter: \"Factories on the Moon can take advantage of lunar resources to manufacture satellites and deploy them further into space. By using an electromagnetic mass driver and lunar manufacturing, it is possible to put 500 to 1000 TW/year of AI satellites into deep space, meaningfully ascend the Kardashev scale and harness a non-trivial percentage of the Sun’s power.\"\n\n— http://localhost/SawyerMerritt/status/2018456893400781022#m",
+          "username": "elonmusk",
+          "user_name": "Elon Musk",
+          "created_at": "2026-02-03T07:06:48+00:00",
+          "url": "https://twitter.com/elonmusk/status/2018581923212439973",
+          "nitter_url": "http://localhost/elonmusk/status/2018581923212439973#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018579799719977169",
+          "text": "True\n\nSawyer Merritt (@SawyerMerritt)\n\nI think a lot of people underestimate how many people will switch airlines for great internet (http://localhost/Starlink).\n\nAirlines that don't have great internet will lose customers to airlines that do have great internet.\n\n— http://localhost/SawyerMerritt/status/2018401353240834453#m",
+          "username": "elonmusk",
+          "user_name": "Elon Musk",
+          "created_at": "2026-02-03T06:58:22+00:00",
+          "url": "https://twitter.com/elonmusk/status/2018579799719977169",
+          "nitter_url": "http://localhost/elonmusk/status/2018579799719977169#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018578316039713220",
+          "text": "The older seasons of Star Trek were a positive view of the future\n\nPeter H. Diamandis, MD (@PeterDiamandis)\n\nHollywood convinced generations of a dystopian future because happiness was too boring for movies. \n\nWe need better storytellers to show how our future will be abundant.\n\n— http://localhost/PeterDiamandis/status/2018451992050356428#m",
+          "username": "elonmusk",
+          "user_name": "Elon Musk",
+          "created_at": "2026-02-03T06:52:28+00:00",
+          "url": "https://twitter.com/elonmusk/status/2018578316039713220",
+          "nitter_url": "http://localhost/elonmusk/status/2018578316039713220#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018555981119226218",
+          "text": "Good night to everyone:\n\nunusual_whales (@unusual_whales)\n\nTrump: We are going to have so much rare earth. It's actually not that rare. There’s a lot of rare earth. There’s a lot of earth.\n\nVideo\n\n— http://localhost/unusual_whales/status/2017719790903701796#m",
+          "username": "unusual_whales",
+          "user_name": "unusual_whales",
+          "created_at": "2026-02-03T05:23:43+00:00",
+          "url": "https://twitter.com/unusual_whales/status/2018555981119226218",
+          "nitter_url": "http://localhost/unusual_whales/status/2018555981119226218#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018555605640999330",
+          "text": "There's still a 12-year-old boy alive in my soul, screaming:\n\nOne real dude named http://localhost/elonmusk is actually turning our childhood fantasies into reality—  \n\nhttp://localhost/SpaceX rockets touching the stars  \n\nhttp://localhost/Tesla self-driving cars  \n\nhttp://localhost/Grok a machine that talks, teaches, and plays like a true friend  \n\nhttp://localhost/Tesla_Optimus robots working alongside people  \n\nhttp://localhost/Neuralink telepathy linking brains to the world  \n\nhttp://localhost/X the platform connecting everyone, everywhere, freely  \n\nI'm just proud—honored—to play even a tiny part in accelerating the future that 12-year-old kid always dreamed of. \n\nLFG 🚀\n\nSpaceX (@SpaceX)\n\nSpaceX has acquired xAI, forming one of the most ambitious, vertically integrated innovation engines on (and off) Earth → http://spacex.com/updates#xai-joins-spacex\n\n— http://localhost/SpaceX/status/2018440335140024383#m",
+          "username": "elonmusk",
+          "user_name": "Elon Musk",
+          "created_at": "2026-02-03T05:22:13+00:00",
+          "url": "https://twitter.com/elonmusk/status/2018555605640999330",
+          "nitter_url": "http://localhost/QXsToo/status/2018555605640999330#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018542839123296564",
+          "text": "These are ongoing stories.\n\nUnusual Whales has the market news you can customize.\n\nSee more: https://unusualwhales.com/trump-tracker",
+          "username": "unusual_whales",
+          "user_name": "unusual_whales",
+          "created_at": "2026-02-03T04:31:30+00:00",
+          "url": "https://twitter.com/unusual_whales/status/2018542839123296564",
+          "nitter_url": "http://localhost/unusual_whales/status/2018542839123296564#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018540636710859244",
+          "text": "I’m extra excited for this.\n\nGrowing up in Chicago, the only vehicles we considered as a family car were those with AWD. This is the case for many cold-weather customers throughout the country.\n\nThe new Model Y AWD is the lowest priced AWD vehicle we’ve ever sold in North America by a significant margin, despite all of its capabilities. \n\nHoping to welcome a lot of new owners to the Tesla family with our new lineup.\n\nTesla North America (@tesla_na)\n\nModel Y AWD now available in the US & Puerto Rico\n\nStarts at $41,990 w/ 294 mi of range\n\nhttps://www.tesla.com/modely/design\n\nVideo\n\n— http://localhost/tesla_na/status/2018492981662126544#m",
+          "username": "elonmusk",
+          "user_name": "Elon Musk",
+          "created_at": "2026-02-03T04:22:45+00:00",
+          "url": "https://twitter.com/elonmusk/status/2018540636710859244",
+          "nitter_url": "http://localhost/sendilpalani/status/2018540636710859244#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018509963388432463",
+          "text": "Now tracking http://localhost/ripe_dao on http://localhost/base \n\nRipe is a lending protocol where a users entire portfolio: crypto, yield-bearing positions, tokenized stocks & NFTs, can back a single loan. Users borrow GREEN stablecoin against their combined assets at weighted terms based on each asset's risk",
+          "username": "DefiLlama",
+          "user_name": "DefiLlama.com",
+          "created_at": "2026-02-03T02:20:52+00:00",
+          "url": "https://twitter.com/DefiLlama/status/2018509963388432463",
+          "nitter_url": "http://localhost/DefiLlama/status/2018509963388432463#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018497165350580599",
+          "text": "🇬🇧🇺🇸 Tom Cruise hangs off airplanes at 30,000 feet. He's jumped out of helicopters, scaled the Burj Khalifa, and broken bones doing his own stunts because he thinks safety doubles are for cowards.\n\nThis man just fled London because the streets feel too dangerous.\n\nWhen the most reckless actor in Hollywood history thinks your city is too sketchy, your city has a serious problem...\n\nVideo",
+          "username": "elonmusk",
+          "user_name": "Elon Musk",
+          "created_at": "2026-02-03T01:30:00+00:00",
+          "url": "https://twitter.com/elonmusk/status/2018497165350580599",
+          "nitter_url": "http://localhost/MarioNawfal/status/2018497165350580599#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018494623476580711",
+          "text": "NEWS: Tesla has just launched a new Model Y variant in the U.S. called the Model Y AWD for $41,990.\n\n• 294 mile range\n\n• 0-60mph: 4.6s\n\nTesla has also renamed the Model Y Standard to the Model Y RWD.\n\nNew U.S. Model Y lineup:\n\n• Model Y RWD\n\n• Model Y AWD\n\n• Model Y Premium RWD\n\n• Model Y Premium AWD\n\n• Model Y Performance\n\nVideo",
+          "username": "elonmusk",
+          "user_name": "Elon Musk",
+          "created_at": "2026-02-03T01:19:54+00:00",
+          "url": "https://twitter.com/elonmusk/status/2018494623476580711",
+          "nitter_url": "http://localhost/SawyerMerritt/status/2018494623476580711#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018488611034001626",
+          "text": "You see SpaceX = Space + X",
+          "username": "elonmusk",
+          "user_name": "Elon Musk",
+          "created_at": "2026-02-03T00:56:01+00:00",
+          "url": "https://twitter.com/elonmusk/status/2018488611034001626",
+          "nitter_url": "http://localhost/karpathy/status/2018488611034001626#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018440636546904155",
+          "text": "Now tracking http://localhost/JagPool_xyz Staked SOL on http://localhost/solana",
+          "username": "DefiLlama",
+          "user_name": "DefiLlama.com",
+          "created_at": "2026-02-02T21:45:23+00:00",
+          "url": "https://twitter.com/DefiLlama/status/2018440636546904155",
+          "nitter_url": "http://localhost/DefiLlama/status/2018440636546904155#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018440335140024383",
+          "text": "SpaceX has acquired xAI, forming one of the most ambitious, vertically integrated innovation engines on (and off) Earth → http://spacex.com/updates#xai-joins-spacex",
+          "username": "elonmusk",
+          "user_name": "Elon Musk",
+          "created_at": "2026-02-02T21:44:11+00:00",
+          "url": "https://twitter.com/elonmusk/status/2018440335140024383",
+          "nitter_url": "http://localhost/SpaceX/status/2018440335140024383#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018440266168848493",
+          "text": "Now tracking http://localhost/StarkeFinance Staked SOL on http://localhost/solana",
+          "username": "DefiLlama",
+          "user_name": "DefiLlama.com",
+          "created_at": "2026-02-02T21:43:54+00:00",
+          "url": "https://twitter.com/DefiLlama/status/2018440266168848493",
+          "nitter_url": "http://localhost/DefiLlama/status/2018440266168848493#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018430080465186970",
+          "text": "Try Grok Imagine 1.0\n\nVideo",
+          "username": "elonmusk",
+          "user_name": "Elon Musk",
+          "created_at": "2026-02-02T21:03:26+00:00",
+          "url": "https://twitter.com/elonmusk/status/2018430080465186970",
+          "nitter_url": "http://localhost/dvorahfr/status/2018430080465186970#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018398887640273291",
+          "text": "Now tracking http://localhost/veda_labs pools on our Yield Dashboard",
+          "username": "DefiLlama",
+          "user_name": "DefiLlama.com",
+          "created_at": "2026-02-02T18:59:29+00:00",
+          "url": "https://twitter.com/DefiLlama/status/2018398887640273291",
+          "nitter_url": "http://localhost/DefiLlama/status/2018398887640273291#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018392215593115862",
+          "text": "Now tracking http://localhost/DenariaFinance on http://localhost/LineaBuild \n\nDenaria is an onchain perpetual DEX powered by a dynamic virtual AMM that blends oracle pricing with virtual AMM liquidity",
+          "username": "DefiLlama",
+          "user_name": "DefiLlama.com",
+          "created_at": "2026-02-02T18:32:58+00:00",
+          "url": "https://twitter.com/DefiLlama/status/2018392215593115862",
+          "nitter_url": "http://localhost/DefiLlama/status/2018392215593115862#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018377740433375702",
+          "text": "Now tracking Token Rights info for http://localhost/Lighter_xyz",
+          "username": "DefiLlama",
+          "user_name": "DefiLlama.com",
+          "created_at": "2026-02-02T17:35:27+00:00",
+          "url": "https://twitter.com/DefiLlama/status/2018377740433375702",
+          "nitter_url": "http://localhost/DefiLlama/status/2018377740433375702#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018208088927424615",
+          "text": "Now tracking Lazy Summer Protocol http://localhost/summerfinance_ pools on our Yield Dashboard",
+          "username": "DefiLlama",
+          "user_name": "DefiLlama.com",
+          "created_at": "2026-02-02T06:21:19+00:00",
+          "url": "https://twitter.com/DefiLlama/status/2018208088927424615",
+          "nitter_url": "http://localhost/DefiLlama/status/2018208088927424615#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018208031201190294",
+          "text": "I actually don't think it's complicated.\n\nIMO the future of onchain mechanism design is mostly going to fit into one pattern:\n\n[something that looks like a prediction market] -> [something that looks like a capture-resistant, non-financialized preference-setting gadget]\n\nIn other words:\n\n* One layer that is maximally open and maximizes accountability (it's a market, anyone can buy and sell, if you make good decisions you win money if you make bad decisions you lose money)\n\n* One layer that is decentralized and pluralistic, and that maximizes space for intrinsic motivation. This cannot be token-based, because token owners are not pluralistic, and anyone can buy in and get 51% of them. Votes here should be anonymous, ideally MACI'd to reduce risk of collusion.\n\nThe prediction market is the correct way to do a \"decentralized executive\", because the most logical primitive for \"accountability\" in a permissionless concept is exactly that.\n\nThough sometimes you will want to keep it simple, and do a centralized executive at that layer instead:\n\n[replaceable centralized executive] -> [something that looks like a capture-resistant, non-financialized preference-setting gadget]\n\nThinking in these two layers explicitly: (i) what is doing your execution, (ii) what is doing your preference-setting and is judging the executor(s), is best.\n\nMilliΞ (@llamaonthebrink)\n\nYesterday Vitalik posted about a curation-style creator platform idea, and while it seems like a complicated solution, his idea will likely prove directionally correct in the not so distant future.\n\nEvery major social media platform optimizes for popularity contests over quality content creation.\n\nThere has to be an opportunity in an alternative approach.\n\n— http://localhost/llamaonthebrink/status/2018205196568944653#m",
+          "username": "VitalikButerin",
+          "user_name": "vitalik.eth",
+          "created_at": "2026-02-02T06:21:05+00:00",
+          "url": "https://twitter.com/VitalikButerin/status/2018208031201190294",
+          "nitter_url": "http://localhost/VitalikButerin/status/2018208031201190294#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018207339917029480",
+          "text": "Now tracking http://localhost/matrixdock STBT pools on our Yield Dashboard\n\nShort-Term US Treasury Bill Token that enables yields from U.S. Treasury securities and reverse repos. Pegged 1:1 to USD",
+          "username": "DefiLlama",
+          "user_name": "DefiLlama.com",
+          "created_at": "2026-02-02T06:18:20+00:00",
+          "url": "https://twitter.com/DefiLlama/status/2018207339917029480",
+          "nitter_url": "http://localhost/DefiLlama/status/2018207339917029480#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018012443700494615",
+          "text": "Now tracking http://localhost/Plasma Saving Vaults on our Fees & Revenue Dashboard\n\nPlasma Vaults are on-chain investment vaults that generate yield by deploying user deposits across leading DeFi protocols through Veda's infrastructure",
+          "username": "DefiLlama",
+          "user_name": "DefiLlama.com",
+          "created_at": "2026-02-01T17:23:54+00:00",
+          "url": "https://twitter.com/DefiLlama/status/2018012443700494615",
+          "nitter_url": "http://localhost/DefiLlama/status/2018012443700494615#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2018011917491568671",
+          "text": "Now tracking http://localhost/bankrbot on our Fees & Revenue Dashboard\n\nSelf-custodial DeFi terminal for viewing multi-chain positions and executing wallet-signed swaps and protocol actions",
+          "username": "DefiLlama",
+          "user_name": "DefiLlama.com",
+          "created_at": "2026-02-01T17:21:48+00:00",
+          "url": "https://twitter.com/DefiLlama/status/2018011917491568671",
+          "nitter_url": "http://localhost/DefiLlama/status/2018011917491568671#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2017956762347835488",
+          "text": "How I would do creator coins\n\nWe've seen about 10 years of people trying to do content incentivization in crypto, from early-stage platforms like Bihu and Steemit, to BitClout in 2021, to Zora, to tipping features inside of decentralized social, and more. So far, I think we have not been very successful, and I think this is because the problem is fundamentally hard.\n\nFirst, my view of what the problem is. A major difference between doing \"creator incentives\" in the 00s vs doing them today, is that in the 00s, a primary problem was having not enough content at all. In the 20s, there's plenty of content, AI can generate an entire metaverse full of it for like $10. The problem is quality. And so your goal is not *incentivizing content*, it's *surfacing good content*.\n\nPersonally, I think that the most successful example of creator incentives we've seen is Substack. To see why, take a look at the top 10:\n\nhttps://substack.com/leaderboard/technology/paid\n\nhttps://substack.com/leaderboard/culture/paid\n\nhttps://substack.com/leaderboard/world-politics/paid\n\nNow, you may disagree with many of these authors. But I have no doubt that:\n\n1. They are on the whole high quality, and contribute positively to the discussion\n\n2. They are mostly people who would not have been elevated without Substack's presence\n\nSo Substack is genuinely surfacing high quality and pluralism.\n\nNow, we can compare to creator coin projects. I don't want to pick on a single one, because I think there's a failure mode of the entire category.\n\nFor example:\n\nTop Zora creator coins: https://www.coingecko.com/en/categories/zora-creator-coins\n\nBitClout: https://www.businessofbusiness.com/articles/inside-the-rise-of-bitclout-a-crypto-based-social-network-influencers-andreessen-horowitz-sequoia/#:~:text=Most%20of%20the,about%20BitClout%E2%80%99s%20users\n\nBasically, the top 10 are people who already have very high social status, and who are often impressive but primarily for reasons other than the content they create.\n\nAt the core, Substack is a simple subscription service: you pay http://localhost/search?q=%23N per month, and you get to see the person's articles. But a big part of Substack's success is that they did not just set the mechanism and forget. Their launch process was very hands-on, deliberately seeding the platform with high-quality creators, based on a very particular vision of what kind of high-quality intellectual environment they wanted to foster, including giving selected people revenue guarantees.\n\nSo now, let's get to one idea that I think could work (of course, coming up with new ideas is inherently a more speculative project than criticizing existing ones, and more prone to error).\n\nCreate a DAO, that is *not* token-based. Instead, the inspiration should be Protocol Guild: there are N members, and they can (anonymously) vote new members in and out. If N gets above ~200, consider auto-splitting it.\n\nImportantly, do _not_ try to make the DAO universal or even industry-wide. Instead, embrace the opinionatedness. Be okay with having a dominant type of content (long-form writing, music, short-form video, long-form video, fiction, educational...), and be okay with having a dominant style (eg. country or region of origin, political viewpoint, if within crypto which projects you're most friendly to...). Hand-pick the initial membership set, in order to maximize its alignment with the desired style.\n\nThe goal is to have a group that is larger than one creator and can accumulate a public brand and collectively bargain to seek revenue opportunities, but at the same time small enough that internal governance is tractable.\n\nNow, here is where the tokens come in. In general, one of my hypotheses this decade is that a large portion of effective governance mechanisms will all have the form factor of \"large number of people and bots participating in a prediction market, with the output oracle being a diverse set of people optimized for mission alignment and capture resistance\". In this case, what we do is: anyone can become a creator and create a creator coin, and then, if they get admitted to a creator DAO, a portion of their proceeds from the DAO are used to burn their creator coins.\n\nThis way, the token speculators are NOT participating in a recursive-speculation attention game backed only by itself. Instead, they are specifically being predictors of what new creators the high-value creator DAOs will be willing to accept. At the same time, they also provide a valuable service to the creator DAOs: they are helping surface promising creators for the DAOs to choose from.\n\nSo the ultimate decider of who rises and falls is not speculators, but high-value content creators (we make the assumption that good creators are also good judges of quality, which seems often true). Individual speculators can stay in the game and thrive to the extent that they do a good job of predicting the creator DAOs' actions.",
+          "username": "VitalikButerin",
+          "user_name": "vitalik.eth",
+          "created_at": "2026-02-01T13:42:38+00:00",
+          "url": "https://twitter.com/VitalikButerin/status/2017956762347835488",
+          "nitter_url": "http://localhost/VitalikButerin/status/2017956762347835488#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2017749990248993129",
+          "text": "Trump: I don't think we would have to go to Congress… we have so much money coming in from tariffs that we'll be able to issue at least a $2,000 dividend. I believe we can do that without Congress.\n\nVideo",
+          "username": "unusual_whales",
+          "user_name": "unusual_whales",
+          "created_at": "2026-02-01T00:01:00+00:00",
+          "url": "https://twitter.com/unusual_whales/status/2017749990248993129",
+          "nitter_url": "http://localhost/unusual_whales/status/2017749990248993129#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2017629194390208570",
+          "text": "Question: It's been reported that the oil sold for $500 million and $300 million went to Venezuelan government. What happened to the other $200 million?  \n\nRubio: It's still sitting in the account is my understanding  \n\nQuestion: The account in Qatar?\n\nRubio: Yes\n\nVideo",
+          "username": "unusual_whales",
+          "user_name": "unusual_whales",
+          "created_at": "2026-01-31T16:01:00+00:00",
+          "url": "https://twitter.com/unusual_whales/status/2017629194390208570",
+          "nitter_url": "http://localhost/unusual_whales/status/2017629194390208570#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2017145595819933745",
+          "text": "In these five years, the Ethereum Foundation is entering a period of mild austerity, in order to be able to simultaneously meet two goals:\n\n1. Deliver on an aggressive roadmap that ensures Ethereum's status as a performant and scalable world computer that does not compromise on robustness, sustainability and decentralization.\n\n2. Ensures the Ethereum Foundation's own ability to sustain into the long term, and protect Ethereum's core mission and goals, including both the core blockchain layer as well as users' ability to access and use the chain with self-sovereignty, security and privacy.\n\nTo this end, my own share of the austerity is that I am personally taking on responsibilities that might in another time have been \"special projects\" of the EF. Specifically, we are seeking the existence of an open-source, secure and verifiable full stack of software and hardware  that can protect both our personal lives and our public environments ( see https://vitalik.eth.limo/general/2025/09/24/openness_and_verifiability.html ). This includes applications such as finance, communication and governance, blockchains, operating systems, secure hardware, biotech (including both personal and public health), and more. If you have seen the Vensa announcement (seeking to make open silicon a commercially viable reality at least for security-critical applications), the https://www.ucritter.com/ including recent versions with built in ZK + FHE + differential-privacy features, the air quality work, my donations to encrypted messaging apps, my own enthusiasm and use for privacy-preserving, walkaway-test-friendly and local-first software (including operating systems), then you know the general spirit of what I am planning to support.\n\nFor this reason I have just withdrawn 16,384 ETH, which will be deployed toward these goals over the next few years. I am also exploring secure decentralized staking options that will allow even more capital from staking rewards to be put toward these goals in the long term.\n\nEthereum itself is an indispensable part of the \"full-stack openness and verifiability\" vision. The Ethereum Foundation will continue with a steadfast focus on developing Ethereum, with that goal in mind. \"Ethereum everywhere\" is nice, but the primary priority is \"Ethereum for people who need it\". Not corposlop, but self-sovereignty, and the baseline infrastructure that enables cooperation without domination.\n\nIn a world where many people's default mindset is that we need to race to become a big strong bully, because otherwise the existing big strong bullies will eat you first, this is the needed alternative. It will involve much more than technology to succeed, but the technical layer is something which is in our control to make happen. The tools to ensure your, and your community's, autonomy and safety, as a basic right that belongs to everyone. Open not in a bullshit \"open means everyone has the right to buy it from us and use our API for $200/month\" way, but actually open, and secure and verifiable so that you know that your technology is working for you.",
+          "username": "VitalikButerin",
+          "user_name": "vitalik.eth",
+          "created_at": "2026-01-30T07:59:21+00:00",
+          "url": "https://twitter.com/VitalikButerin/status/2017145595819933745",
+          "nitter_url": "http://localhost/VitalikButerin/status/2017145595819933745#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2016898906915811488",
+          "text": "TheDAO is back. BULLISH\n\nA decade later, we’re opening a new chapter.\n\nTheDAO Security Fund: activating 75,000+ ETH to strengthen Ethereum security.\n\nhttps://thedao.fund/",
+          "username": "VitalikButerin",
+          "user_name": "vitalik.eth",
+          "created_at": "2026-01-29T15:39:06+00:00",
+          "url": "https://twitter.com/VitalikButerin/status/2016898906915811488",
+          "nitter_url": "http://localhost/thedaofund/status/2016898906915811488#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2016465453367861297",
+          "text": "I'll do the ill-advised thing and try to explain my own thought process and constraints (and possibly unadmitted cowardice) that guide when I do and don't speak on these kinds of political topics - and further down just say what some of my direct opinions are. It's 2026, the careful route isn't getting us anywhere anymore, might as well try being open.\n\nWhen it comes to hot political issues (not abstract questions like tax policy, surveillance, etc, which it's actually easy to talk about, I mean specific events that affect specific groups), I basically have three choices:\n\n1. Talk about none of them\n\n2. Talk about some of them\n\n3. Talk about all of them\n\nMany people do (1). In crypto, many people talk about \"decentralized governance\", a \"freedom\", a \"fairer economy without intermediaries\", \"cypherpunk\", etc etc, and maybe talk about how blockchains and encryption and zero knowledge proofs can make these things happen. But they take care to avoid making the link between those values and any specific situation. This approach is \"safe\". But ultimately, it feels hollow, and I think it makes your mind hollow. It makes it really easy for you to think you're doing the right thing, because you're working on all the right technologies, but then because you never engage on any concrete issue, you don't even notice if you're not actually making any impact on the underlying problems - or worse, actively diverting idealistic talent and effort from actually-effective solutions. I think this applies both to individuals, and to whole communities. And so if you don't want to fall into this trap, you have to engage with the world.\n\nNote that this does not mean that *your work* can't be general-purpose and instead needs to be targeted to directly affect some specific situation in the world. Focused work is good. But I do think the world benefits from a decentralized public apparatus of moral conscience that extends beyond topics that you directly work on.\n\nMany people do (3). But there is a good argument against (3): if you are forced to take positions on everything in the world, then you're usually taking positions on things you had little or no prior understanding of, and your positions are motivated by a few emotional articles or posts that recently convinced you in one direction or the other. And if you have 100 topics, you can only devote 1% of the effort to tracking each one. It becomes easy for someone to convince you of a position that you would not even support if you were more informed about it. There is a reason why people hate the \"omnicause\", \"everything-bagel activists\", etc. Focusing on everything dilutes the message to the point where you're succeeding at nothing (or worse, having actively counterproductive postures on things as a result of low information).\n\nHence, there is the option of (2). But (2) has a natural problem: once you talk about some things, it becomes easier for people to pressure you to talk about even more things, by accusing you of selective outrage and hypocrisy. (And, to be fair, selective outrage and hypocrisy are very real problems) To defend against this, you need to hold \"a line\". One very natural line is to mostly limit your attention to topics that relate to you personally.\n\nFor example, I and my family are from Russia. When I see footage of the war in Ukraine, whether videos of soldiers getting ready for a military operation, or families expressing their anguish after their apartment building or hospital was bombed, they are often speaking in a language I have known since childhood. More importantly, and regrettably, I personally met Vladimir Putin and thus to some small degree helped legitimize him back in 2018. To me, these things mean this conflict relates to me and is my responsibility to do the right thing in (and not just be a passive bystander, perhaps saying \"I am against war\" exactly once and then continuing my life).\n\nSimilarly, Canada is my responsibility, as it's the land where I grew up - both when the government financially deplatformed the truckers (which I criticized), and when the bumbling old man down south starts bullying and threatening its sovereignty (which I've also criticized).\n\nMeanwhile I've spent 0 days in Myanmar or Venezuela, less than three months in the Middle East, and have much less context in those and other places - I know what I know from reading second-hand sources and making my own judgements about which facts are true and false and which arguments are right and wrong, which is far from zero, but it still has limits.\n\nThe United States is a special case, because historically politics in the USA affects the world so much, many people (though today much less than a decade ago) look up to it as an example, and it has massive influence through its economy and its centralized technology platforms. So sorry guys, the entire world has a right to blab about your internal affairs. Something something vaguely similar to \"no taxation without representation\".\n\nThis approach that I outlined does have a weakness: regions of the world that are economically very poor will have very few globally powerful people that have close connections to them. Hence, a \"take care of your own\" norm leaves such people in the dust, vulnerable to being ignored or even outright predated on by others, with no one powerful sticking up for them. I personally try to address this by first making a judgement about whether a faraway situation is more like an internal conflict or more like eg. global public health, and apply the \"take care of your own\" norm in cases like the former and not in cases like the latter.\n\nThis is the explanation I can give for why I've publicly said relatively more about Canada, USA and Russia, and relatively little about Venezuela, Sudan, Africa, Myanmar, China, or the Middle East, including both Iran and the various conflicts involving Israel. Basically, if I don't draw the line roughly here, what other line can I hold?\n\n*Maybe* there are some people who are closer to \"pure devs\" who can hold a different line, speaking *only* about abstract generalities, but I've always covered the full spectrum from pure tech to social issues, so I don't think I *can* hold that line. Hence, instead I have to hold slome further-out and more complicated line.\n\nOf course, it's also easy to construct a less self-serving explanation: I have some view of who my constituency is, and I am a coward who is afraid of offending them. I could respond by pointing to various instances in which I've been publicly brave (whether calling out Craig Wright, or visiting Kyiv, or running through 2km of rain to get to a conference panel on time etc), but maybe my critics can justly counter by pointing out that this is simply the old-as-time masculine tactic of \"compensating for something\".\n\nI will let readers make their own judgements.\n\nNow, my views on a few specific topics:\n\nIran\n\nFrom what I can tell, the Iranian regime is:\n\n* Literally killing tens of thousands of people, in gruesome ways, in its crackdown on the current protests\n\n* Totally denying Iranian people access to the worldwide internet, in part to cover up the above, and there is a high chance that the regime intends this situation to be permanent.\n\n* In the longer term, doing more generally awful things like imposing what clothes women have to wear, providing military support to Russia's invasion, publicly wishing death to various groups on official channels, etc\n\nThese things are unambiguously awful. They're not a \"eh, what can we do\" normal level of awful, they are totally awful. Even if global public condemnation accomplishes nothing else, simply reducing the regime's social status to the point where it equals that of North Korea's gov seems like part of the bare minimum that should be done. Though hopefully, the protests will succeed and expand and Iranian people will get freedom. I hope that the crypto space finds a way to be useful by exploring more options to restore access to the global internet to Iranians.\n\nFurthermore, there is another important point to make: many people say \"this is awful\", but then still maintain an attitude of disapproval toward overly \"impolite\" ways of dealing with the problem, eg. using physical violence against the Iranian leadership. I see the value of a \"suggesting violence is impolite\" norm in maintaining civilization, but IMO that norm should be focused on *initiating* the escalation to full-scale violence; it's fine to respond with violence when violence is already being used in the other direction on a large scale. Being overly pacifist is a good way to feel self-righteous while doing nothing effective to prevent the people you sympathize with from being rolled over.\n\nNothing in those above paragraphs is \"anti-Islamic\". But there is the question: if we analyze the situation, and ask *what causes* the Iranian government to be abnormally brutal, then might the conclusion be that those causes include cultural values that are core to Islam?\n\nI personally don't understand Islam enough to comment. But I can say two things:\n\n* There's plenty of extreme evil that happens without Islam. the invasions carried out by Russia are one good example, there's plenty of extremely dangerous political megalomania worldwide that is 100% secular\n\n* In my experience, the anti-Islam hate that I see in our world often goes beyond cultural criticism, and turns into attacks on people and condemnation of entire ethnic groups (see eg. post 9/11).\n\nCulture can and should be criticized, including by outsiders. This includes banal things, like my view that miles, feet and pounds are stupid units of measurement and SI units are more civilized (I have much less confidence on 'F vs 'C). It also includes deeper things like moral values. But there is a way to do this that does not turn into personal attacks on people. I do often see anti-Islam discourse failing at this (though some criticize effectively and humanely).\n\nIsrael/Gaza\n\nMy moral view on the situation is:\n\n* The attack on Oct 7 was a brutal unjustified war crime that killed around a thousand innocent people, and should be condemned without qualifications\n\n* The response to the attack has killed ~50-100x more people than the original attack, the majority of them civilians, and has destroyed the homes of over a million Gazans and traumatized the entire population. This level of total devastation in response to an attack of a much smaller scale exceeds all reasonable bounds of self-defense, and itself is a brutal war crime\n\n* There are various statements made by high-level officials, actions by soldiers, etc, that I've seen that suggest that the mental state involved in the Gaza operation is less \"a principled effort to protect people\" and more \"classic pre-modern revenge psychology\"\n\n* Hence, the ICC was right to charge both sides of this\n\n* The Israeli government is on the whole a lot more rights-respecting and better to live under than the Hamas one. However, the Hamas government already has social status worse than North Korea. Meanwhile, the Israeli one often gets treated at the highest official levels as a special valued ally, in a way that I fear deeply undermines moral norms, and thus creates room for eg. letting Putin get away with his crimes in Ukraine. This is an imbalance, and I think this is something that many people are reacting against.\n\n* What happened in 1967, 1948, and arguably even the late 2000s is honestly not very relevant to this moral analysis. The majority of the population was not even alive when those things happened, there's no good moral reason why the fate of a 14 year old kid who is seeing their home or family destroyed should depend on arcane debates about the previous century's history\n\n* The biggest heroes in this situation are probably people quietly working in the background to reconnect people and lay the ground for peace that will hopefully shape itself over decades. I don't think the world can respond *only* by doing this, because it's also important to defend norms (\"injustice anywhere is a threat to justice anywhere\"), but I'm really glad these people exist and morally support them.\n\nI strongly oppose anti-Semitism. To me, this is a special case of the broader moral principle that one should not judge entire ethnic groups by the decisions of a few elites. In other worlds, \"hate the government, not the people\". One important corollary of this, of course, is that criticizing the Israeli government does not count as anti-Semitism.\n\nPrinciples vs details of the situation\n\nI should note explicitly that these moral views above are very \"principles-driven\" and not \"details of the situation\" driven. I think this is the correct level at which to approach this. The reason is that while \"details of the situation\" thinking often can acknowledge subtle important facts that would otherwise be ignored, nevertheless:\n\n* It has very low galaxy brain resistance ( https://vitalik.eth.limo/general/2025/11/07/galaxybrain.html ). It's too easy to cherry-pick details that favor your side, and appeal to particularism (\"you outsiders can't understand...\") to shield one's local bullying from external pushback\n\n* It's not something you can build norms around. Peace and humanitarianism in the world depend on moral norms: the fact that the whole world recoils in disgust at certain unconscionable outcomes, and that it can do this in lockstep, and can't be divided-and-conquered by arguing arcane points about third-order game theory or history. Some say \"norms are fake anyway, we're in the law of the jungle, you have to protect your own\". To anyone who sincerely believes this, all I can say is: YOU HAVE NO FRIGGIN IDEA HOW MUCH EVERYONE, EVEN THE VILLAINS, ARE HOLDING THEMSELVES BACK BECAUSE OF MORALITY AND NORMS EVEN TODAY, AND HENCE, HOW MUCH WORSE THINGS COULD GET\n\n* Outsiders to a situation have more understanding of principles than of situational details. Hence, if it's valid for outsiders to express views on things at all, they should focus on their relative expertise, which is the principles.\n\nICE and Immigration\n\nThe other big thing happening now, that I've been silent on, is ICE turning into a full-on police state and now shooting protesters in broad daylight.\n\nThe immigration issue is complex and it is important to separate two aspects:\n\n* Whether less or more immigration is good (and what kinds). If the highest acceptable level of immigration is less than the level that would naturally arise in the absence of either walls or deportation, then walls or deportation are in principle required.\n\n* The fact that ICE is acting like total assholes about this situation.\n\nThese things can and must be separated. There are immigration systems far more restrictive than USA, whose implementation is more humane.\n\nThe second needs to be strongly opposed, full stop, no counterarguments admitted. Once the police state apparatus exists to this extent, it *will* keep finding new targets. Even today, it has already expanded its violence from illegal immigrants to obviously-American defenders of immigrants. [insert Niemöller poem here]\n\nToday, this second issue (the cruelty) is the more important one in the USA, and its morality is pretty cut-and-dried simple, as described above, so nothing more to say about it. So now, on to the first issue (ideal levels of immigration).\n\nI am generally persuaded by Bryan Caplan-style arguments that the answer is \"very high\". To summarize:\n\n(i) the bulk of economic evidence suggests that high-skilled immigration is pretty close to no-downsides good, high-volume low-skilled immigration *slightly* depresses wages of low-wage locals, but it also means consumer prices go down for everyone. The $3 falafels in Berlin (which in turn support the city's status as an affordable home for various artistic and cultural activities) are only possible because of the Middle Eastern low-skill labor\n\n(ii) in the USA, even illegal immigrants (!!!) on average commit less crime than the native population. In Europe though this is not true.\n\nI also add my own bespoke point (iii): if you are worried about change to *culture*, then I believe that the larger driver of culture change is not foreigners but technology. The real great replacement is the kids growing up on TikTok. (also, much of cross-country culture spread happens through the internet, not via farm workers or Uber drivers)\n\nAnd so actually I believe that if you care about stopping the great replacement, the right thing to invest in is ... longevity technology, so that existing human beings and their generations with unique cultures can survive through the ages as human beings, and not just as history pages. That's right: making everyone live 10x longer is a *conservative* technology.\n\n(To the counterargument that this will also make evil dictators live 10x longer and prevent their societies from ever escaping: if we get into that world and a dictator gets too awful, then yeah I'm ok with droning them, I already said so above)\n\nHowever, the downsides to public safety and government welfare expenditure from some types of immigrants are real. Personally, I think that we're very far from exhausting the opportunities we have to solve this problem without deporting people at all - I regularly see stories of criminals getting freed after committing three murders and then quickly going out and committing a fourth. We should stop doing this. Every act of lenience against a violent criminal saps public acceptance for immigration, and thus leads to ten acts of anti-lenience toward peaceful foreigners. Hence, true long-term empathy would withhold lenience from the criminals, and apply that lenience to peaceful foreigners instead.\n\nBut there is a larger problem behind this problem. Western morality is very dominated by \"out of sight out of mind\" bias. If you are on the inside of the wall, then you're part of the family, all human beings are equal, let's sing and dance in a circle. If you are on the outside of the wall, then you get performative thoughts and prayers, but in terms of substantive support, well, hang on we'll get right back to you.\n\nThis is where I think the social role of the \"illegal immigrant\" category in the USA comes in. It is a strange category, because we're saying that legally there are tens of millions of people who are violating the law on a mass scale, but we're not _doing_ that much about it. Requiring employers to verify immigration status of employees frequently gets shot down. But from the perspective of \"Western society hacking around its own broken moral code\", it makes perfect sense. We believe in \"all humans are equal\", that \"second-class citizenship\" is a bad and dystopian idea, that everyone deserves \"good\" working conditions, etc etc.  But the economic reality is that the wage level that maximizes (not only local economic, but also humanitarian) gains from hiring foreign labor is lower than the level that is acceptable to locals - if you force the wage for low-skill foreigners up to the same level as locals, then you end up hiring much fewer of them, and so even the total humanitarian benefit you bring to low-income foreigners by giving them more economic opportunity is lower. So how do we solve this? Well, we invent the \"illegal immigrant\" category, and so the moral baseline becomes \"well technically you don't even have the right to be here, and so really, anything you get here counts as an extra bonus\". This is the moral self-arbitrage.\n\nThe problem is that wealthy countries by default are exactly in the position of the space colony from the movie Elysium: they're gated communities for the global rich, where everyone outside is a second-class citizen on a global scale. So if we say \"we refuse to exploit foreign labor, they can all stay outside\", we're not actually being moral.\n\nHence, to me the principled solution seems to be, to be more willing as a society to say \"you're welcome in the land and you can work, but you're not part of the family\", and to create visa categories that reflect this fact. Paths to become part of the family should continue to exist, but it's okay for those paths to be much more difficult than paths to simply come in and work. This is a model that already works well in many places in the non-West. And today, I find many non-Western countries increasingly opening themselves up to foreigners, while Western countries close down, add more ESTA and visa bureaucracy, border guards become more annoying and insufferable, etc.\n\nThe grand sacrifice: take less seriously the idea that \"once you're within the walls, everyone is part of the family and is equal\". This mentality was more sustainable in the 20th century, when people's identities were mostly bound up with a single country and most people did not even see anything outside their home country, but it is incompatible with the 21st, where information is global and our identities are plural. Unless we can achieve equality across the whole world, saying \"within our home we are equal, outside our home go away\" is ultimately a larp morality, and we should move on to something better. This *should* be a major task of the next generation of compassion-driven political philosophers. If we do this, it opens the door to greater openness to the outside world, which will ultimately be a human rights boon to everyone by giving people much-needed second options.\n\n(special thanks to http://localhost/ameensol for pushing me to be more brave even though I predict he will disagree with ~1/3 of the above)",
+          "username": "VitalikButerin",
+          "user_name": "vitalik.eth",
+          "created_at": "2026-01-28T10:56:42+00:00",
+          "url": "https://twitter.com/VitalikButerin/status/2016465453367861297",
+          "nitter_url": "http://localhost/VitalikButerin/status/2016465453367861297#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2016460401068614076",
+          "text": "The situation in Iran is continuing to get much worse. Much respect for everyone going through extreme danger to try to increase the chance that Iranian people can be free.\n\nSariraa.eth (@SariraMerikhi)\n\nDay 19 of the internet blackout in Iran and we’re out here testing hundreds of VPNs just to post a few damn words.\n\n- We’ve cried so much for our friends and our people that there’s literally no tears left. All that’s inside us now is rage, curses, and a burning thirst for revenge.\n\n- Let the world know: in just two days they slaughtered at least 80,000 of us people who simply stepped out onto the streets.\n\n• You guys have zero clue how deep this nightmare goes. Hell, even we can’t fully wrap our heads around it yet every day another hundred photos and videos of our people pop up.\n\n• I’m a nationalist, a patriot to the core. Even if I’m reborn a hundred times, I’d still choose to be Iranian.\n\n- Shoutout to the honorable, freedom loving people of Iran my brave ass compatriots who stand like lions against these hyenas and jackals.\n\n• A few things from the inside:\n\n- Every day we’re just waiting for something to happen. Eyes glued to the sky and the news. Half the businesses are already dead, but people don’t even care anymore because they know it’s all over anyway.\n\n- Big thanks to the American people for voting in that wise man as your president a real patriot.\n\n- Respect to the people of Ukraine they get the pain we’re going through.\n\n- Shoutout to the people of Israel standing with us even though they know it puts a target on their backs.\n\n- And thank you everyone in my community reading this, screaming humanity from every corner of the world and standing with us.\n\n• We’ve got a long fucking road ahead. We gotta stand together and drag our countries out of this darkness and ignorance. This isn’t a one or two year thing it’s gonna take ages, but it’s doable.\n\n- As you can see, people are giving the only thing they have left that matters their lives.\n\n• Here’s to victory and to a world finally free from Islamists, far left crazies, and these spineless, rootless clowns.\n\n— http://localhost/SariraMerikhi/status/2016075477765505034#m",
+          "username": "VitalikButerin",
+          "user_name": "vitalik.eth",
+          "created_at": "2026-01-28T10:36:38+00:00",
+          "url": "https://twitter.com/VitalikButerin/status/2016460401068614076",
+          "nitter_url": "http://localhost/VitalikButerin/status/2016460401068614076#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2016424844682723819",
+          "text": "This morning I needed to check which addresses were signers on my multisig.\n\nI was on my phone, and did not have the Safe app installed there.\n\nI realized that I could just look up my address on etherscan, and use the \"read contract\" feature to get what I want directly.\n\nThese are the kinds of additional UX benefits you get if your wallet or application is open source and passes the walkaway test. Giving users access to alternative options often helps in unexpected situations much more mundane than the Safe website \"walking away\" outright.\n\n(Of course, this exact workflow will eventually have to break because privacy. One way to make an equivalent privacy-friendly workflow is that the user can save a \"viewing key\" that is an extended version of their address and also contains extra private info, and the block explorers can support it, putting the private info in the hashtag part of the url so it stays client side. Though this has the weakness that encouraging people to paste any kinds of secrets into URLs or webpages is risky; ultimately we just need to be able to do more things through your wallet directly)",
+          "username": "VitalikButerin",
+          "user_name": "vitalik.eth",
+          "created_at": "2026-01-28T08:15:20+00:00",
+          "url": "https://twitter.com/VitalikButerin/status/2016424844682723819",
+          "nitter_url": "http://localhost/VitalikButerin/status/2016424844682723819#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2015965780727496907",
+          "text": "The scaling hierarchy in blockchains:\n\nComputation > data > state\n\nComputation is easier to scale than data. You can parallelize it, require the block builder to provide all kinds of \"hints\" for it, or just replace arbitrary amounts of it with a proof of it.\n\nData is in the middle. If an availability guarantee on data is required, then that guarantee is required, no way around it. But you _can_ split it up and erasure code it, a la PeerDAS. You can do graceful degradation for it: if a node only has 1/10 the data capacity of the other nodes, it can always produce blocks 1/10 the size.\n\nState is the hardest. To guarantee the ability to verify even one transaction, you need the full state. If you replace the state with a tree and keep the root, you need the full state to be able to update that root. There _are_ ways to split it up, but they involve architecture changes, they are fundamentally not general-purpose.\n\nHence, if you can replace state with data (without introducing new forms of centralization), by default you should seriously consider it. And if you can replace data with computation (without introducing new forms of centralization), by default you should seriously consider it.",
+          "username": "VitalikButerin",
+          "user_name": "vitalik.eth",
+          "created_at": "2026-01-27T01:51:11+00:00",
+          "url": "https://twitter.com/VitalikButerin/status/2015965780727496907",
+          "nitter_url": "http://localhost/VitalikButerin/status/2015965780727496907#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2015599527370293422",
+          "text": "I no longer agree with this previous tweet of mine - since 2017, I have become a much more willing connoisseur of mountains. It's worth explaining why.\n\nhttps://nitter.net/VitalikButerin/status/873177382164848641\n\nFirst, the original context. That tweet was in a debate with Ian Grigg, who argued that blockchains should track the order of transactions, but not the state (eg. user balances, smart contract code and storage):\n\n> The messages are logged, but the state (e.g., UTXO) is implied, which means it is constructed by the computer internally, and then (can be) thrown away.\n\nI was heavily against this philosophy, because it would imply that users have no way to get the state other than either (i) running a node that processed every transaction in all of history, or (ii) trusting someone else.\n\nIn blockchains that commit to the state in the block header (like Ethereum), you can simply prove any value in the state with a Merkle branch. This is conditional on the honest majority assumption: if >= 50% of the consensus participants are honest, then the chain with the most PoW (or PoS) support will be valid, and so the state root will be correct.\n\nTrusting an honest majority is far better than trusting a single RPC provider. Not trusting at all (by personally verifying every transaction in the chain) is theoretically ideal, but it's a computation load infeasible for regular users, unless we take the (even worse) tradeoff of keeping blockchain capacity so low that most people cannot even use the chain.\n\nNow, what has changed since then?\n\nThe biggest thing is of course ZK-SNARKs. We now have a technology that lets you verify the correctness of the chain, without literally re-executing every transaction. WE INVENTED THE THING THAT GETS YOU THE BENEFITS WITHOUT THE COSTS! This is like if someone from the future teleported back into US healthcare debates in 2008, and demonstrated a clearly working pill that anyone could make for $15 that cured all diseases. Like, yes, if we have that pill, we should get the government fully out of healthcare, let people make the pill and sell it at Walgreens, and healthcare becomes super affordable so everyone is happy. ZK-SNARKs are literally like that but for the block size war. (With two asterisks for block building centralization and data bandwidth, but that's a separate topic)\n\nWith better technology, we should raise our expectations, and revisit tradeoffs that we made grudgingly in a previous era.\n\nBut also, I have actually changed my mind on some of the underlying issues. In 2017, I was thinking about blockchains in terms of academic assumptions - what is okay to rely on honest majority for, when we are ok with 1-of-N trust assumption, etc. If a construction gave better properties under known-acceptable assumptions, I would eagerly embrace it.\n\nOn a raw subconscious level, I don't think I was sufficiently appreciative of the fact that _in the real world, lots of things break_. Sometimes the p2p network goes down. Sometimes the p2p network has 20x the latency you expected - anyone who has played WoW can attest to long spans of time when the latency spiked up from its usual ~200ms to 1000-5000ms. Sometimes a third party service you've been relying on for years shuts down, and there isn't a good alternative. If the alternative is that you personally go through a github repo and figure out how to PERSONALLY RUN A SERVER, lots of people will give up and never figure it out and end up permanently losing access to their money. Sometimes mining or staking gets concentrated to the point where 51% attacks are very easy to imagine, and you almost have to game-theoretically analyze consensus security as though 75% of miners or stakers are controlled by one single agent. Sometimes, as we saw with tornado cash, intermediaries all start censoring some application, and your *only* option becomes to directly use the chain.\n\nIf we are making a self-sovereign blockchain to last through the ages, THE ANSWER TO THE ABOVE CONUNDRUMS CANNOT ALWAYS BE \"CALL THE DEVS\". If it is, the devs themselves become the point of centralization - they become DEVS in the ancient Roman sense, where the letter V was used to represent the U sound.\n\nThe Mountain Man's cabin is not meant as the replacement lifestyle for everyone. It is meant as the safe place to retreat to when things go wrong. It is also meant as the universal BATNA (\"Best Alternative to a Negotiated Agreement\") - the alternative option that improves your well-being not just in the case when you end up needing it, but also because knowledge of it existing motivates third parties to give you better terms. This is like how Bittorrent existing is an important check on the power of music and video streaming platforms, driving them to offer customers better terms.\n\nWe do not need to start living every day in the Mountain Man's cabin. But part of maintaining the infinite garden of Ethereum is certainly keeping the cabin well-maintained.\n\nvitalik.eth (@VitalikButerin)\n\nThe idea of average users personally validating the entire history of the system is a weird mountain man fantasy. There, I said it.\n\n— http://localhost/VitalikButerin/status/873177382164848641#m",
+          "username": "VitalikButerin",
+          "user_name": "vitalik.eth",
+          "created_at": "2026-01-26T01:35:50+00:00",
+          "url": "https://twitter.com/VitalikButerin/status/2015599527370293422",
+          "nitter_url": "http://localhost/VitalikButerin/status/2015599527370293422#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2014823681042874455",
+          "text": "The relationship between \"institutions\" and \"cypherpunk\" is complex and needs to be understood properly. In truth, institutions (both governments and corporations) are neither guaranteed friend nor foe.\n\nExhibit A: https://www.theregister.com/2026/01/11/eu_open_source_consultation/ European Union seeking to aggressively support open source\n\nExhibit B: https://fightchatcontrol.eu/ European Union bureaucrats want Chat Control (mandatory encryption backdoors)\n\nExhibit C: the Patriot Act (which, we must note, _neither party_ now expresses much interest in repealing)\n\nExhibit D: the US government is now famously a user of Signal\n\nBasically, the game-theoretic optimum for an institution is to have control over what it can control, but also to resist intrusion by others. In fact, institutions are often staffed by highly sophisticated people, who have a much deeper understanding of these issues than regular people and a much deeper will to do something about them. An important driver of many people's refusal to use data-slurping corposlop software is company policy.\n\nSome people have the misperception that my words yesterday about the importance of using tools that maximize your data self-sovereignty are something that will appeal to individual enthusiast communities, but will be rejected as unrealistic by efficiency-minded \"serious people\". But this is false: \"serious people\" are often _more_ robustness-minded than retail and many already have policies even stricter than what I advocate.\n\nI predict that in this next era, this trend will accelerate: institutions (again, both corporations and governments) will want to more aggressively minimize their external trust dependencies, and have more guarantees over their operations. Again, this does not mean that they want to minimize *your dependency on them* - that's the thing that we as the Ethereum community must insist on, and build tools to help people achieve. But that's precisely the complexity of the situation.\n\nIn the stablecoin world, this means:\n\n* Asset issuers in the EU will want a chain whose governance center of gravity is not overly US-based, and vice versa (same for other pairs of countries)\n\n* Governments will push for more KYC, but at the same time privacy tools will improve, because cypherpunks are working hard to make them improve. The more realistic equilibrium is that non-KYC'd assets will exist, and ability to use them with strong privacy will grow, but also over the next decade we'll see more attempts at \"ZK proof of source of funds\". We will see ideological disputes over how to respond to this\n\n* Institutions will want to control their own wallets, and even their own staking if they stake ETH. This is actually good for ethereum staking decentralization. Of course, they will not proactively work to give you the user a self-sovereign wallet. Doing _that_ in a way that is secure for regular users is the task of Ethereum cypherpunks (see: smart contract wallets, social recovery).\n\nEthereum is the censorship-resistant world computer: we do not have to approve of every activity that happens on the world computer. I did not approve much of three million dollar digital monkeys, I will not approve much of privacy with centralized (including multisig/threshold) decryption backdoors. But the existence of those things is not up to me to decide. What *is* up to us is to build the world that we want to see on top of Ethereum, and make that world strong, so that it can prosper in the competition, both on the Ethereum chain itself, and against the centralized world.\n\nAt best, we can interoperate with the non-cypherpunk world to better bootstrap the cypherpunk world. For example, spreads on decentralized stablecoins can decrease if it's easy for people to run arbitrage strategies where they hold positive quantities of a centralized stablecoin and negative quantities of the decentralized one. If we want prediction markets to avoid sliding into sports betting corposlop, we should explore improving their liquidity by helping traditional financial entities use them to hedge against their existing risks. What is a bet from one side is often a purchase of insurance from the other side, and if we want prediction markets to evolve in a healthy way, it may be overall better for the counterparties of the sophisticated traders earning big APYs to be buyers of insurance than to be naive bettors who constantly lose money. Synergies like this should be explored across all domains.\n\nThis is why I do not believe that cypherpunk requires total hostility to institutions. Instead, I support a policy that institutions are already used to using against each other: openness to win-win cooperation, but aggressively standing up for our own interests. And in this case, our interest is building a financial, social and identity layer that protects people's self-sovereignty and freedom.\n\ndasha (@0xdasha)\n\neverything vitalik is saying is right, just kinda late imo\n\nethereum is too institutional by now for any sort of real cypherpunk pivot\n\nglobal settlement layer is too lucrative of a position, which is not bad, but we must be real in that 100% of stablecoin, cefi and defi on ethereum will not go anywhere and not become less compliant\n\nforensics today is ethereum's core business, the kyc tightening will continue, wallets will eventually be gated and linked to your full onchain history on all side wallets via billions of models already trained\n\n— http://localhost/0xdasha/status/2014595111322353962#m",
+          "username": "VitalikButerin",
+          "user_name": "vitalik.eth",
+          "created_at": "2026-01-23T22:12:53+00:00",
+          "url": "https://twitter.com/VitalikButerin/status/2014823681042874455",
+          "nitter_url": "http://localhost/VitalikButerin/status/2014823681042874455#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "2011545006335516704",
+          "text": "My journey on FinTwit has been nothing short of incredible.\n\nWhen I set to go on my own in 2021, I remember a friend from the rates industry telling me “You are posting your thoughts on other platforms, but you’re missing out on the biggest of them all. Try Twitter”.\n\nI had never used it in my life, but it clicked immediately.\n\nThe whole ecosystem was about deep research, sharing ideas, and some fair banter - just a fantastic place where to get high quality financial info.\n\nI still remember working overnight on the “banking crash” of 2023 as I felt I could add value given it was about interest rate derivatives - my home turf.\n\nFollowers and impressions grew at an outrageous pace. A few times I was stopped in NY and London by fellow FinTwitters asking if I was “MacroAlf”. Crazy stuff.\n\nFast forward to today, unfortunately all of that it’s gone. It’s mostly low quality info, accounts flaming each others to get subscribers to their newsletters, and a ton of selective “look how smart I was” self-quote posts.\n\nI hope it will come back to what it was. Really.\n\nIn the meantime a few people pointed me to the post below. It is flattering but incorrect.\n\nI have gotten a lot of things publicly wrong. And I don’t have any issues admitting it. My win rate has always been around 50%. \n\nGood luck to everyone. I miss the good old FinTwit.\n\nTheHappyHawaiian (@ThHappyHawaiian)\n\nCongrats to http://localhost/MacroAlf and http://localhost/LynAldenContact!\n\nX’s internal scoring rates you two as the highest ranked forecasters in the commodity space!\n\n— http://localhost/ThHappyHawaiian/status/2011473845211820312#m",
+          "username": "MacroAlf",
+          "user_name": "Alf",
+          "created_at": "2026-01-14T21:04:36+00:00",
+          "url": "https://twitter.com/MacroAlf/status/2011545006335516704",
+          "nitter_url": "http://localhost/MacroAlf/status/2011545006335516704#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "1958271849499885733",
+          "text": "Hi guys, quick announcement.\n\nI won't be posting here anymore until further notice.\n\nTo everyone who supported my work and engaged fruitfully over the years: thank you.\n\nIf you want to be in touch, my email is:\n\nalf at my research firm dot com\n\nAnd remember: never break pasta.",
+          "username": "MacroAlf",
+          "user_name": "Alf",
+          "created_at": "2025-08-20T20:56:06+00:00",
+          "url": "https://twitter.com/MacroAlf/status/1958271849499885733",
+          "nitter_url": "http://localhost/MacroAlf/status/1958271849499885733#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "1953815814341104066",
+          "text": "New TMTF podcast out with my buddy Brent Donnelly.\n\n- Maybe the Fed is ready to move dovish, but what's already priced in bond markets?\n\n- How to think about carry when setting up trades\n\n- Sometimes Brent is more Italian than me\n\nCheck it out on your preferred podcast platform",
+          "username": "MacroAlf",
+          "user_name": "Alf",
+          "created_at": "2025-08-08T13:49:24+00:00",
+          "url": "https://twitter.com/MacroAlf/status/1953815814341104066",
+          "nitter_url": "http://localhost/MacroAlf/status/1953815814341104066#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "1953336391875580368",
+          "text": "Not sure who needs to hear this.\n\nBut with Fed Funds at 4.33% and terminal rate at 3.1%, long bonds are not offering big juice and carry is quite limited.\n\nThe curve could still be way steeper as the inflation risk premia goes up.",
+          "username": "MacroAlf",
+          "user_name": "Alf",
+          "created_at": "2025-08-07T06:04:21+00:00",
+          "url": "https://twitter.com/MacroAlf/status/1953336391875580368",
+          "nitter_url": "http://localhost/MacroAlf/status/1953336391875580368#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "1953158243410153501",
+          "text": "So the US enacted a $300 billion tax hike for 2025 with pretty much no offsetting new fiscal injection this year.\n\nPerhaps investors should include this in their assessment going forward?",
+          "username": "MacroAlf",
+          "user_name": "Alf",
+          "created_at": "2025-08-06T18:16:27+00:00",
+          "url": "https://twitter.com/MacroAlf/status/1953158243410153501",
+          "nitter_url": "http://localhost/MacroAlf/status/1953158243410153501#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "1948377447403073884",
+          "text": "The S&P 500 is down 4% this year when measured in EUR.",
+          "username": "MacroAlf",
+          "user_name": "Alf",
+          "created_at": "2025-07-24T13:39:17+00:00",
+          "url": "https://twitter.com/MacroAlf/status/1948377447403073884",
+          "nitter_url": "http://localhost/MacroAlf/status/1948377447403073884#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "1948064566031851945",
+          "text": "US curve steepeners are very popular, but you pay to own them (negative carry and roll) and Bessent can hit you with QRA changes, buybacks and more.\n\nI would say there are better “fiscal dominance” expressions out there?",
+          "username": "MacroAlf",
+          "user_name": "Alf",
+          "created_at": "2025-07-23T16:56:00+00:00",
+          "url": "https://twitter.com/MacroAlf/status/1948064566031851945",
+          "nitter_url": "http://localhost/MacroAlf/status/1948064566031851945#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "1948001549902651522",
+          "text": "Everyone obsesses about US fiscal, but the pivot from austere budgets to fiscal spending in Europe and Asia is equally important.\n\nFiscal deficits are a global phenomenon now, and that’s the real news.",
+          "username": "MacroAlf",
+          "user_name": "Alf",
+          "created_at": "2025-07-23T12:45:36+00:00",
+          "url": "https://twitter.com/MacroAlf/status/1948001549902651522",
+          "nitter_url": "http://localhost/MacroAlf/status/1948001549902651522#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "1947272850886316038",
+          "text": "Over the last 3 years, the S&P 500 has underperformed Gold by 13%.\n\nThat's including dividends for SPX and the opportunity cost (e.g. negative carry) of holding Gold instead of T-Bills.",
+          "username": "MacroAlf",
+          "user_name": "Alf",
+          "created_at": "2025-07-21T12:30:00+00:00",
+          "url": "https://twitter.com/MacroAlf/status/1947272850886316038",
+          "nitter_url": "http://localhost/MacroAlf/status/1947272850886316038#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        },
+        {
+          "id": "1947194635635265557",
+          "text": "''The USD has stopped going down'' crowd often forgets that other fiat currencies are just one release valve for this trade\n\nPrecious metals, long-end yields and crypto are also key release valves for ''debase-and-run-it-hot'' policies\n\nThis macro theme rermains intact for now",
+          "username": "MacroAlf",
+          "user_name": "Alf",
+          "created_at": "2025-07-21T07:19:12+00:00",
+          "url": "https://twitter.com/MacroAlf/status/1947194635635265557",
+          "nitter_url": "http://localhost/MacroAlf/status/1947194635635265557#m",
+          "likes": 0,
+          "retweets": 0,
+          "replies": 0,
+          "source": "nitter_rss"
+        }
+      ],
+      "errors": [
+        "@cz_binance: All Nitter instances failed for @cz_binance (last error: Server disconnected)",
+        "@WatcherGuru: All Nitter instances failed for @WatcherGuru (last error: Server disconnected)",
+        "@whale_alert: All Nitter instances failed for @whale_alert (last error: Server disconnected)",
+        "@sama: All Nitter instances failed for @sama (last error: Server disconnected)",
+        "@OpenAI: All Nitter instances failed for @OpenAI (last error: Server disconnected)",
+        "@ylecun: All Nitter instances failed for @ylecun (last error: Server disconnected)"
+      ],
+      "instance_used": "http://172.31.42.175:8080",
+      "timestamp": "2026-02-03 21:30:08.620642"
+    },
+    "wechat": {
+      "articles": [
+        {
+          "title": "周生生公布检测报告",
+          "author": "",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T21:13:01",
+          "url": "https://mp.weixin.qq.com/s/io4S4N7ILokBvXv9Dm_lKw",
+          "digest": ""
+        },
+        {
+          "title": "马斯克，被传唤",
+          "author": "",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T20:36:43",
+          "url": "https://mp.weixin.qq.com/s/C0e79CQl2G27frHG1zgXTQ",
+          "digest": ""
+        },
+        {
+          "title": "A股1月新开户492万户，同比增长2倍多",
+          "author": "王晨",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T19:53:18",
+          "url": "https://mp.weixin.qq.com/s/BdTxST1GfIkVzTPhUXtAjw",
+          "digest": ""
+        },
+        {
+          "title": "中央一号文件：持续整治农村高额彩礼",
+          "author": "",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T19:16:09",
+          "url": "https://mp.weixin.qq.com/s/SJlaIPu1KeDe5WtS99xZ6Q",
+          "digest": ""
+        },
+        {
+          "title": "2026年中央一号文件：促进人工智能与农业发展相结合",
+          "author": "",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T18:50:12",
+          "url": "https://mp.weixin.qq.com/s/w9XT1U3lno7CDfcZleMOWw",
+          "digest": ""
+        },
+        {
+          "title": "2026年中央一号文件发布",
+          "author": "",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T18:22:02",
+          "url": "https://mp.weixin.qq.com/s/q2a0HhurcRUIT_zCvAkatA",
+          "digest": ""
+        },
+        {
+          "title": "突围新能源内卷：smart 2026年剑指全球市场，产品扩容与品牌深耕双线破局",
+          "author": "资讯",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T18:14:02",
+          "url": "https://mp.weixin.qq.com/s/almc7Gu8nKDAj226BleZHg",
+          "digest": ""
+        },
+        {
+          "title": "韩国股市，大跌后又迎大涨",
+          "author": "马兰",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T17:48:18",
+          "url": "https://mp.weixin.qq.com/s/404xpkRFhbyAr9HyNsyZCw",
+          "digest": ""
+        },
+        {
+          "title": "李微微，一审被判无期",
+          "author": "",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T17:08:51",
+          "url": "https://mp.weixin.qq.com/s/vkLgUGA5Kotspeh1WARXbQ",
+          "digest": ""
+        },
+        {
+          "title": "字节跳动，28亿拿地",
+          "author": "李洁",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T16:49:58",
+          "url": "https://mp.weixin.qq.com/s/juQgZYMg7LqVAp80KZT3vw",
+          "digest": ""
+        },
+        {
+          "title": "游戏等行业增值税税率要提高？专家：没有可信度",
+          "author": "",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T16:05:29",
+          "url": "https://mp.weixin.qq.com/s/Oxpb0h15RelNksnFfqVT9g",
+          "digest": ""
+        },
+        {
+          "title": "上金所：调整黄金、白银部分合约保证金水平和涨跌停板",
+          "author": "",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T15:54:28",
+          "url": "https://mp.weixin.qq.com/s/8GyAb1WfpQ4ZmCkblG4SvQ",
+          "digest": ""
+        },
+        {
+          "title": "超4800股上涨",
+          "author": "",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T15:10:18",
+          "url": "https://mp.weixin.qq.com/s/EyTVWivtRtVUchE08XG-AQ",
+          "digest": ""
+        },
+        {
+          "title": "日本称在深海挖到含稀土淤泥，外交部回应",
+          "author": "",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T14:46:47",
+          "url": "https://mp.weixin.qq.com/s/NSxZQzq0OI-GxdC1ANnvHg",
+          "digest": ""
+        },
+        {
+          "title": "美方将启动关键矿产储备计划，中方回应",
+          "author": "",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T14:28:04",
+          "url": "https://mp.weixin.qq.com/s/rCTPHz5-f9WXx56iNnf__Q",
+          "digest": ""
+        },
+        {
+          "title": "突围新能源内卷：smart 2026年剑指全球市场，产品扩容与品牌深耕双线破局",
+          "author": "资讯",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T14:04:35",
+          "url": "https://mp.weixin.qq.com/s/CVMUAZUh7lIF_H6fJF1aeA",
+          "digest": ""
+        },
+        {
+          "title": "周生生回应“足金挂坠检出铁银钯”",
+          "author": "",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T13:29:47",
+          "url": "https://mp.weixin.qq.com/s/dKMOOdinKqjew43WS5arJA",
+          "digest": ""
+        },
+        {
+          "title": "寒武纪发布严正声明",
+          "author": "",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T13:00:02",
+          "url": "https://mp.weixin.qq.com/s/lMPJIiOVyqlvR4inpo8IfQ",
+          "digest": ""
+        },
+        {
+          "title": "白银基金估值调整，国投瑞银最新回应",
+          "author": "",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T12:32:08",
+          "url": "https://mp.weixin.qq.com/s/iRfvOvR2HgcEh4BNkD1mtQ",
+          "digest": "国投瑞银基金昨日晚间发布公告，宣布对旗下国投白银LOF所持白银期货合约的估值方法进行调整。"
+        },
+        {
+          "title": "【大佬持仓跟踪】服务器+液冷，公司已推出GPU服务器电源，为阿里定制液冷服务器供电系统",
+          "author": "财联社VIP",
+          "account_name": "财联社",
+          "publish_time": "2026-02-03T12:13:27",
+          "url": "https://mp.weixin.qq.com/s/vCH7Iu7AkuR6UYQQof2skA",
+          "digest": ""
+        }
+      ],
+      "timestamp": "2026-02-03T21:30:22.801702"
+    }
+  },
+  "errors": []
+}

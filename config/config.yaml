@@ -120,7 +120,7 @@ twitter:
   enabled: true                         # 是否启用 Twitter 追踪
 
   # Nitter 实例配置
-  nitter_instance: "http://localhost:8080"  # 自建 Nitter 实例地址
+  nitter_instance: "http://172.31.42.175:8080"  # 自建 Nitter 实例地址
                                             # 留空则使用公共实例（不稳定）
 
   # 关注账号列表
@@ -157,8 +157,11 @@ wechat:
   enabled: true                         # 是否启用公众号追踪
 
   # wechat-article-exporter 服务配置
-  service_url: "http://localhost:3001"  # 服务地址
+  service_url: "http://172.31.42.175:3001"  # 服务地址
   timeout: 30                           # 请求超时时间（秒）
+  
+  # API 认证密钥（登录后从 data/kv/cookie 目录获取文件名）
+  auth_key: "03a7d7d5c19449879ccebbd5f1a4947f"
 
   # 关注公众号列表
   # 分类: finance（财经）, crypto（加密货币）, tech（科技）, quant（量化）

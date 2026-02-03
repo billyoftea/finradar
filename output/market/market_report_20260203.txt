@@ -1,0 +1,61 @@
+==================================================
+📊 每日市场追踪报告
+📅 2026年02月03日 21:30
+==================================================
+
+🇨🇳 【A股市场】
+----------------------------------------
+  📈 上证指数: 4067.74 (+1.29%)
+  📈 深证成指: 14127.10 (+2.19%)
+  📈 沪深300: 4660.11 (+1.18%)
+  📈 创业板指: 3324.89 (+1.86%)
+  📈 科创50: 1471.07 (+1.39%)
+
+🥇 【贵金属】
+----------------------------------------
+
+₿ 【加密货币】
+----------------------------------------
+  📈 BTC: $78,231.00 (+0.36%)
+  📉 ETH: $2,299.87 (-0.69%)
+  📉 SOL: $102.93 (-0.06%)
+
+📈 【期货市场】
+----------------------------------------
+
+💻 【GitHub 趋势】
+----------------------------------------
+  ⭐ beautiful-mermaid (5590 stars)
+  ⭐ nanoclaw (3732 stars)
+     My personal Claude assistant that runs in Apple co...
+  ⭐ nanobot (3435 stars)
+     "🐈 nanobot: The Ultra-Lightweight Clawdbot"...
+  ⭐ skills (2802 stars)
+     Anthony Fu's curated collection of agent skills....
+  ⭐ lingbot-world (2282 stars)
+     Advancing Open-source World Models...
+
+🐦 【Twitter 热点】
+----------------------------------------
+  @zerohedge: Top Overnight News  Republican opposition to Trump’s deal with Democrats to end ...
+     ❤️ 0
+  @zerohedge: A Month Of Shock And Awe: These Were The Best And Worst Performing Assets In Jan...
+     ❤️ 0
+  @unusual_whales: US Commerce Secretary Howard Lutnick said the Trump administration believes glob...
+     ❤️ 0
+  @zerohedge: Musk's X Office In Paris Raided By Cybercrime Unit As Brussels Becomes More Unhi...
+     ❤️ 0
+  @zerohedge: *ZELENSKIY: UKRAINE IN TALKS WITH US FOR MORE PATRIOT MISSILES...
+     ❤️ 0
+
+📱 【微信公众号】
+----------------------------------------
+  📄 [财联社] 周生生公布检测报告
+  📄 [财联社] 马斯克，被传唤
+  📄 [财联社] A股1月新开户492万户，同比增长2倍多
+  📄 [财联社] 中央一号文件：持续整治农村高额彩礼
+  📄 [财联社] 2026年中央一号文件：促进人工智能与农业发展相结合
+
+==================================================
+📌 报告生成完毕
+==================================================

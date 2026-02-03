@@ -61,13 +61,15 @@ class WechatArticleFetcher:
     
     def __init__(self, 
                  base_url: str = None,
-                 timeout: int = None):
+                 timeout: int = None,
+                 auth_key: str = None):
         """
         初始化获取器
         
         Args:
             base_url: wechat-article-exporter 服务地址，默认从配置文件读取
             timeout: 请求超时时间（秒），默认从配置文件读取
+            auth_key: API 认证密钥，登录后从 cookie 目录获取
         """
         # 尝试从全局配置加载
         self._load_from_global_config()
@@ -75,6 +77,7 @@ class WechatArticleFetcher:
         # 使用参数覆盖全局配置
         self.base_url = (base_url or self._global_service_url or "http://localhost:3001").rstrip('/')
         self.timeout = aiohttp.ClientTimeout(total=timeout or self._global_timeout or 30)
+        self.auth_key = auth_key or self._global_auth_key
         self._session: Optional[aiohttp.ClientSession] = None
     
     def _load_from_global_config(self):
@@ -89,6 +92,7 @@ class WechatArticleFetcher:
             self._global_accounts = global_config.wechat.accounts
             self._global_max_articles = global_config.wechat.max_articles_per_account
             self._global_max_age_days = global_config.wechat.max_age_days
+            self._global_auth_key = getattr(global_config.wechat, 'auth_key', None)
         except Exception as e:
             print(f"⚠️ 无法加载全局配置: {e}")
             self._global_enabled = True
@@ -97,6 +101,7 @@ class WechatArticleFetcher:
             self._global_accounts = {}
             self._global_max_articles = 20
             self._global_max_age_days = 3
+            self._global_auth_key = None
     
     def get_configured_accounts(self) -> Dict[str, List[str]]:
         """获取配置的公众号列表（按分类）"""
@@ -140,6 +145,13 @@ class WechatArticleFetcher:
         except Exception:
             return False
             
+    def _get_headers(self) -> dict:
+        """获取请求头，包含认证信息"""
+        headers = {"Content-Type": "application/json"}
+        if self.auth_key:
+            headers["X-Auth-Key"] = self.auth_key
+        return headers
+    
     async def search_accounts(self, 
                               keyword: str,
                               limit: int = 10) -> List[WechatAccount]:
@@ -156,19 +168,24 @@ class WechatArticleFetcher:
         session = await self._get_session()
         
         try:
-            # API 端点参考项目文档
-            url = f"{self.base_url}/api/search"
+            # 使用公开 API v1 接口
+            url = f"{self.base_url}/api/public/v1/account"
             params = {
                 "keyword": keyword,
-                "limit": limit
+                "size": limit
             }
             
-            async with session.get(url, params=params) as resp:
+            async with session.get(url, params=params, headers=self._get_headers()) as resp:
                 if resp.status != 200:
                     print(f"搜索公众号失败: HTTP {resp.status}")
                     return []
                     
                 data = await resp.json()
+                
+                # 检查 API 返回状态
+                if data.get("base_resp", {}).get("ret") != 0:
+                    print(f"搜索公众号失败: {data.get('base_resp', {}).get('err_msg', '未知错误')}")
+                    return []
                 
                 accounts = []
                 for item in data.get("list", []):
@@ -190,7 +207,8 @@ class WechatArticleFetcher:
     async def get_articles(self,
                            fakeid: str,
                            offset: int = 0,
-                           count: int = 20) -> List[WechatArticle]:
+                           count: int = 20,
+                           account_name: str = "") -> List[WechatArticle]:
         """
         获取公众号文章列表
         
@@ -198,6 +216,7 @@ class WechatArticleFetcher:
             fakeid: 公众号 ID
             offset: 偏移量
             count: 获取数量
+            account_name: 公众号名称（用于填充文章数据）
             
         Returns:
             List[WechatArticle]: 文章列表
@@ -205,22 +224,28 @@ class WechatArticleFetcher:
         session = await self._get_session()
         
         try:
-            url = f"{self.base_url}/api/articles"
+            # 使用公开 API v1 接口
+            url = f"{self.base_url}/api/public/v1/article"
             params = {
                 "fakeid": fakeid,
-                "offset": offset,
-                "count": count
+                "begin": offset,
+                "size": min(count, 20)  # API 限制最大 20
             }
             
-            async with session.get(url, params=params) as resp:
+            async with session.get(url, params=params, headers=self._get_headers()) as resp:
                 if resp.status != 200:
                     print(f"获取文章列表失败: HTTP {resp.status}")
                     return []
                     
                 data = await resp.json()
                 
+                # 检查 API 返回状态
+                if data.get("base_resp", {}).get("ret") != 0:
+                    print(f"获取文章列表失败: {data.get('base_resp', {}).get('err_msg', '未知错误')}")
+                    return []
+                
                 articles = []
-                for item in data.get("list", []):
+                for item in data.get("articles", []):
                     # 解析发布时间
                     create_time = item.get("create_time", 0)
                     if isinstance(create_time, int):
@@ -230,13 +255,13 @@ class WechatArticleFetcher:
                         
                     article = WechatArticle(
                         title=item.get("title", ""),
-                        author=item.get("author", ""),
-                        account_name=item.get("account_name", ""),
+                        author=item.get("author_name", "") or item.get("author", ""),
+                        account_name=account_name,
                         publish_time=publish_time,
                         url=item.get("link", ""),
                         digest=item.get("digest", ""),
                         cover_url=item.get("cover", ""),
-                        is_original=item.get("is_original", False)
+                        is_original=item.get("copyright_stat", 0) == 1
                     )
                     articles.append(article)
                     

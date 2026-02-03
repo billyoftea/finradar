@@ -39,6 +39,7 @@ class WechatConfig:
     enabled: bool = True
     service_url: str = "http://localhost:3001"
     timeout: int = 30
+    auth_key: str = ""  # API 认证密钥
     accounts: Dict[str, List[str]] = field(default_factory=dict)
     max_articles_per_account: int = 20
     max_age_days: int = 3
@@ -123,6 +124,7 @@ class SocialSourceConfig:
                 enabled=wechat_config.get("enabled", True),
                 service_url=wechat_config.get("service_url", "http://localhost:3001"),
                 timeout=wechat_config.get("timeout", 30),
+                auth_key=wechat_config.get("auth_key", ""),
                 accounts=wechat_config.get("accounts", {}),
                 max_articles_per_account=wechat_config.get("max_articles_per_account", 20),
                 max_age_days=wechat_config.get("max_age_days", 3)
