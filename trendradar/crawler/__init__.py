@@ -3,6 +3,6 @@
 爬虫模块 - 数据抓取功能
 """
 
-from FinRadar.crawler.fetcher import DataFetcher
+from trendradar.crawler.fetcher import DataFetcher
 
 __all__ = ["DataFetcher"]

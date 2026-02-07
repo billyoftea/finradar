@@ -8,9 +8,9 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Callable
 
-from FinRadar.report.formatter import format_title_for_platform
-from FinRadar.report.helpers import format_rank_display
-from FinRadar.utils.time import format_iso_time_friendly, convert_time_for_display
+from trendradar.report.formatter import format_title_for_platform
+from trendradar.report.helpers import format_rank_display
+from trendradar.utils.time import format_iso_time_friendly, convert_time_for_display
 
 
 # 默认批次大小配置

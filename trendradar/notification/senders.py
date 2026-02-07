@@ -39,7 +39,7 @@ def _render_ai_analysis(ai_analysis: Any, channel: str) -> str:
         return ""
 
     try:
-        from FinRadar.ai.formatter import get_ai_analysis_renderer
+        from trendradar.ai.formatter import get_ai_analysis_renderer
         renderer = get_ai_analysis_renderer(channel)
         return renderer(ai_analysis)
     except ImportError:

@@ -8,7 +8,7 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Callable
 
-from FinRadar.report.formatter import format_title_for_platform
+from trendradar.report.formatter import format_title_for_platform
 
 
 # 默认区域顺序

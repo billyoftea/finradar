@@ -8,7 +8,7 @@ RSS HTML 报告渲染模块
 from datetime import datetime
 from typing import Dict, List, Optional, Callable
 
-from FinRadar.report.helpers import html_escape
+from trendradar.report.helpers import html_escape
 
 
 def render_rss_html_content(

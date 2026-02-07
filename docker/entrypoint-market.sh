@@ -13,17 +13,26 @@ env >> /etc/environment
 case "${RUN_MODE:-cron}" in
 "once")
     echo "🔄 单次执行模式"
-    exec /usr/local/bin/python -m fin_module
+    echo ""
+    echo "📊 执行 fin_module (金融市场+Twitter+微信)..."
+    /usr/local/bin/python -m fin_module
+    echo ""
+    echo "🔥 执行 trendradar (热榜新闻)..."
+    /usr/local/bin/python -m trendradar
     ;;
 "cron")
-    # 默认定时: 每天早上 8:30 执行
-    CRON_SCHEDULE="${CRON_SCHEDULE:-30 8 * * *}"
+    # 默认定时: 每30分钟执行
+    CRON_SCHEDULE="${CRON_SCHEDULE:-*/30 * * * *}"
     
-    # 生成 crontab
-    echo "${CRON_SCHEDULE} cd /app && /usr/local/bin/python -m fin_module >> /var/log/market.log 2>&1" > /tmp/crontab
+    # 生成 crontab - 同时运行两个模块
+    cat > /tmp/crontab <<EOF
+${CRON_SCHEDULE} cd /app && /usr/local/bin/python -m fin_module >> /var/log/market.log 2>&1 && /usr/local/bin/python -m trendradar >> /var/log/trendradar.log 2>&1
+EOF
     
     echo "📅 定时任务配置:"
     echo "   调度: ${CRON_SCHEDULE}"
+    echo "   任务1: fin_module (金融市场+Twitter+微信)"
+    echo "   任务2: trendradar (热榜新闻)"
     cat /tmp/crontab
 
     if ! /usr/local/bin/supercronic -test /tmp/crontab; then
@@ -35,7 +44,11 @@ case "${RUN_MODE:-cron}" in
     if [ "${IMMEDIATE_RUN:-true}" = "true" ]; then
         echo ""
         echo "▶️ 立即执行一次..."
+        echo "📊 执行 fin_module..."
         /usr/local/bin/python -m fin_module || true
+        echo ""
+        echo "🔥 执行 trendradar..."
+        /usr/local/bin/python -m trendradar || true
     fi
 
     echo ""

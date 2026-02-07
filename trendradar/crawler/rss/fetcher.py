@@ -14,8 +14,8 @@ from typing import List, Dict, Optional, Tuple, Callable
 import requests
 
 from .parser import RSSParser, ParsedRSSItem
-from FinRadar.storage.base import RSSItem, RSSData
-from FinRadar.utils.time import get_configured_time, is_within_days, DEFAULT_TIMEZONE
+from trendradar.storage.base import RSSItem, RSSData
+from trendradar.utils.time import get_configured_time, is_within_days, DEFAULT_TIMEZONE
 
 
 @dataclass

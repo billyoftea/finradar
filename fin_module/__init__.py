@@ -21,3 +21,8 @@ FinRadar 市场追踪模块
 
 __version__ = "0.1.0"
 __author__ = "FinRadar"
+
+# 导出主类
+from fin_module.__main__ import MarketTracker
+
+__all__ = ["MarketTracker"]

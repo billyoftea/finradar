@@ -176,7 +176,8 @@ class NitterRSSFetcher(BaseFetcher):
     
     def _is_local_instance(self, url: str) -> bool:
         """检查是否为本地/自建实例"""
-        local_patterns = ["localhost", "127.0.0.1", "0.0.0.0", "192.168.", "10."]
+        # 包含所有私有 IP 地址段: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+        local_patterns = ["localhost", "127.0.0.1", "0.0.0.0", "192.168.", "10.", "172."]
         return any(pattern in url for pattern in local_patterns)
     
     async def fetch(self) -> Dict[str, Any]:
@@ -189,23 +190,26 @@ class NitterRSSFetcher(BaseFetcher):
         all_tweets = []
         errors = []
         
+        # 请求间隔（秒），避免触发速率限制
+        request_delay = self.config.get("request_delay", 1.0)
+        
         async with aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=self.timeout),
             headers={"User-Agent": "Mozilla/5.0 (compatible; FinRadar/1.0)"}
         ) as session:
-            # 并发获取所有账号的推文
-            tasks = [
-                self._fetch_user_rss(session, username)
-                for username in self.accounts
-            ]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            
-            for username, result in zip(self.accounts, results):
-                if isinstance(result, Exception):
-                    errors.append(f"@{username}: {str(result)}")
-                    logger.warning(f"Failed to fetch @{username}: {result}")
-                elif result:
-                    all_tweets.extend(result)
+            # 串行获取，避免并发请求触发 429 限流
+            for i, username in enumerate(self.accounts):
+                try:
+                    result = await self._fetch_user_rss(session, username)
+                    if result:
+                        all_tweets.extend(result)
+                except Exception as e:
+                    errors.append(f"@{username}: {str(e)}")
+                    logger.warning(f"Failed to fetch @{username}: {e}")
+                
+                # 添加请求间隔，避免触发速率限制（最后一个不需要等待）
+                if i < len(self.accounts) - 1:
+                    await asyncio.sleep(request_delay)
         
         # 按时间排序（最新在前）
         all_tweets.sort(key=lambda x: x.get("created_at", ""), reverse=True)

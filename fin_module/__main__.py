@@ -214,29 +214,32 @@ class MarketTracker:
                     # 先搜索公众号获取 fakeid
                     accounts = await fetcher.search_accounts(account_name, limit=1)
                     if accounts:
-                        if fetch_content:
-                            # 使用新方法抓取文章及全文
-                            logger.info(f"   正在抓取 {account_name} 的文章及全文...")
-                            articles = await fetcher.get_articles_with_content(
-                                accounts[0].fakeid, 
-                                count=wechat_conf.max_articles_per_account,
-                                account_name=account_name,
-                                fetch_content=True,
-                                content_delay=wechat_conf.content_delay
-                            )
-                        else:
-                            # 仅抓取文章列表
-                            articles = await fetcher.get_articles(
-                                accounts[0].fakeid, 
-                                count=wechat_conf.max_articles_per_account
-                            )
-                            # 添加公众号名称
-                            for art in articles:
-                                art.account_name = account_name
+                        # 先获取文章列表（不含全文）
+                        articles = await fetcher.get_articles(
+                            accounts[0].fakeid, 
+                            count=wechat_conf.max_articles_per_account
+                        )
+                        # 添加公众号名称
+                        for art in articles:
+                            art.account_name = account_name
                         
-                        # 时间过滤：只保留指定时间范围内的文章
+                        # ⚠️ 关键：先时间过滤，再抓取全文
                         if cutoff_time:
+                            before_filter = len(articles)
                             articles = [a for a in articles if a.publish_time and a.publish_time >= cutoff_time]
+                            logger.info(f"   {account_name}: {before_filter}篇 → 过滤后{len(articles)}篇(24h内)")
+                        
+                        # 如果启用全文抓取，对过滤后的文章抓取全文
+                        if fetch_content and articles:
+                            logger.info(f"   正在抓取 {account_name} 的{len(articles)}篇文章全文...")
+                            for i, art in enumerate(articles, 1):
+                                try:
+                                    content = await fetcher.get_article_content(art.url)
+                                    art.content = content
+                                    if i < len(articles):
+                                        await asyncio.sleep(wechat_conf.content_delay)
+                                except Exception as e:
+                                    logger.debug(f"获取文章全文失败 {art.title}: {e}")
                         
                         all_articles.extend(articles)
                 except Exception as e:

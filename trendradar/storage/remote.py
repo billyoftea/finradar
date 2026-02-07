@@ -28,9 +28,9 @@ except ImportError:
     BotoConfig = None
     ClientError = Exception
 
-from FinRadar.storage.base import StorageBackend, NewsItem, NewsData, RSSItem, RSSData
-from FinRadar.storage.sqlite_mixin import SQLiteStorageMixin
-from FinRadar.utils.time import (
+from trendradar.storage.base import StorageBackend, NewsItem, NewsData, RSSItem, RSSData
+from trendradar.storage.sqlite_mixin import SQLiteStorageMixin
+from trendradar.utils.time import (
     get_configured_time,
     format_date_folder,
     format_time_filename,

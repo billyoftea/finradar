@@ -30,13 +30,14 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 
 # 复制应用代码
 COPY fin_module/ ./fin_module/
+COPY trendradar/ ./trendradar/
 COPY config/ ./config/
 
 # 复制入口脚本
 COPY docker/entrypoint-market.sh /entrypoint.sh
 RUN sed -i 's/\r$//' /entrypoint.sh && \
     chmod +x /entrypoint.sh && \
-    mkdir -p /app/output/market
+    mkdir -p /app/output/market /app/output/news
 
 # 环境变量
 ENV PYTHONUNBUFFERED=1 \

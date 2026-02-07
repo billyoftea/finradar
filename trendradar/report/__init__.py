@@ -13,14 +13,14 @@
 - generator: 报告生成器
 """
 
-from FinRadar.report.helpers import (
+from trendradar.report.helpers import (
     clean_title,
     html_escape,
     format_rank_display,
 )
-from FinRadar.report.formatter import format_title_for_platform
-from FinRadar.report.html import render_html_content
-from FinRadar.report.generator import (
+from trendradar.report.formatter import format_title_for_platform
+from trendradar.report.html import render_html_content
+from trendradar.report.generator import (
     prepare_report_data,
     generate_html_report,
 )

@@ -8,7 +8,7 @@
 - auto: 根据环境自动选择（GitHub Actions 用 remote，其他用 local）
 """
 
-from FinRadar.storage.base import (
+from trendradar.storage.base import (
     StorageBackend,
     NewsItem,
     NewsData,
@@ -17,13 +17,13 @@ from FinRadar.storage.base import (
     convert_crawl_results_to_news_data,
     convert_news_data_to_results,
 )
-from FinRadar.storage.sqlite_mixin import SQLiteStorageMixin
-from FinRadar.storage.local import LocalStorageBackend
-from FinRadar.storage.manager import StorageManager, get_storage_manager
+from trendradar.storage.sqlite_mixin import SQLiteStorageMixin
+from trendradar.storage.local import LocalStorageBackend
+from trendradar.storage.manager import StorageManager, get_storage_manager
 
 # 远程后端可选导入（需要 boto3）
 try:
-    from FinRadar.storage.remote import RemoteStorageBackend
+    from trendradar.storage.remote import RemoteStorageBackend
     HAS_REMOTE = True
 except ImportError:
     RemoteStorageBackend = None
