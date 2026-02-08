@@ -76,6 +76,22 @@ def load_social_data(date_str: str, report_type: str = None) -> dict:
     return {}
 
 
+def is_weekend(date_str: str) -> tuple:
+    """检测是否为周末及休市情况
+    
+    Returns:
+        (is_weekend: bool, market_status: str)
+        market_status 可能是: '正常交易', 'A股休市', '全市场休市'
+    """
+    iso_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
+    dt = datetime.strptime(iso_date, "%Y-%m-%d")
+    weekday = dt.weekday()  # 0=周一, 6=周日
+    
+    if weekday >= 5:  # 周六(5)或周日(6)
+        return True, 'A股休市'
+    return False, '正常交易'
+
+
 def load_news_data(date_str: str) -> list:
     """读取 NewsNow 热榜数据"""
     iso_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
@@ -218,12 +234,25 @@ def format_wechat_for_ai(social: dict) -> str:
     for a in articles:
         account = a.get("account_name", "")
         title = a.get("title", "")
-        content = a.get("content", "") or a.get("digest", "") or ""
-        # 发送标题+正文前500字（保证关键信息完整）
-        content_preview = content[:500].replace("\n", " ")
+        digest = a.get("digest", "")
+        content = a.get("content", "") or ""
+        read_count = a.get("read_count", 0)
+        like_count = a.get("like_count", 0)
+        
+        # 优先使用digest（摘要），如果没有则使用正文前1000字
+        if digest:
+            article_summary = digest
+        else:
+            # 清理HTML标签，提取纯文本
+            import re
+            content_text = re.sub(r'<[^>]+>', ' ', content)
+            article_summary = content_text[:1000].replace('\n', ' ')
+        
         lines.append(f"\n  【{account}】{title}")
-        if content_preview:
-            lines.append(f"  {content_preview}")
+        if article_summary:
+            lines.append(f"  摘要: {article_summary}")
+        if read_count or like_count:
+            lines.append(f"  阅读: {read_count} | 点赞: {like_count}")
     
     return "\n".join(lines)
 
@@ -344,17 +373,24 @@ def run_ai_analysis(market: dict, social: dict, news: list,
     if wechat_text != "暂无微信公众号文章":
         summary = call_deepseek(
             system_prompt=(
-                "你是资深财经媒体分析师。请对以下微信公众号文章进行分析总结，提取：\n"
-                "1. 最重要的5-8条核心新闻/观点\n"
+                "你是资深财经媒体分析师。请对以下微信公众号文章进行深度分析：\n\n"
+                "第一部分：重要文章详细摘要（请为每篇重要文章生成100-200字的详细摘要。判断标准如下）：\n"
+                "1. **深度分析类**：原文有深度思考、独特见解、数据支撑的研究型文章\n"
+                "2. **政策解读类**：涉及重要政策、监管、法规的权威解读\n"
+                "3. **行业趋势类**：预测未来趋势、产业变革的前瞻性分析\n"
+                "4. **重要公司动态**：上市公司重大事件、业绩预告、并购重组\n"
+                "5. **用户可能感兴趣**：与投资者关注领域（AI、芯片、新能源、金融等）相关的高质量内容\n\n"
+                "第二部分：整体分析总结\n"
+                "1. 核心观点汇总\n"
                 "2. 政策监管动向\n"
                 "3. 行业投资机会和风险提示\n"
                 "4. 与市场走势相关的关键信息\n\n"
                 "注意：合并重复报道，按重要性排序。\n"
-                "用中文，Markdown格式，重要信息**加粗**，500-800字。"
+                "用中文，Markdown格式，重要信息**加粗**，800-1200字。"
             ),
             user_prompt=f"以下是 {date_context} 收集的微信公众号文章：\n\n{wechat_text}",
             api_key=api_key,
-            max_tokens=2000
+            max_tokens=3000
         )
         section_summaries["wechat"] = summary
     
@@ -379,7 +415,12 @@ def run_ai_analysis(market: dict, social: dict, news: list,
     
     # ─── 第5步: 综合汇总 ────────────────────────
     logger.info("🔍 [5/5] 生成综合分析报告...")
-    synthesis_input = f"以下是 {date_context} 各数据源的分析结果，请进行最终综合汇总：\n\n"
+    
+    # 检查是否为周末
+    is_weekend_flag, market_status = is_weekend(date_str)
+    weekend_note = "【注意：今日为周末，A股休市，部分市场数据可能缺失】" if is_weekend_flag else ""
+    
+    synthesis_input = f"以下是 {date_context} 各数据源的分析结果，请进行最终综合汇总：{weekend_note}\n\n"
     
     if "market" in section_summaries:
         synthesis_input += f"## 市场数据分析\n{section_summaries['market']}\n\n"
@@ -403,6 +444,8 @@ def run_ai_analysis(market: dict, social: dict, news: list,
             "AI、科技行业重要进展\n\n"
             "## 🌍 地缘政治\n"
             "影响市场的国际事件\n\n"
+            "## � 重要微信文章\n"
+            "从微信公众号分析中提取最重要、最值得关注的3-5篇文章，包括原文标题、公众号、简要分析（100字内）和推荐理由\n\n"
             "## 💡 投资启示\n"
             "基于以上信息的前瞻性投资建议\n\n"
             "要求：\n"
@@ -410,7 +453,7 @@ def run_ai_analysis(market: dict, social: dict, news: list,
             "- Markdown 格式，每个版块用 ## 标题\n"
             "- 重要数据用 **加粗**，关键判断要明确\n"
             "- 去除重复信息，交叉引用不同来源\n"
-            "- 总字数 1500-2500 字"
+            "- 总字数 1500-3000 字"
         ),
         user_prompt=synthesis_input,
         api_key=api_key,
@@ -717,10 +760,16 @@ def main():
     # ── 生成完整 Markdown ──────────────────────
     report_parts = []
     
+    # 检查休市状态
+    is_weekend_flag, market_status = is_weekend(date_str)
+    market_status_badge = "⚠️ A股休市" if is_weekend_flag else "✅ 正常交易"
+    
     # 标题
     report_parts.append(f"# 📰 FinRadar {report_label}")
-    report_parts.append(f"**{iso_date}** | {report_label} | 覆盖时段: {time_range}")
+    report_parts.append(f"**{iso_date}** | {report_label} | 覆盖时段: {time_range} | 市场状态: {market_status_badge}")
     report_parts.append(f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
+    if is_weekend_flag:
+        report_parts.append(f"**⚠️ 注意：今日为周末，A股休市，部分市场数据可能缺失或未更新**\n")
     report_parts.append("---\n")
     
     # AI 分析摘要
