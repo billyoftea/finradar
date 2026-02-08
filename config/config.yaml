@@ -123,27 +123,86 @@ twitter:
   nitter_instance: "http://172.31.42.175:8080"  # 自建 Nitter 实例地址
                                             # 留空则使用公共实例（不稳定）
 
-  # 关注账号列表
-  # 分类: crypto（加密货币）, tech（科技）, finance（金融）
+  # 关注账号列表（已验证可用）
+  # 分类: macro（宏观/央行）, finance（金融/投行）, crypto（加密货币）,
+  #        tech（AI/科技）, politics（地缘政治）, quant（量化/数据）
   accounts:
-    crypto:
-      - "VitalikButerin"     # 以太坊创始人
-      - "cz_binance"         # Binance CEO
-      - "WatcherGuru"        # 加密新闻
-      - "whale_alert"        # 大额转账监控
-      - "DefiLlama"          # DeFi 数据
-    tech:
-      - "elonmusk"           # Elon Musk
-      - "sama"               # Sam Altman (OpenAI)
-      - "OpenAI"             # OpenAI 官方
-      - "ylecun"             # Yann LeCun (Meta AI)
-    finance:
-      - "MacroAlf"           # 宏观分析
-      - "unusual_whales"     # 期权异动
-      - "zerohedge"          # 金融新闻
+    macro:                               # 宏观经济 & 央行政策
+      - "MacroAlf"                       # Alfonso Peccatiello - 宏观分析
+      - "federalreserve"                 # 美联储官方
+      - "NickTimiraos"                   # WSJ 美联储记者（Fed Whisperer）
+      - "SoberLook"                      # 宏观数据可视化
+      - "LynAldenContact"               # Lyn Alden - 宏观+投资
+      - "PeterSchiff"                    # 黄金多头/宏观评论
+      - "jimbianco"                      # Jim Bianco - 利率/债券
+      - "dampedspring"                   # Andy Constan - 宏观策略
+      - "DavidBeckworth"                 # David Beckworth - 货币政策
+    finance:                             # 金融市场 & 投行研报
+      - "unusual_whales"                 # 期权异动监控
+      - "zerohedge"                      # 金融新闻/市场评论
+      - "DeItaone"                       # 突发财经新闻 (Walter Bloomberg)
+      - "markets"                        # Bloomberg Markets
+      - "Schuldensuehner"                # Holger Zschaepitz - 欧洲/全球市场
+      - "jessefelder"                    # Jesse Felder - 价值投资
+      - "GoldmanSachs"                   # 高盛官方
+      - "FT"                             # 金融时报
+      - "business"                       # Bloomberg Business
+      - "WSJ"                            # 华尔街日报
+      - "Sino_Market"                    # 中国市场英文资讯
+      - "CNBC"                           # CNBC 财经
+      - "ReutersBiz"                     # 路透社商业
+    crypto:                              # 加密货币 & Web3
+      - "VitalikButerin"                 # 以太坊创始人
+      - "cz_binance"                     # Binance 创始人
+      - "WatcherGuru"                    # 加密新闻快讯
+      - "whale_alert"                    # 大额转账监控
+      - "DefiLlama"                      # DeFi 数据聚合
+      - "glassnode"                      # Glassnode 链上数据
+      - "WuBlockchain"                   # 吴说 (加密行业中文圈)
+      - "ScopeProtocol"                  # Scope 链上分析
+      - "CoinDesk"                       # CoinDesk 官方
+      - "MessariCrypto"                  # Messari 研究
+    tech:                                # AI & 科技
+      - "elonmusk"                       # Elon Musk
+      - "sama"                           # Sam Altman (OpenAI)
+      - "OpenAI"                         # OpenAI 官方
+      - "ylecun"                         # Yann LeCun (Meta AI)
+      - "AndrewYNg"                      # Andrew Ng (AI教育)
+      - "demishassabis"                  # Demis Hassabis (DeepMind)
+      - "ClaudeAI"                       # Anthropic Claude
+      - "GoogleDeepMind"                 # Google DeepMind 官方
+      - "karpathy"                       # Andrej Karpathy
+      - "huggingface"                    # Hugging Face (开源AI)
+      - "_jasonwei"                      # Jason Wei (Google Brain)
+      - "swyx"                           # swyx - AI工程
+      - "bindureddy"                     # Bindu Reddy (Abacus.AI)
+      - "benthompson"                    # Ben Thompson (Stratechery 科技趋势)
+      - "TechCrunch"                     # TechCrunch 科技新闻
+      - "TheInformation"                 # The Information (科技深度)
+    politics:                            # 地缘政治 & 国际关系
+      - "BNONews"                        # 突发新闻
+      - "spectatorindex"                 # The Spectator Index (地缘数据)
+      - "SteveHerman"                    # Steve Herman (VOA 白宫记者)
+      - "ReutersWorld"                   # 路透社国际
+      - "CGTNOfficial"                   # CGTN (中国国际视角)
+      - "SCMPNews"                       # 南华早报
+      - "globaltimesnews"                # 环球时报英文版
+      - "NikkeiAsia"                     # 日经亚洲
+      - "BBCWorld"                       # BBC 世界新闻
+      - "AP"                             # 美联社
+      - "IanBremmer"                     # Ian Bremmer (GZERO 地缘风险)
+      - "TheEconomist"                   # 经济学人
+    quant:                               # 量化 & 数据科学
+      - "QuantMeta"                      # 量化交易策略
+      - "lopezdeprado"                   # Marcos Lopez de Prado (量化大师)
+      - "CFAinstitute"                   # CFA Institute
+      - "TwoSigma"                       # Two Sigma (量化基金)
+      - "QuantaMagazine"                 # Quanta Magazine (数学/科学)
+      - "QuantInsti"                     # QuantInsti (量化教育)
 
   # 获取设置
   max_tweets_per_user: 10               # 每个账号获取的推文数量
+  max_age_hours: 12                     # 最大推文年龄（小时），配合12小时抓取周期，0=不限制
   timeout: 15                           # 请求超时时间（秒）
 
 
@@ -161,7 +220,7 @@ wechat:
   timeout: 30                           # 请求超时时间（秒）
   
   # API 认证密钥（登录后从 data/kv/cookie 目录获取文件名）
-  auth_key: "03a7d7d5c19449879ccebbd5f1a4947f"
+  auth_key: "3dc311e6ed1d4f4897ee47a30d680773"
   
   # 文章全文抓取配置
   fetch_content: true                   # 是否抓取文章全文内容（会增加抓取时间）
@@ -244,7 +303,7 @@ wechat:
 
   # 获取设置
   max_articles_per_account: 20          # 每个公众号获取的文章数量
-  max_age_hours: 24                     # 最大文章年龄（小时），默认24小时，0=不限制
+  max_age_hours: 12                     # 最大文章年龄（小时），配合每12小时抓取一次（07:00/19:00），0=不限制
 
 
 # ===============================================================
@@ -472,7 +531,7 @@ ai:
   
   model: "deepseek/deepseek-chat"
 
-  api_key: ""                       # API Key（建议使用环境变量 AI_API_KEY）
+  api_key: "sk-392de2e6fa5d45b68c969c49eb6de6c0"  # DeepSeek API Key
   
   api_base: ""                      # 自定义 API 端点（可选，大多数情况留空）
                                     # 示例: https://api.openai.com/v1（自建代理或兼容接口）

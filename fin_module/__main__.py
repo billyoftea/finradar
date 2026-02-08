@@ -157,10 +157,40 @@ class MarketTracker:
             
             fetcher = NitterRSSFetcher(config)
             if fetcher.enabled:
-                logger.info(f"🐦 正在抓取 Twitter 热点 (实例: {twitter_conf.nitter_instance})...")
+                max_age_hours = twitter_conf.max_age_hours
+                logger.info(f"🐦 正在抓取 Twitter 热点 (实例: {twitter_conf.nitter_instance}, 时间范围: {max_age_hours}小时)...")
                 logger.info(f"   关注账号: {len(config['accounts'])} 个")
                 data = await fetcher.fetch()
-                logger.info("✅ Twitter 数据抓取完成")
+                
+                # 按时间过滤推文（与微信一致的12小时窗口）
+                if max_age_hours > 0 and data.get("tweets"):
+                    from datetime import timedelta
+                    from email.utils import parsedate_to_datetime as _parse_dt
+                    cutoff_time = datetime.now().astimezone()
+                    cutoff_time = cutoff_time - timedelta(hours=max_age_hours)
+                    
+                    before_count = len(data["tweets"])
+                    filtered_tweets = []
+                    for tweet in data["tweets"]:
+                        created_at = tweet.get("created_at", "")
+                        if created_at:
+                            try:
+                                tweet_time = datetime.fromisoformat(created_at)
+                                # 确保有时区信息用于比较
+                                if tweet_time.tzinfo is None:
+                                    import pytz
+                                    tweet_time = pytz.UTC.localize(tweet_time)
+                                if tweet_time >= cutoff_time:
+                                    filtered_tweets.append(tweet)
+                            except (ValueError, TypeError):
+                                filtered_tweets.append(tweet)  # 解析失败保留
+                        else:
+                            filtered_tweets.append(tweet)  # 无时间信息保留
+                    
+                    data["tweets"] = filtered_tweets
+                    logger.info(f"   时间过滤: {before_count}条 → {len(filtered_tweets)}条 (过去{max_age_hours}小时内)")
+                
+                logger.info(f"✅ Twitter 数据抓取完成，共 {len(data.get('tweets', []))} 条推文")
                 return data
         except ImportError as e:
             logger.warning(f"⚠️ Twitter模块未安装: {e}")
@@ -227,7 +257,7 @@ class MarketTracker:
                         if cutoff_time:
                             before_filter = len(articles)
                             articles = [a for a in articles if a.publish_time and a.publish_time >= cutoff_time]
-                            logger.info(f"   {account_name}: {before_filter}篇 → 过滤后{len(articles)}篇(24h内)")
+                            logger.info(f"   {account_name}: {before_filter}篇 → 过滤后{len(articles)}篇({max_age_hours}h内)")
                         
                         # 如果启用全文抓取，对过滤后的文章抓取全文
                         if fetch_content and articles:
@@ -273,28 +303,42 @@ class MarketTracker:
             self.errors.append(f"微信公众号数据: {e}")
         return None
     
-    async def fetch_all(self) -> Dict[str, Any]:
-        """并行抓取所有数据源"""
+    async def fetch_all(self, mode: str = "all") -> Dict[str, Any]:
+        """
+        抓取数据源
+        
+        mode:
+          - "all":    抓取所有 (默认)
+          - "market": 仅金融市场 (A股/贵金属/加密货币/期货/GitHub)
+          - "social": 仅社交媒体 (Twitter + 微信公众号)
+        """
         logger.info("=" * 60)
-        logger.info("🚀 开始每日市场追踪...")
+        logger.info(f"🚀 开始市场追踪... [模式: {mode}]")
         logger.info(f"📅 时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info("=" * 60)
         
-        # 并行执行所有抓取任务
-        tasks = [
-            self.fetch_stock_cn(),
-            self.fetch_precious_metal(),
-            self.fetch_crypto(),
-            self.fetch_futures(),
-            self.fetch_github(),
-            self.fetch_twitter(),
-            self.fetch_wechat(),
-        ]
+        tasks = []
+        keys = []
+        
+        if mode in ("all", "market"):
+            tasks += [
+                self.fetch_stock_cn(),
+                self.fetch_precious_metal(),
+                self.fetch_crypto(),
+                self.fetch_futures(),
+                self.fetch_github(),
+            ]
+            keys += ["stock_cn", "precious_metal", "crypto", "futures", "github"]
+        
+        if mode in ("all", "social"):
+            tasks += [
+                self.fetch_twitter(),
+                self.fetch_wechat(),
+            ]
+            keys += ["twitter", "wechat"]
         
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        # 整理结果
-        keys = ["stock_cn", "precious_metal", "crypto", "futures", "github", "twitter", "wechat"]
         for key, result in zip(keys, results):
             if isinstance(result, Exception):
                 logger.error(f"❌ {key} 抓取异常: {result}")
@@ -428,24 +472,48 @@ class MarketTracker:
         
         return "\n".join(report_lines)
     
-    def save_report(self, output_dir: str = "/app/output/market"):
-        """保存报告到文件"""
+    def save_report(self, output_dir: str = "/app/output/market", mode: str = "all"):
+        """
+        保存报告到文件
+        
+        mode:
+          - "social": 根据时间判断早报/晚报标签，避免覆盖
+          - "market" / "all": 直接覆盖（市场数据每30分钟更新）
+        """
         os.makedirs(output_dir, exist_ok=True)
         
         now = datetime.now()
         date_str = now.strftime("%Y%m%d")
         
+        # 如果是社交媒体模式（早报/晚报），添加时间标签避免覆盖
+        suffix = ""
+        if mode == "social":
+            hour = now.hour
+            # 05:00-11:00 算早报，17:00-23:00 算晚报
+            if 5 <= hour < 11:
+                suffix = "_morning"
+                label = "早报"
+            elif 17 <= hour < 23:
+                suffix = "_evening"
+                label = "晚报"
+            else:
+                suffix = f"_{now.strftime('%H%M')}"  # 其他时间用小时分钟
+                label = "临时报告"
+            logger.info(f"📅 社交媒体数据标签: {label}")
+        
         # 保存文本报告
-        report_file = os.path.join(output_dir, f"market_report_{date_str}.txt")
+        report_file = os.path.join(output_dir, f"market_report_{date_str}{suffix}.txt")
         with open(report_file, "w", encoding="utf-8") as f:
             f.write(self.generate_report())
         logger.info(f"📄 报告已保存: {report_file}")
         
         # 保存 JSON 数据
-        json_file = os.path.join(output_dir, f"market_data_{date_str}.json")
+        json_file = os.path.join(output_dir, f"market_data_{date_str}{suffix}.json")
         with open(json_file, "w", encoding="utf-8") as f:
             json.dump({
                 "timestamp": now.isoformat(),
+                "mode": mode,
+                "report_type": suffix.lstrip("_") if suffix else "latest",
                 "data": self.results,
                 "errors": self.errors
             }, f, ensure_ascii=False, indent=2, default=str)
@@ -455,54 +523,28 @@ class MarketTracker:
 
 
 async def main():
-    """主函数"""
-    # 从环境变量读取配置
-    config = {
-        "stock_cn": {
-            "enabled": os.getenv("ENABLE_STOCK_CN", "true").lower() == "true"
-        },
-        "precious_metal": {
-            "enabled": os.getenv("ENABLE_PRECIOUS_METAL", "true").lower() == "true"
-        },
-        "crypto": {
-            "enabled": os.getenv("ENABLE_CRYPTO", "true").lower() == "true",
-            "coins": os.getenv("CRYPTO_COINS", "bitcoin,ethereum,solana,bnb,xrp").split(","),
-            "vs_currency": os.getenv("CRYPTO_VS_CURRENCY", "usd")
-        },
-        "futures": {
-            "enabled": os.getenv("ENABLE_FUTURES", "true").lower() == "true"
-        },
-        "github": {
-            "enabled": os.getenv("ENABLE_GITHUB", "true").lower() == "true",
-            "token": os.getenv("GITHUB_TOKEN", "")
-        },
-        "twitter": {
-            "enabled": os.getenv("ENABLE_TWITTER", "true").lower() == "true",
-            "nitter_instance": os.getenv("NITTER_INSTANCE", ""),
-            "accounts": os.getenv("TWITTER_ACCOUNTS", "VitalikButerin,elonmusk,OpenAI").split(",")
-        },
-        "wechat": {
-            "enabled": os.getenv("ENABLE_WECHAT", "false").lower() == "true",
-            "service_url": os.getenv("WECHAT_SERVICE_URL", "http://localhost:3001"),
-            "timeout": int(os.getenv("WECHAT_TIMEOUT", "30"))
-        }
-    }
+    """主函数 - 支持 --mode market|social|all 参数"""
+    import argparse
+    parser = argparse.ArgumentParser(description="FinRadar 市场追踪")
+    parser.add_argument("--mode", choices=["all", "market", "social"],
+                        default="all", help="运行模式: all=全部, market=仅市场数据, social=仅Twitter+微信")
+    args = parser.parse_args()
     
     # 创建追踪器并执行
-    tracker = MarketTracker(config)
+    tracker = MarketTracker()
     
     try:
-        await tracker.fetch_all()
+        await tracker.fetch_all(mode=args.mode)
         
         # 生成并打印报告
         report = tracker.generate_report()
         print(report)
         
-        # 保存报告
+        # 保存报告（传入 mode 以便添加早报/晚报标签）
         output_dir = os.getenv("OUTPUT_DIR", "/app/output/market")
-        tracker.save_report(output_dir)
+        tracker.save_report(output_dir, mode=args.mode)
         
-        logger.info("🎉 每日市场追踪完成!")
+        logger.info(f"🎉 追踪完成! [模式: {args.mode}]")
         
     except Exception as e:
         logger.error(f"❌ 执行失败: {e}")

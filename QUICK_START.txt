@@ -12,12 +12,21 @@
     docker ps -a | grep -E "(nitter|wechat|finradar)"
     
     应该看到 4 个容器都是 "Up" 状态：
-    ✅ finradar-market              (每30分钟自动抓取数据)
+    ✅ finradar-market              (自动调度以下任务)
+       ⏱  每30分钟 → 金融市场数据 (A股/期货/贵金属/加密货币) + NewsNow热榜
+       🌅 每天07:00 → Twitter (12个账号) + 微信公众号 (67个) [早报]
+       🌇 每天19:00 → Twitter + 微信公众号 [晚报]
+    
     ✅ wechat-article-exporter      (微信文章服务, 端口3001)
     ✅ nitter                        (Twitter RSS服务, 端口8080)
-    ✅ nitter-redis                  (Nitter数据库)
+    ✅ nitter-redis                  (Redis缓存数据库, nitter依赖它)
 
-    💡 注意：wechat-article-exporter 显示 (unhealthy) 是正常的
+    💡 为什么有 nitter 和 nitter-redis 两个容器？
+       - nitter: Twitter RSS 主服务（你访问的是这个）
+       - nitter-redis: Redis 数据库（nitter 用它缓存数据，提高速度）
+       它们是配套使用的，类似于"应用程序+数据库"的关系
+    
+    💡 wechat-article-exporter 显示 (unhealthy) 是正常的
        只要状态是 "Up" 就可以使用
 
     # 2️⃣ 快速检查核心服务
@@ -33,63 +42,52 @@
     ls -lh output/news/ | tail -3
     
     # 5️⃣ 查看最近一次执行时间
-    docker logs finradar-market 2>&1 | grep "开始每日市场追踪" | tail -1
+    docker logs finradar-market 2>&1 | grep "开始市场追踪" | tail -1
 
 
 ┌─────────────────────────────────────────────────────────────┐
-│  🤖 自动化抓取（Docker 方式 - 推荐）                         │
+│  🤖 自动化调度策略                                           │
 └─────────────────────────────────────────────────────────────┘
 
-    ✅ 已配置！系统每30分钟自动抓取一次
+    ⏱  每30分钟:  市场数据 + NewsNow热榜
+    🌅 每天07:00: Twitter + 微信公众号 → 早报 (覆盖 19:00→07:00)
+    🌇 每天19:00: Twitter + 微信公众号 → 晚报 (覆盖 07:00→19:00)
     
-    包含：Twitter + 微信公众号 + 金融市场 + 热榜新闻
+    输出文件：
+    📊 金融市场    → output/market/market_data_20260207.json (每30分钟覆盖)
+    🌅 早报数据    → output/market/market_data_20260207_morning.json (07:00)
+    🌇 晚报数据    → output/market/market_data_20260207_evening.json (19:00)
+    🔥 NewsNow热榜 → output/news/*.db
     
-    无需手动操作，自动运行中...
+    早报和晚报数据不会相互覆盖，分别保存
+    无需手动操作，全自动运行
 
 
 ┌─────────────────────────────────────────────────────────────┐
-│  🚀 手动抓取（测试用）                                        │
+│  🚀 手动执行（测试用）                                        │
 └─────────────────────────────────────────────────────────────┘
 
-    ./fetch-all.sh
+    # 全部执行
+    docker exec finradar-market python -m fin_module --mode all
 
-    包含：Twitter + 微信公众号 + 金融市场 + 热榜新闻
-
-
-┌─────────────────────────────────────────────────────────────┐
-│  📝 常用命令                                                 │
-└─────────────────────────────────────────────────────────────┘
-
-    ./fetch-all.sh -t          # 仅 Twitter
-    ./fetch-all.sh -w          # 仅微信公众号
-    ./fetch-all.sh -m          # 仅金融市场
-    ./fetch-all.sh -r          # 仅热榜新闻
+    # 仅市场数据
+    docker exec finradar-market python -m fin_module --mode market
     
-    ./fetch-all.sh -t -w       # Twitter + 微信
-    ./fetch-all.sh --help      # 帮助信息
+    # 仅 Twitter + 微信
+    docker exec finradar-market python -m fin_module --mode social
+    
+    # 仅热榜新闻
+    docker exec finradar-market python -m trendradar
 
 
 ┌─────────────────────────────────────────────────────────────┐
 │  📂 输出文件位置                                             │
 └─────────────────────────────────────────────────────────────┘
 
-    output/market/    → 金融市场数据
-    output/twitter/   → Twitter 推文
-    output/wechat/    → 微信公众号文章
-    output/news/      → TrendRadar 热榜
-
-
-┌─────────────────────────────────────────────────────────────┐
-│  ⏰ 设置定时任务                                             │
-└─────────────────────────────────────────────────────────────┘
-
-    crontab -e
-
-    # 每天早上 8:00 抓取
-    0 8 * * * cd /home/ubuntu/finradar && ./fetch-all.sh
-
-    # 每小时抓取一次
-    0 * * * * cd /home/ubuntu/finradar && ./fetch-all.sh
+    output/market/market_data_20260207.json          → 最新市场数据 (每30分钟更新)
+    output/market/market_data_20260207_morning.json  → 早报数据 (07:00, Twitter+微信)
+    output/market/market_data_20260207_evening.json  → 晚报数据 (19:00, Twitter+微信)
+    output/news/2026-02-07.db                        → NewsNow热榜数据库
 
 
 ┌─────────────────────────────────────────────────────────────┐
@@ -172,19 +170,19 @@
 │  📖 详细文档                                                 │
 └─────────────────────────────────────────────────────────────┘
 
-    cat FETCH_GUIDE.md              # 完整使用指南
     cat docs/每日市场追踪使用指南.md  # 配置说明
 
 
 ┌─────────────────────────────────────────────────────────────┐
-│  ✅ 最近一次抓取结果                                         │
+│  ✅ 调度总结                                                 │
 └─────────────────────────────────────────────────────────────┘
 
-    Twitter:  120 条推文 ✅
-    日期:     2026-02-04 06:43
+    ⏱  每30分钟 → 市场数据 (A股/期货/贵金属/加密货币) + NewsNow热榜
+    🌅 07:00    → Twitter + 微信公众号 (过去12小时, 早报素材)
+    🌇 19:00    → Twitter + 微信公众号 (过去12小时, 晚报素材)
     
-    运行 ./fetch-all.sh 查看实时状态
+    早报和晚报各覆盖12小时，内容不重叠
 
 ╔═══════════════════════════════════════════════════════════════╗
-║  💡 提示：首次运行建议先测试单个模块，确认配置正确后再运行全部 ║
+║  💡 提示：手动测试用 docker exec finradar-market 命令        ║
 ╚═══════════════════════════════════════════════════════════════╝

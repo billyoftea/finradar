@@ -19,6 +19,7 @@ class TwitterConfig:
     nitter_instance: str = "http://localhost:8080"
     accounts: Dict[str, List[str]] = field(default_factory=dict)
     max_tweets_per_user: int = 10
+    max_age_hours: int = 12  # 最大推文年龄（小时），配合12小时抓取周期，0=不限制
     timeout: int = 15
     
     def get_all_accounts(self) -> List[str]:
@@ -42,7 +43,7 @@ class WechatConfig:
     auth_key: str = ""  # API 认证密钥
     accounts: Dict[str, List[str]] = field(default_factory=dict)
     max_articles_per_account: int = 20
-    max_age_hours: int = 24  # 最大文章年龄（小时），默认24小时，0=不限制
+    max_age_hours: int = 12  # 最大文章年龄（小时），配合12小时抓取周期，0=不限制
     fetch_content: bool = False  # 是否抓取文章全文内容
     content_delay: float = 0.5  # 抓取全文之间的延迟（秒）
     
@@ -113,6 +114,7 @@ class SocialSourceConfig:
                 nitter_instance=twitter_config.get("nitter_instance", "http://localhost:8080"),
                 accounts=twitter_config.get("accounts", {}),
                 max_tweets_per_user=twitter_config.get("max_tweets_per_user", 10),
+                max_age_hours=twitter_config.get("max_age_hours", 12),
                 timeout=twitter_config.get("timeout", 15)
             )
         return self._twitter

@@ -1,6 +1,6 @@
 ==================================================
 📊 每日市场追踪报告
-📅 2026年02月07日 10:35
+📅 2026年02月07日 23:42
 ==================================================
 
 🇨🇳 【A股市场】
@@ -16,46 +16,25 @@
 
 ₿ 【加密货币】
 ----------------------------------------
-  📈 BTC: $70,409.00 (+9.16%)
-  📈 ETH: $2,058.95 (+8.11%)
-  📈 SOL: $87.26 (+12.76%)
+  📈 BTC: $69,406.00 (+0.97%)
+  📈 ETH: $2,050.01 (+3.26%)
+  📈 SOL: $86.49 (+2.45%)
 
 📈 【期货市场】
 ----------------------------------------
 
 💻 【GitHub 趋势】
 ----------------------------------------
-  ⭐ nanobot (11091 stars)
+  ⭐ nanobot (12007 stars)
      "🐈 nanobot: The Ultra-Lightweight Clawdbot"...
-  ⭐ tirith (1476 stars)
+  ⭐ tirith (1518 stars)
      Your browser catches homograph attacks. Your termi...
-  ⭐ claudes-c-compiler (1167 stars)
-     Claude Opus 4.6 wrote a dependency-free C compiler...
-  ⭐ ClawRouter (1072 stars)
+  ⭐ ClawRouter (1408 stars)
      Smart LLM router — save 78% on inference costs. 30...
-  ⭐ OpenClaw-Docker-CN-IM (922 stars)
+  ⭐ claudes-c-compiler (1351 stars)
+     Claude Opus 4.6 wrote a dependency-free C compiler...
+  ⭐ OpenClaw-Docker-CN-IM (1051 stars)
      OpenClaw 的中国IM平台整合Docker版本，预装并配置了飞书、钉钉、QQ机器人、企业微信等...
-
-🐦 【Twitter 热点】
-----------------------------------------
-  @zerohedge: Goldman: Local Resistance Against Data Centers "Are Not Slowing Development"  ht...
-     ❤️ 0
-  @DefiLlama: Yesterday had the second highest Perp DEX Volume on record, surpassed only by 10...
-     ❤️ 0
-  @unusual_whales: What are the whales doing?  Check Unusual Whales to find out.  See more: http://...
-     ❤️ 0
-  @zerohedge: Suicide Bomb Rocks Pakistan's Capital, Over 30 Dead & 169 Wounded https://www.ze...
-     ❤️ 0
-  @WatcherGuru: JUST IN: 🇺🇸 President Trump predicts the US stock market will double by the end ...
-     ❤️ 0
-
-📱 【微信公众号】
-----------------------------------------
-  📄 [财联社] 中国央行，连续15个月增持黄金
-  📄 [每日经济新闻] 谈判结束，特朗普签令：对与伊朗有贸易往来的国家征关税，“例如25%”！美国宣布对
-  📄 [每日经济新闻] 米兰冬奥会开幕，中国代表团亮相，谷爱凌再出征！郎朗时隔18年再登奥运开幕式舞台，
-  📄 [财经杂志] 累跌52%，比特币遭遇了什么？
-  📄 [财联社] 千问，把奶茶店“逼到歇业”
 
 ==================================================
 📌 报告生成完毕
