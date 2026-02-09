@@ -1,5 +1,5 @@
 #!/bin/bash
-# FinRadar 每日数据抓取脚本
+# finradar 每日数据抓取脚本
 # 使用方法:
 #   ./scripts/fetch.sh           # 抓取所有数据
 #   ./scripts/fetch.sh -t        # 仅 Twitter

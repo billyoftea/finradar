@@ -1,6 +1,6 @@
 # 📊 每日市场追踪 Agent - 实施规划文档
 
-> 基于 FinRadar 项目，构建一个全方位的每日市场追踪系统
+> 基于 finradar 项目，构建一个全方位的每日市场追踪系统
 
 ---
 
@@ -30,11 +30,11 @@
 - 🐦 Twitter/社交热点
 - 💻 GitHub 技术趋势
 
-### 1.2 与现有 FinRadar 的关系
+### 1.2 与现有 finradar 的关系
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    FinRadar (现有)                        │
+│                    finradar (现有)                        │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
 │  │ newsnow API │  │ RSS 订阅    │  │ AI 分析     │         │
 │  │ 热榜抓取    │  │ 新闻聚合    │  │ 内容总结    │         │
@@ -105,10 +105,10 @@
 
 ### 2.2 模块划分
 
-建议在 `trendradar/` 目录下新增以下模块：
+建议在 `finradar/` 目录下新增以下模块：
 
 ```
-trendradar/
+finradar/
 ├── market/                      # 🆕 市场追踪模块（新增）
 │   ├── __init__.py
 │   ├── fetcher/                 # 数据抓取器
@@ -430,7 +430,7 @@ Phase 4 (1周) - AI 分析 + 集成
 #### 5.2.1 数据模型定义
 
 ```python
-# trendradar/market/models/market_data.py
+# finradar/market/models/market_data.py
 
 from dataclasses import dataclass
 from typing import List, Optional
@@ -482,7 +482,7 @@ class MarketSnapshot:
 #### 5.2.2 数据抓取器基类
 
 ```python
-# trendradar/market/fetcher/__init__.py
+# finradar/market/fetcher/__init__.py
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict
@@ -515,7 +515,7 @@ class BaseFetcher(ABC):
 #### 5.2.3 A股数据抓取示例
 
 ```python
-# trendradar/market/fetcher/stock_cn.py
+# finradar/market/fetcher/stock_cn.py
 
 import akshare as ak
 import pandas as pd
@@ -712,7 +712,7 @@ Meme币热度:
 
 ```
 ## Phase 1: 基础框架
-- [ ] 创建 `trendradar/market/` 目录结构
+- [ ] 创建 `finradar/market/` 目录结构
 - [ ] 定义数据模型 (`models/market_data.py`)
 - [ ] 实现 AkShare A股数据抓取
 - [ ] 实现 yfinance 贵金属数据抓取
@@ -780,4 +780,4 @@ Meme币热度:
 ---
 
 > 📅 文档创建时间: 2025-01-29
-> 📝 作者: FinRadar Agent
+> 📝 作者: finradar Agent

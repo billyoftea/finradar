@@ -1,4 +1,4 @@
-# FinRadar 市场追踪 Docker 镜像
+# finradar 市场追踪 Docker 镜像
 # 每日信息汇总服务
 
 FROM python:3.10-slim
@@ -23,14 +23,13 @@ RUN curl -fsSL -o /usr/local/bin/supercronic "$SUPERCRONIC_URL" && \
 
 # 复制并安装 Python 依赖
 COPY requirements.txt .
-COPY fin_module/requirements.txt ./fin_module_requirements.txt
+COPY finradar/market/requirements.txt ./market_requirements.txt
 
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -r fin_module_requirements.txt
+    pip install --no-cache-dir -r market_requirements.txt
 
 # 复制应用代码
-COPY fin_module/ ./fin_module/
-COPY trendradar/ ./trendradar/
+COPY finradar/ ./finradar/
 COPY config/ ./config/
 COPY scripts/ ./scripts/
 

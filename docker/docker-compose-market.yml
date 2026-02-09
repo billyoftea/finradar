@@ -1,4 +1,4 @@
-# FinRadar 市场追踪服务 Docker Compose 配置
+# finradar 市场追踪服务 Docker Compose 配置
 # 用于每日信息汇总功能
 
 services:

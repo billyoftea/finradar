@@ -92,10 +92,10 @@ class SystemManagementTools:
         try:
             import time
             import yaml
-            from FinRadar.crawler.fetcher import DataFetcher
-            from FinRadar.storage.local import LocalStorageBackend
-            from FinRadar.storage.base import convert_crawl_results_to_news_data
-            from FinRadar.utils.time import get_configured_time, format_date_folder, format_time_filename
+            from finradar.crawler.fetcher import DataFetcher
+            from finradar.storage.local import LocalStorageBackend
+            from finradar.storage.base import convert_crawl_results_to_news_data
+            from finradar.utils.time import get_configured_time, format_date_folder, format_time_filename
             from ..services.cache_service import get_cache
 
             # 参数验证
@@ -164,7 +164,7 @@ class SystemManagementTools:
                 request_interval=request_interval
             )
 
-            # 获取当前时间（统一使用 FinRadar 的时间工具）
+            # 获取当前时间（统一使用 finradar 的时间工具）
             # 从配置中读取时区，默认为 Asia/Shanghai
             timezone = config_data.get("app", {}).get("timezone", "Asia/Shanghai")
             current_time = get_configured_time(timezone)
@@ -384,9 +384,9 @@ class SystemManagementTools:
         """
         检查版本更新
 
-        同时检查 FinRadar 和 MCP Server 两个组件的版本更新。
+        同时检查 finradar 和 MCP Server 两个组件的版本更新。
         远程版本 URL 从 config.yaml 获取：
-        - version_check_url: FinRadar 版本
+        - version_check_url: finradar 版本
         - mcp_version_check_url: MCP Server 版本
 
         Args:
@@ -395,7 +395,7 @@ class SystemManagementTools:
         Returns:
             版本检查结果字典，包含：
             - success: 是否成功
-            - FinRadar: FinRadar 版本检查结果
+            - finradar: finradar 版本检查结果
             - mcp: MCP Server 版本检查结果
             - any_update: 是否有任何组件需要更新
 
@@ -477,7 +477,7 @@ class SystemManagementTools:
 
         try:
             # 导入本地版本
-            from FinRadar import __version__ as FinRadar_version
+            from finradar import __version__ as finradar_version
             from mcp_server import __version__ as mcp_version
 
             # 从配置文件获取远程版本 URL
@@ -495,7 +495,7 @@ class SystemManagementTools:
                 config_data = yaml.safe_load(f)
 
             advanced_config = config_data.get("advanced", {})
-            FinRadar_url = advanced_config.get(
+            finradar_url = advanced_config.get(
                 "version_check_url",
                 "https://raw.githubusercontent.com/sansan0/FinRadar/refs/heads/master/version"
             )
@@ -517,8 +517,8 @@ class SystemManagementTools:
             }
 
             # 检查两个版本
-            FinRadar_result = check_single_version(
-                "FinRadar", FinRadar_version, FinRadar_url, proxies, headers
+            finradar_result = check_single_version(
+                "finradar", finradar_version, finradar_url, proxies, headers
             )
             mcp_result = check_single_version(
                 "MCP Server", mcp_version, mcp_url, proxies, headers
@@ -526,18 +526,18 @@ class SystemManagementTools:
 
             # 判断是否有任何更新
             any_update = (
-                (FinRadar_result.get("success") and FinRadar_result.get("need_update", False)) or
+                (finradar_result.get("success") and finradar_result.get("need_update", False)) or
                 (mcp_result.get("success") and mcp_result.get("need_update", False))
             )
 
             return {
                 "success": True,
                 "summary": {
-                    "description": "版本检查结果（FinRadar + MCP Server）",
+                    "description": "版本检查结果（finradar + MCP Server）",
                     "any_update": any_update
                 },
                 "data": {
-                    "FinRadar": FinRadar_result,
+                    "finradar": finradar_result,
                     "mcp": mcp_result,
                     "any_update": any_update
                 }

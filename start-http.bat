@@ -2,7 +2,7 @@
 chcp 65001 >nul
 
 echo ============================================================
-echo   FinRadar MCP Server (HTTP 模式)
+echo   finradar MCP Server (HTTP 模式)
 echo ============================================================
 echo.
 

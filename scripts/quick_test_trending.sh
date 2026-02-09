@@ -3,7 +3,7 @@
 # 用法: bash scripts/quick_test_trending.sh
 
 echo "============================================================"
-echo "🚀 FinRadar 快速测试热门内容功能"
+echo "🚀 finradar 快速测试热门内容功能"
 echo "⏰ 时间: $(date '+%Y-%m-%d %H:%M:%S')"
 echo "============================================================"
 
@@ -17,7 +17,7 @@ import sys
 sys.path.insert(0, '/home/ubuntu/finradar')
 
 async def test():
-    from fin_module.fetcher.nitter_rss import NitterRSSFetcher
+    from finradar.market.fetcher.nitter_rss import NitterRSSFetcher
     fetcher = NitterRSSFetcher()
     result = await fetcher.fetch_trending(keywords=['bitcoin'], max_results=5)
     tweets = result.get('trending_tweets', [])
@@ -39,7 +39,7 @@ import sys
 sys.path.insert(0, '/home/ubuntu/finradar')
 
 async def test():
-    from fin_module.fetcher.wechat_article import WechatArticleFetcher
+    from finradar.market.fetcher.wechat_article import WechatArticleFetcher
     fetcher = WechatArticleFetcher()
     
     ok = await fetcher.check_service()

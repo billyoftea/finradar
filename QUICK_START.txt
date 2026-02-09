@@ -1,5 +1,5 @@
 ╔═══════════════════════════════════════════════════════════════╗
-║                  FinRadar 每日数据抓取                        ║
+║                  finradar 每日数据抓取                        ║
 ║                     快速参考卡片                              ║
 ║                  服务器: 13.212.190.29                        ║
 ╚═══════════════════════════════════════════════════════════════╝
@@ -68,16 +68,16 @@
 └─────────────────────────────────────────────────────────────┘
 
     # 全部执行
-    docker exec finradar-market python -m fin_module --mode all
+    docker exec finradar-market python -m finradar --mode all
 
     # 仅市场数据
-    docker exec finradar-market python -m fin_module --mode market
+    docker exec finradar-market python -m finradar --mode market
     
     # 仅 Twitter + 微信
-    docker exec finradar-market python -m fin_module --mode social
+    docker exec finradar-market python -m finradar --mode social
     
     # 仅热榜新闻
-    docker exec finradar-market python -m trendradar
+    docker exec finradar-market python -m finradar
 
 
 ┌─────────────────────────────────────────────────────────────┐

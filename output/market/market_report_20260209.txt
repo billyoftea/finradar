@@ -1,6 +1,6 @@
 ==================================================
 📊 每日市场追踪报告
-📅 2026年02月09日 15:49
+📅 2026年02月09日 16:58
 ==================================================
 
 🇨🇳 【A股市场】
@@ -16,24 +16,24 @@
 
 ₿ 【加密货币】
 ----------------------------------------
-  📈 BTC: $70,386.00 (+1.24%)
-  📉 ETH: $2,068.64 (-0.39%)
-  📉 SOL: $85.47 (-1.74%)
+  📉 BTC: $69,895.00 (-1.02%)
+  📉 ETH: $2,051.74 (-2.80%)
+  📉 SOL: $84.52 (-4.32%)
 
 📈 【期货市场】
 ----------------------------------------
 
 💻 【GitHub 趋势】
 ----------------------------------------
-  ⭐ ClawRouter (1871 stars)
+  ⭐ ClawRouter (1878 stars)
      Smart LLM router — save 78% on inference costs. 30...
-  ⭐ claudes-c-compiler (1737 stars)
-     Claude Opus 4.6 wrote a dependency-free C compiler...
-  ⭐ vouch (1691 stars)
+  ⭐ vouch (1756 stars)
      A community trust management system based on expli...
-  ⭐ excalidraw-mcp-app (992 stars)
+  ⭐ claudes-c-compiler (1752 stars)
+     Claude Opus 4.6 wrote a dependency-free C compiler...
+  ⭐ excalidraw-mcp-app (996 stars)
      Excalidraw MCP App...
-  ⭐ clash-master (907 stars)
+  ⭐ clash-master (915 stars)
      A modern and elegant dashboard for visualizing and...
 
 ==================================================

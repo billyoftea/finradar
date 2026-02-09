@@ -24,7 +24,7 @@ async def fetch_twitter_data(config, report_type: str = "evening") -> Dict[str, 
     Returns:
         包含普通推文和热门推文的字典
     """
-    from fin_module.fetcher.nitter_rss import NitterRSSFetcher
+    from finradar.market.fetcher.nitter_rss import NitterRSSFetcher
     
     print(f"\n🐦 获取 Twitter 数据...")
     print(f"   使用实例: {config.twitter.nitter_instance}")
@@ -83,7 +83,7 @@ async def fetch_wechat_data(config, report_type: str = "evening") -> Dict[str, A
     Returns:
         包含普通文章和热门文章的字典
     """
-    from fin_module.fetcher.wechat_article import WechatArticleFetcher
+    from finradar.market.fetcher.wechat_article import WechatArticleFetcher
     
     print(f"\n📱 获取微信文章数据...")
     print(f"   服务地址: {config.wechat.service_url}")
@@ -201,10 +201,10 @@ async def main():
     """
     主函数：获取所有社交媒体数据
     """
-    from fin_module.fetcher.social_config import SocialSourceConfig
+    from finradar.market.fetcher.social_config import SocialSourceConfig
     
     print("\n" + "="*70)
-    print("🚀 FinRadar 社交媒体数据获取（含热门内容）")
+    print("🚀 finradar 社交媒体数据获取（含热门内容）")
     print(f"⏰ 时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*70)
     

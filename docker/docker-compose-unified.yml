@@ -1,0 +1,99 @@
+# finradar 统一 Docker Compose 配置
+# 用法:
+#   构建:  docker compose -f docker/docker-compose-unified.yml build
+#   启动:  docker compose -f docker/docker-compose-unified.yml up -d
+#   日志:  docker compose -f docker/docker-compose-unified.yml logs -f
+#   停止:  docker compose -f docker/docker-compose-unified.yml down
+#   单次:  docker compose -f docker/docker-compose-unified.yml run --rm finradar
+
+services:
+  finradar:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.unified
+    image: finradar:latest
+    container_name: finradar
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:${WEBSERVER_PORT:-8080}:${WEBSERVER_PORT:-8080}"
+
+    volumes:
+      - ../config:/app/config:ro
+      - ../output:/app/output
+
+    environment:
+      # 时区 (北京时间)
+      - TZ=Asia/Shanghai
+
+      # ==================== 运行控制 ====================
+      # 任务模式: all / news / market / social
+      - TASK_MODE=${TASK_MODE:-all}
+      # 运行模式: cron (定时) / once (单次)
+      - RUN_MODE=${RUN_MODE:-cron}
+      # 启动时是否立即执行一次
+      - IMMEDIATE_RUN=${IMMEDIATE_RUN:-true}
+      # 自定义 cron 表达式 (仅 news/market 单模式时生效)
+      - CRON_SCHEDULE=${CRON_SCHEDULE:-*/30 * * * *}
+
+      # ==================== Web 服务器 ====================
+      - ENABLE_WEBSERVER=${ENABLE_WEBSERVER:-false}
+      - WEBSERVER_PORT=${WEBSERVER_PORT:-8080}
+
+      # ==================== 数据源开关 ====================
+      - ENABLE_STOCK_CN=${ENABLE_STOCK_CN:-true}
+      - ENABLE_PRECIOUS_METAL=${ENABLE_PRECIOUS_METAL:-true}
+      - ENABLE_CRYPTO=${ENABLE_CRYPTO:-true}
+      - CRYPTO_COINS=${CRYPTO_COINS:-bitcoin,ethereum,solana,bnb,xrp}
+      - CRYPTO_VS_CURRENCY=${CRYPTO_VS_CURRENCY:-usd}
+      - ENABLE_FUTURES=${ENABLE_FUTURES:-true}
+      - ENABLE_GITHUB=${ENABLE_GITHUB:-true}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - ENABLE_TWITTER=${ENABLE_TWITTER:-true}
+      - NITTER_INSTANCE=${NITTER_INSTANCE:-}
+      - TWITTER_ACCOUNTS=${TWITTER_ACCOUNTS:-}
+      - ENABLE_WECHAT=${ENABLE_WECHAT:-false}
+      - WECHAT_SERVICE_URL=${WECHAT_SERVICE_URL:-http://localhost:3001}
+
+      # ==================== 通知配置 ====================
+      - FEISHU_WEBHOOK_URL=${FEISHU_WEBHOOK_URL:-}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+      - DINGTALK_WEBHOOK_URL=${DINGTALK_WEBHOOK_URL:-}
+      - WEWORK_WEBHOOK_URL=${WEWORK_WEBHOOK_URL:-}
+      - WEWORK_MSG_TYPE=${WEWORK_MSG_TYPE:-}
+      - EMAIL_FROM=${EMAIL_FROM:-}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD:-}
+      - EMAIL_TO=${EMAIL_TO:-}
+      - EMAIL_SMTP_SERVER=${EMAIL_SMTP_SERVER:-}
+      - EMAIL_SMTP_PORT=${EMAIL_SMTP_PORT:-}
+      - NTFY_SERVER_URL=${NTFY_SERVER_URL:-https://ntfy.sh}
+      - NTFY_TOPIC=${NTFY_TOPIC:-}
+      - NTFY_TOKEN=${NTFY_TOKEN:-}
+      - BARK_URL=${BARK_URL:-}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - GENERIC_WEBHOOK_URL=${GENERIC_WEBHOOK_URL:-}
+      - GENERIC_WEBHOOK_TEMPLATE=${GENERIC_WEBHOOK_TEMPLATE:-}
+
+      # ==================== AI 配置 ====================
+      - AI_ANALYSIS_ENABLED=${AI_ANALYSIS_ENABLED:-false}
+      - AI_API_KEY=${AI_API_KEY:-}
+      - AI_MODEL=${AI_MODEL:-}
+      - AI_API_BASE=${AI_API_BASE:-}
+
+      # ==================== 远程存储 (S3) ====================
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME:-}
+      - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID:-}
+      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY:-}
+      - S3_REGION=${S3_REGION:-}
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  default:
+    name: finradar-network

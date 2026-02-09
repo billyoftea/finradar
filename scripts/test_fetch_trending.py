@@ -20,8 +20,8 @@ async def test_twitter_trending():
     print("🐦 测试 Twitter 热门推文获取")
     print("="*70)
     
-    from fin_module.fetcher.nitter_rss import NitterRSSFetcher
-    from fin_module.fetcher.social_config import SocialSourceConfig
+    from finradar.market.fetcher.nitter_rss import NitterRSSFetcher
+    from finradar.market.fetcher.social_config import SocialSourceConfig
     
     # 加载配置
     config = SocialSourceConfig()
@@ -86,8 +86,8 @@ async def test_wechat_hot():
     print("📱 测试微信热门文章获取")
     print("="*70)
     
-    from fin_module.fetcher.wechat_article import WechatArticleFetcher
-    from fin_module.fetcher.social_config import SocialSourceConfig
+    from finradar.market.fetcher.wechat_article import WechatArticleFetcher
+    from finradar.market.fetcher.social_config import SocialSourceConfig
     
     # 加载配置
     config = SocialSourceConfig()
@@ -164,7 +164,7 @@ async def test_wechat_hot():
 async def main():
     """主函数"""
     print("\n" + "="*70)
-    print("🚀 FinRadar 热门内容获取测试")
+    print("🚀 finradar 热门内容获取测试")
     print(f"⏰ 测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*70)
     

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 FinRadar 数据服务启动"
+echo "🚀 finradar 数据服务启动"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "📅 时间: $(date '+%Y-%m-%d %H:%M:%S')"
 echo "🕐 时区: ${TZ:-Asia/Shanghai}"
@@ -17,13 +17,13 @@ case "${RUN_MODE:-cron}" in
     echo "🔄 单次执行模式"
     echo ""
     echo "📊 执行市场数据抓取..."
-    $PY -m fin_module --mode market
+    $PY -m finradar --mode market
     echo ""
     echo "🔥 执行热榜新闻抓取..."
-    $PY -m trendradar
+    $PY -m finradar --mode news
     echo ""
     echo "📱🐦 执行 Twitter + 微信抓取..."
-    $PY -m fin_module --mode social
+    $PY -m finradar --mode social
     ;;
 "cron")
     # ┌──────────────────────────────────────────────┐
@@ -35,15 +35,15 @@ case "${RUN_MODE:-cron}" in
 
     cat > /tmp/crontab <<'EOF'
 # 每30分钟: 市场数据 + NewsNow热榜
-*/30 * * * * cd /app && /usr/local/bin/python -m fin_module --mode market >> /var/log/market.log 2>&1 && /usr/local/bin/python -m trendradar >> /var/log/trendradar.log 2>&1
+*/30 * * * * cd /app && /usr/local/bin/python -m finradar --mode market >> /var/log/market.log 2>&1 && /usr/local/bin/python -m finradar --mode news >> /var/log/finradar.log 2>&1
 
 # 每天 07:00: 抓取 Twitter + 微信 (早报素材，覆盖过去12小时 19:00→07:00)
 # 抓取完成后自动生成早报
-0 7 * * * cd /app && /usr/local/bin/python -m fin_module --mode social >> /var/log/social.log 2>&1 && /usr/local/bin/python scripts/generate_report.py --type morning >> /var/log/report.log 2>&1
+0 7 * * * cd /app && /usr/local/bin/python -m finradar --mode social >> /var/log/social.log 2>&1 && /usr/local/bin/python scripts/generate_report.py --type morning >> /var/log/report.log 2>&1
 
 # 每天 19:00: 抓取 Twitter + 微信 (晚报素材，覆盖过去12小时 07:00→19:00)
 # 抓取完成后自动生成晚报
-0 19 * * * cd /app && /usr/local/bin/python -m fin_module --mode social >> /var/log/social.log 2>&1 && /usr/local/bin/python scripts/generate_report.py --type evening >> /var/log/report.log 2>&1
+0 19 * * * cd /app && /usr/local/bin/python -m finradar --mode social >> /var/log/social.log 2>&1 && /usr/local/bin/python scripts/generate_report.py --type evening >> /var/log/report.log 2>&1
 EOF
 
     echo "📅 定时任务配置:"
@@ -61,10 +61,10 @@ EOF
     if [ "${IMMEDIATE_RUN:-true}" = "true" ]; then
         echo ""
         echo "▶️ 立即执行一次市场数据..."
-        $PY -m fin_module --mode market || true
+        $PY -m finradar --mode market || true
         echo ""
         echo "🔥 执行热榜新闻抓取..."
-        $PY -m trendradar || true
+        $PY -m finradar --mode news || true
     fi
 
     echo ""

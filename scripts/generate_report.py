@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 """
-FinRadar 每日综合报告生成器
+finradar 每日综合报告生成器
 
 汇总市场数据、Twitter、微信公众号、NewsNow热榜，
 调用 DeepSeek API 生成 AI 分析摘要，输出为 Markdown 格式。
@@ -687,7 +687,7 @@ def generate_raw_news_section(news: list) -> str:
 # ══════════════════════════════════════════════════════
 
 def main():
-    parser = argparse.ArgumentParser(description="FinRadar 每日综合报告")
+    parser = argparse.ArgumentParser(description="finradar 每日综合报告")
     parser.add_argument("--date", default=datetime.now().strftime("%Y%m%d"),
                         help="日期 YYYYMMDD (默认今天)")
     parser.add_argument("--type", choices=["morning", "evening", "auto"], default="auto",
@@ -765,7 +765,7 @@ def main():
     market_status_badge = "⚠️ A股休市" if is_weekend_flag else "✅ 正常交易"
     
     # 标题
-    report_parts.append(f"# 📰 FinRadar {report_label}")
+    report_parts.append(f"# 📰 finradar {report_label}")
     report_parts.append(f"**{iso_date}** | {report_label} | 覆盖时段: {time_range} | 市场状态: {market_status_badge}")
     report_parts.append(f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
     if is_weekend_flag:
@@ -786,7 +786,7 @@ def main():
     
     # 页脚
     report_parts.append("---\n")
-    report_parts.append(f"*报告由 FinRadar 自动生成 | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n")
+    report_parts.append(f"*报告由 finradar 自动生成 | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n")
     
     full_report = "\n".join(report_parts)
     

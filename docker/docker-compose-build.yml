@@ -1,9 +1,9 @@
 services:
-  FinRadar:
+  finradar:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: FinRadar
+    container_name: finradar
     restart: unless-stopped
 
     ports:
@@ -58,11 +58,11 @@ services:
       - RUN_MODE=${RUN_MODE:-cron}
       - IMMEDIATE_RUN=${IMMEDIATE_RUN:-true}
 
-  FinRadar-mcp:
+  finradar-mcp:
     build:
       context: ..
       dockerfile: docker/Dockerfile.mcp
-    container_name: FinRadar-mcp
+    container_name: finradar-mcp
     restart: unless-stopped
 
     ports:

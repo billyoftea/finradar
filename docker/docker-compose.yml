@@ -1,7 +1,7 @@
 services:
-  FinRadar:
-    image: wantcat/FinRadar:latest
-    container_name: FinRadar
+  finradar:
+    image: wantcat/finradar:latest
+    container_name: finradar
     restart: unless-stopped
 
     ports:
@@ -56,9 +56,9 @@ services:
       - RUN_MODE=${RUN_MODE:-cron}
       - IMMEDIATE_RUN=${IMMEDIATE_RUN:-true}
 
-  FinRadar-mcp:
-    image: wantcat/FinRadar-mcp:latest
-    container_name: FinRadar-mcp
+  finradar-mcp:
+    image: wantcat/finradar-mcp:latest
+    container_name: finradar-mcp
     restart: unless-stopped
 
     ports:

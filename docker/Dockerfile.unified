@@ -1,0 +1,83 @@
+# finradar 统一 Docker 镜像
+# 支持所有模式: news / market / social / all
+
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# ==================== 系统依赖 + 时区 ====================
+ARG TARGETARCH
+ENV SUPERCRONIC_VERSION=v0.2.39
+
+RUN set -ex && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends curl ca-certificates tzdata && \
+    # 设置北京时区
+    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    echo "Asia/Shanghai" > /etc/timezone && \
+    # 安装 supercronic（定时任务）
+    case ${TARGETARCH} in \
+    amd64) \
+        export SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/${SUPERCRONIC_VERSION}/supercronic-linux-amd64; \
+        export SUPERCRONIC_SHA1SUM=c98bbf82c5f648aaac8708c182cc83046fe48423; \
+        export SUPERCRONIC=supercronic-linux-amd64; \
+        ;; \
+    arm64) \
+        export SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/${SUPERCRONIC_VERSION}/supercronic-linux-arm64; \
+        export SUPERCRONIC_SHA1SUM=5ef4ccc3d43f12d0f6c3763758bc37cc4e5af76e; \
+        export SUPERCRONIC=supercronic-linux-arm64; \
+        ;; \
+    *) \
+        echo "Unsupported architecture: ${TARGETARCH}"; \
+        exit 1; \
+        ;; \
+    esac && \
+    for i in 1 2 3; do \
+        echo "Download attempt $i/3"; \
+        if curl -fsSL --connect-timeout 30 --max-time 60 -o "$SUPERCRONIC" "$SUPERCRONIC_URL"; then \
+            break; \
+        fi; \
+        if [ $i -eq 3 ]; then exit 1; fi; \
+        sleep 2; \
+    done && \
+    echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - && \
+    chmod +x "$SUPERCRONIC" && \
+    mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" && \
+    ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic && \
+    # 清理
+    apt-get remove -y curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# ==================== Python 依赖 ====================
+COPY requirements.txt .
+COPY finradar/market/requirements.txt ./market_requirements.txt
+
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r market_requirements.txt
+
+# ==================== 应用代码 ====================
+COPY finradar/ ./finradar/
+COPY mcp_server/ ./mcp_server/
+COPY config/ ./config/
+COPY scripts/ ./scripts/
+COPY docker/manage.py .
+
+# 复制 entrypoint 并转换格式
+COPY docker/entrypoint-unified.sh /entrypoint.sh
+RUN sed -i 's/\r$//' /entrypoint.sh && \
+    chmod +x /entrypoint.sh && \
+    chmod +x manage.py && \
+    mkdir -p /app/output/market /app/output/news /app/output/report /app/output/html \
+             /app/output/rss /app/output/twitter
+
+# ==================== 环境变量 ====================
+ENV PYTHONUNBUFFERED=1 \
+    TZ=Asia/Shanghai \
+    CONFIG_PATH=/app/config/config.yaml \
+    FREQUENCY_WORDS_PATH=/app/config/frequency_words.txt \
+    OUTPUT_DIR=/app/output/market
+
+EXPOSE 8080
+
+ENTRYPOINT ["/entrypoint.sh"]
