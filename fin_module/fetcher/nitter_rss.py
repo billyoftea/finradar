@@ -221,6 +221,231 @@ class NitterRSSFetcher(BaseFetcher):
             "timestamp": datetime.now()
         }
     
+    async def fetch_trending(self, keywords: List[str] = None, max_results: int = 30) -> Dict[str, Any]:
+        """
+        抓取热门推文（基于关键词搜索 + 按互动数据排序）
+        
+        Args:
+            keywords: 搜索关键词列表，默认使用热门金融/科技关键词
+            max_results: 返回的最大推文数量
+            
+        Returns:
+            包含热门推文列表的字典
+        """
+        # 默认热门关键词（金融、加密、AI、科技相关）
+        default_keywords = [
+            "bitcoin", "crypto", "AI", "AI artificial intelligence",
+            "stock market", "nasdaq", "SPY"
+        ]
+        
+        if keywords is None:
+            keywords = default_keywords
+        
+        all_trending_tweets = []
+        errors = []
+        search_delay = self.config.get("request_delay", 2.0)  # 搜索请求间隔更长
+        
+        async with aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=self.timeout),
+            headers={"User-Agent": "Mozilla/5.0 (compatible; FinRadar/1.0)"}
+        ) as session:
+            # 对每个关键词进行搜索
+            for i, keyword in enumerate(keywords):
+                try:
+                    tweets = await self._search_tweets(session, keyword)
+                    if tweets:
+                        all_trending_tweets.extend(tweets)
+                        logger.info(f"Found {len(tweets)} tweets for keyword '{keyword}'")
+                except Exception as e:
+                    errors.append(f"Search '{keyword}': {str(e)}")
+                    logger.warning(f"Failed to search for '{keyword}': {e}")
+                
+                # 搜索请求间隔
+                if i < len(keywords) - 1:
+                    await asyncio.sleep(search_delay)
+        
+        # 按互动数据排序（点赞+转推数）
+        all_trending_tweets.sort(
+            key=lambda x: (x.get("likes", 0) + x.get("retweets", 0)),
+            reverse=True
+        )
+        
+        # 去重（根据推文ID）
+        seen_ids = set()
+        unique_tweets = []
+        for tweet in all_trending_tweets:
+            tweet_id = tweet.get("id", "")
+            if tweet_id and tweet_id not in seen_ids:
+                seen_ids.add(tweet_id)
+                unique_tweets.append(tweet)
+        
+        return {
+            "trending_tweets": unique_tweets[:max_results],
+            "total_found": len(all_trending_tweets),
+            "unique_count": len(unique_tweets),
+            "errors": errors,
+            "instance_used": self.current_instance,
+            "timestamp": datetime.now()
+        }
+    
+    async def _search_tweets(self, session: aiohttp.ClientSession, keyword: str) -> List[Dict]:
+        """
+        搜索热门推文
+        
+        Args:
+            session: aiohttp 会话
+            keyword: 搜索关键词
+            
+        Returns:
+            推文列表
+        """
+        # 构建搜索URL（Nitter支持f=tweets参数）
+        search_url = f"{self.current_instance}/search"
+        params = {
+            "q": keyword,
+            "f": "tweets",
+            "include": "nativeretweets"  # 包含原生转发
+        }
+        
+        try:
+            async with session.get(search_url, params=params, timeout=aiohttp.ClientTimeout(total=self.timeout)) as response:
+                if response.status != 200:
+                    logger.warning(f"Search failed for '{keyword}': HTTP {response.status}")
+                    return []
+                
+                html = await response.text()
+                return self._parse_search_results(html, keyword)
+                
+        except asyncio.TimeoutError:
+            logger.warning(f"Search timeout for '{keyword}'")
+            return []
+        except Exception as e:
+            logger.error(f"Error searching tweets for '{keyword}': {e}")
+            return []
+    
+    def _parse_search_results(self, html: str, keyword: str) -> List[Dict]:
+        """
+        解析搜索结果HTML
+        
+        Args:
+            html: 搜索结果HTML
+            keyword: 搜索关键词
+            
+        Returns:
+            推文列表
+        """
+        tweets = []
+        
+        try:
+            # 使用BeautifulSoup解析HTML
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(html, 'html.parser')
+            
+            # 查找所有推文元素
+            tweet_items = soup.find_all("div", class_="timeline-item")
+            
+            for item in tweet_items:
+                try:
+                    # 提取用户名
+                    username = item.get("data-username", "")
+                    if not username:
+                        continue
+                    
+                    # 提取推文内容
+                    tweet_content = item.find("div", class_="tweet-content")
+                    if not tweet_content:
+                        continue
+                    
+                    text = tweet_content.get_text(strip=True)
+                    if not text:
+                        continue
+                    
+                    # 提取链接和推文ID
+                    tweet_link = item.find("a", class_="tweet-link")
+                    tweet_url = ""
+                    tweet_id = ""
+                    if tweet_link and tweet_link.get("href"):
+                        tweet_url = tweet_link["href"]
+                        # 从URL提取ID: /username/status/123456
+                        match = re.search(r"/status/(\d+)", tweet_url)
+                        if match:
+                            tweet_id = match.group(1)
+                    
+                    # 提取互动数据（点赞、转推等）
+                    stats_item = item.find("div", class_="tweet-stats")
+                    likes = 0
+                    retweets = 0
+                    replies = 0
+                    
+                    if stats_item:
+                        # 查找互动图标和数值
+                        tweet_stat_elements = stats_item.find_all("span", class_="tweet-stat")
+                        for stat in tweet_stat_elements:
+                            icon_class = ""
+                            value_text = ""
+                            
+                            icon_elem = stat.find("span", class_=re.compile(r"icon-"))
+                            if icon_elem:
+                                icon_class = " ".join(icon_elem.get("class", []))
+                            
+                            # 提取数值
+                            value_div = stat.find("div")
+                            if value_div:
+                                value_text = value_div.get_text(strip=True)
+                            
+                            # 解析数值
+                            value = 0
+                            try:
+                                # 处理带逗号的数字，如 "14,091"
+                                value = int(value_text.replace(",", "").replace("K", "000").replace("M", "000000"))
+                            except:
+                                pass
+                            
+                            # 根据图标类型分配数值
+                            if "icon-heart" in icon_class:
+                                likes = value
+                            elif "icon-retweet" in icon_class:
+                                retweets = value
+                            elif "icon-comment" in icon_class:
+                                replies = value
+                    
+                    # 构造Twitter原始链接
+                    twitter_url = f"https://twitter.com/{username}/status/{tweet_id}" if tweet_id else ""
+                    
+                    # 只添加有一定互动量的推文（过滤低质量内容）
+                    total_engagement = likes + retweets + replies
+                    if total_engagement < 10:  # 阈值：总互动数至少10
+                        continue
+                    
+                    tweets.append({
+                        "id": tweet_id,
+                        "text": text,
+                        "username": username,
+                        "user_name": username,  # Nitter搜索结果不提供显示名称
+                        "created_at": datetime.now().isoformat(),  # Nitter搜索结果不提供时间
+                        "likes": likes,
+                        "retweets": retweets,
+                        "replies": replies,
+                        "url": twitter_url,
+                        "nitter_url": f"{self.current_instance}/status/{tweet_id}" if tweet_id else "",
+                        "source": "nitter_search",
+                        "keyword": keyword
+                    })
+                    
+                except Exception as e:
+                    logger.debug(f"Error parsing tweet item: {e}")
+                    continue
+            
+            logger.info(f"Parsed {len(tweets)} tweets from keyword '{keyword}'")
+            return tweets
+            
+        except ImportError:
+            logger.error("BeautifulSoup not installed. Run: pip install beautifulsoup4")
+            return []
+        except Exception as e:
+            logger.error(f"Error parsing search results: {e}")
+            return []
+    
     async def _fetch_user_rss(self, session: aiohttp.ClientSession, username: str) -> List[Dict]:
         """
         获取单个用户的 RSS 订阅

@@ -10,10 +10,13 @@
 import asyncio
 import aiohttp
 import re
+import logging
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 from bs4 import BeautifulSoup
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -83,6 +86,10 @@ class WechatArticleFetcher:
         self.timeout = aiohttp.ClientTimeout(total=timeout or self._global_timeout or 30)
         self.auth_key = auth_key or self._global_auth_key
         self._session: Optional[aiohttp.ClientSession] = None
+    
+    def get_accounts_by_category(self, category: str) -> List[str]:
+        """按分类获取公众号"""
+        return self._global_accounts.get(category, [])
     
     def _load_from_global_config(self):
         """从全局配置文件加载微信公众号配置"""
@@ -407,6 +414,108 @@ class WechatArticleFetcher:
                 
         except Exception:
             return {"read_count": 0, "like_count": 0, "comment_count": 0}
+    
+    async def fetch_hot_articles(self,
+                                   max_results: int = 30,
+                                   hours_ago: int = 48,
+                                   categories: List[str] = None) -> Dict[str, Any]:
+        """
+        获取热门文章（基于阅读量和点赞数排序）
+        
+        Args:
+            max_results: 返回的最大文章数量
+            hours_ago: 文章发布时间范围（小时）
+            categories: 公众号分类列表，默认全部
+            
+        Returns:
+            Dict containing hot articles list
+        """
+        # 默认获取的公众号分类
+        if categories is None:
+            categories = ["finance", "tech", "quant", "crypto"]
+        
+        all_articles = []
+        errors = []
+        
+        # 获取指定分类的公众号列表
+        accounts_by_category = []
+        for category in categories:
+            category_accounts = self.get_accounts_by_category(category)
+            for account_name in category_accounts:
+                accounts_by_category.append((category, account_name))
+        
+        logger.info(f"准备从 {len(accounts_by_category)} 个公众号抓取热门文章...")
+        
+        # 获取时间阈值
+        time_threshold = datetime.now() - timedelta(hours=hours_ago)
+        
+        session = await self._get_session()
+        
+        # 串行抓取，避免并发触发限流
+        for i, (category, account_name) in enumerate(accounts_by_category[:20]):  # 限制最多查看20个公众号
+            try:
+                # 搜索公众号
+                accounts = await self.search_accounts(account_name)
+                if not accounts:
+                    errors.append(f"{account_name}: 未搜索到公众号")
+                    continue
+                
+                fakeid = accounts[0].fakeid
+                
+                # 获取文章列表
+                articles = await self.get_articles(fakeid, offset=0, count=10, account_name=account_name)
+                
+                # 过滤时间范围内的文章
+                recent_articles = [
+                    art for art in articles 
+                    if art.publish_time and art.publish_time >= time_threshold
+                ]
+                
+                # 为每篇文章获取统计数据（如果配置了auth_key）
+                for art in recent_articles[:5]:  # 每个公众号只获取前5篇的统计
+                    try:
+                        stats = await self.get_article_stats(art.url)
+                        art.read_count = stats.get("read_count", 0)
+                        art.like_count = stats.get("like_count", 0)
+                        art.comment_count = stats.get("comment_count", 0)
+                    except Exception as e:
+                        logger.debug(f"获取统计数据失败: {e}")
+                
+                all_articles.extend(recent_articles)
+                logger.info(f"   从 {account_name} 获取 {len(recent_articles)} 篇文章")
+                
+            except Exception as e:
+                errors.append(f"{account_name}: {str(e)}")
+                logger.warning(f"获取 {account_name} 的文章失败: {e}")
+            
+            # 请求延迟
+            if i < len(accounts_by_category) - 1:
+                await asyncio.sleep(self._global_timeout / 10)
+        
+        # 根据热度排序（阅读量 * 1 + 点赞数 * 10 + 评论数 * 20）
+        def calculate_score(article: WechatArticle) -> float:
+            return (
+                article.read_count * 1.0 +
+                article.like_count * 10.0 +
+                article.comment_count * 20.0
+            )
+        
+        sorted_articles = sorted(all_articles, key=calculate_score, reverse=True)
+        
+        # 过滤高质量文章（确保有一定的互动数据）
+        high_quality = [
+            art for art in sorted_articles
+            if art.read_count > 0 or art.like_count > 0 or len(art.digest or art.content) > 100
+        ]
+        
+        return {
+            "hot_articles": high_quality[:max_results],
+            "total_found": len(all_articles),
+            "high_quality_count": len(high_quality),
+            "errors": errors,
+            "categories_scanned": categories,
+            "timestamp": datetime.now()
+        }
 
 
 # 预定义的金融相关公众号列表

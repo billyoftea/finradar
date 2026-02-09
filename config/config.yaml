@@ -200,6 +200,18 @@ twitter:
       - "QuantaMagazine"                 # Quanta Magazine (数学/科学)
       - "QuantInsti"                     # QuantInsti (量化教育)
 
+  # 热门推文获取配置
+  fetch_trending: true                  # 是否抓取热门推文（基于关键词搜索）
+  # 热门搜索关键词列表（会搜索这些关键词并返回高互动量的推文）
+  trending_keywords:
+    - "bitcoin OR btc OR cryptocurrency"  # 加密货币
+    - "AI OR \"artificial intelligence\" OR ChatGPT OR GPT"  # AI
+    - "stock market OR SPY OR QQQ"       # 金融市场
+    - "economy OR inflation OR Fed"      # 宏观经济
+    - "nvidia OR AMD OR Intel"           # 芯片AI
+  trending_max_results: 30             # 热门推文最大返回数量
+  trending_engagement_threshold: 10     # 最小互动数阈值（点赞+转推），低于此值不收录
+
   # 获取设置
   max_tweets_per_user: 10               # 每个账号获取的推文数量
   max_age_hours: 12                     # 最大推文年龄（小时），配合12小时抓取周期，0=不限制
@@ -300,6 +312,16 @@ wechat:
       - "qeubee"
       - "数据科学实战"
       - "贝叶斯之美"
+
+  # 热门文章获取配置
+  fetch_hot_articles: true             # 是否抓取热门文章（基于阅读量和点赞排序）
+  hot_max_results: 30                  # 热门文章最大返回数量
+  hot_hours_ago: 48                    # 文章发布时间范围（小时，最近48小时内）
+  hot_categories:                       # 扫描哪些分类的公众号（默认全部）
+    - "finance"
+    - "tech"
+    - "quant"
+    - "crypto"
 
   # 获取设置
   max_articles_per_account: 20          # 每个公众号获取的文章数量
