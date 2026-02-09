@@ -30,7 +30,7 @@ case "${RUN_MODE:-cron}" in
     # ┌──────────────────────────────────────────────┐
     # │  调度策略:                                    │
     # │  • 市场数据 + 热榜新闻: 每30分钟              │
-    # │  • 社交媒体:           07:00 / 19:00          │
+    # │  • 社交媒体:           08:00 / 20:00          │
     # └──────────────────────────────────────────────┘
 
     case "${TASK_MODE}" in
@@ -39,16 +39,16 @@ case "${RUN_MODE:-cron}" in
 # 每30分钟: 市场数据 + 热榜新闻
 */30 * * * * cd /app && /usr/local/bin/python -m finradar --mode market >> /var/log/market.log 2>&1 && /usr/local/bin/python -m finradar --mode news >> /var/log/finradar.log 2>&1
 
-# 每天 07:00: 社交媒体早报
-0 7 * * * cd /app && /usr/local/bin/python -m finradar --mode social >> /var/log/social.log 2>&1 && /usr/local/bin/python scripts/generate_report.py --type morning >> /var/log/report.log 2>&1
+# 每天 08:00: 抓取社交媒体 + 生成早报
+0 8 * * * cd /app && /usr/local/bin/python -m finradar --mode social >> /var/log/social.log 2>&1 && /usr/local/bin/python scripts/generate_report.py --type morning >> /var/log/report.log 2>&1
 
-# 每天 19:00: 社交媒体晚报
-0 19 * * * cd /app && /usr/local/bin/python -m finradar --mode social >> /var/log/social.log 2>&1 && /usr/local/bin/python scripts/generate_report.py --type evening >> /var/log/report.log 2>&1
+# 每天 20:00: 抓取社交媒体 + 生成晚报
+0 20 * * * cd /app && /usr/local/bin/python -m finradar --mode social >> /var/log/social.log 2>&1 && /usr/local/bin/python scripts/generate_report.py --type evening >> /var/log/report.log 2>&1
 EOF
         echo "📅 定时任务:"
         echo "   ⏱  每30分钟  → 市场数据 + 热榜新闻"
-        echo "   🌅 每天07:00 → 社交媒体 + 早报"
-        echo "   🌇 每天19:00 → 社交媒体 + 晚报"
+        echo "   🌅 每天08:00 → 社交媒体 + 早报"
+        echo "   🌇 每天20:00 → 社交媒体 + 晚报"
         ;;
     "news")
         echo "${CRON_SCHEDULE:-*/30 * * * *} cd /app && /usr/local/bin/python -m finradar --mode news >> /var/log/finradar.log 2>&1" > /tmp/crontab
@@ -60,10 +60,10 @@ EOF
         ;;
     "social")
         cat > /tmp/crontab <<'EOF'
-0 7 * * * cd /app && /usr/local/bin/python -m finradar --mode social >> /var/log/social.log 2>&1
-0 19 * * * cd /app && /usr/local/bin/python -m finradar --mode social >> /var/log/social.log 2>&1
+0 8 * * * cd /app && /usr/local/bin/python -m finradar --mode social >> /var/log/social.log 2>&1 && /usr/local/bin/python scripts/generate_report.py --type morning >> /var/log/report.log 2>&1
+0 20 * * * cd /app && /usr/local/bin/python -m finradar --mode social >> /var/log/social.log 2>&1 && /usr/local/bin/python scripts/generate_report.py --type evening >> /var/log/report.log 2>&1
 EOF
-        echo "📅 定时任务: 07:00 / 19:00 → 社交媒体"
+        echo "📅 定时任务: 08:00 / 20:00 → 社交媒体 + 报告"
         ;;
     esac
 

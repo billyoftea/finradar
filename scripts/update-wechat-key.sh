@@ -25,7 +25,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 # 配置文件路径
-COOKIE_DIR="$PROJECT_ROOT/fin_module/wechat-article/data/kv/cookie"
+COOKIE_DIR="$PROJECT_ROOT/output/wechat/.data/kv/cookie"
 CONFIG_FILE="$PROJECT_ROOT/config/config.yaml"
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -97,22 +97,17 @@ echo -e "${YELLOW}是否重建并重启 Docker 服务? [Y/n]${NC}"
 read -r REBUILD
 if [[ ! "$REBUILD" =~ ^[Nn] ]]; then
     echo ""
-    echo -e "${YELLOW}🔨 重建 Docker 镜像...${NC}"
-    cd "$PROJECT_ROOT"
-    sudo docker build -f docker/Dockerfile.market -t finradar-market:latest . 2>&1 | tail -5
-    
     echo ""
     echo -e "${YELLOW}🔄 重启服务...${NC}"
     cd "$PROJECT_ROOT/docker"
-    sudo docker compose -f docker-compose-market.yml down
-    sudo docker compose -f docker-compose-market.yml up -d
-    
+    docker compose -f docker-compose-unified.yml --profile social-sources up -d wechat-exporter finradar
+
     echo ""
     echo -e "${GREEN}✅ 服务已重启${NC}"
     echo ""
     echo -e "${YELLOW}📊 等待 30 秒后查看日志...${NC}"
     sleep 30
-    sudo docker logs finradar-market --tail 50
+    docker logs finradar --tail 50 || true
 fi
 
 echo ""

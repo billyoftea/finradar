@@ -11,10 +11,11 @@ echo "============================================================"
 echo ""
 echo "📦 1️⃣  测试 Twitter 热门推文（10秒）"
 echo "------------------------------------------------------------"
-timeout 20 /home/ubuntu/miniconda3/bin/python -c "
+timeout 20 python3 -c "
 import asyncio
 import sys
-sys.path.insert(0, '/home/ubuntu/finradar')
+from pathlib import Path
+sys.path.insert(0, str(Path.cwd()))
 
 async def test():
     from finradar.market.fetcher.nitter_rss import NitterRSSFetcher
@@ -33,10 +34,11 @@ asyncio.run(test())
 echo ""
 echo "📱 2️⃣  测试微信热门文章（快速模式）"
 echo "------------------------------------------------------------"
-timeout 30 /home/ubuntu/miniconda3/bin/python -c "
+timeout 30 python3 -c "
 import asyncio
 import sys
-sys.path.insert(0, '/home/ubuntu/finradar')
+from pathlib import Path
+sys.path.insert(0, str(Path.cwd()))
 
 async def test():
     from finradar.market.fetcher.wechat_article import WechatArticleFetcher

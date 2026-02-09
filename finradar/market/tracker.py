@@ -38,6 +38,25 @@ class MarketTracker:
         self.config = config or {}
         self.results: Dict[str, Any] = {}
         self.errors: List[str] = []
+        self.fetch_timeout = float(
+            os.environ.get("MARKET_FETCH_TIMEOUT", self.config.get("fetch_timeout", 120))
+        )
+        self.module_timeouts = self.config.get("module_timeouts", {}) or {}
+        # 微信全文抓取较慢，单独给更长默认超时，避免“看起来失败但其实还在正常抓取”。
+        self.module_timeouts.setdefault("wechat", float(os.environ.get("WECHAT_FETCH_TIMEOUT", 1800)))
+
+    async def _run_with_timeout(self, key: str, coro):
+        """给单个模块抓取加超时保护，避免某个数据源阻塞整个流程。"""
+        timeout = self.module_timeouts.get(key, self.fetch_timeout)
+        if not timeout or float(timeout) <= 0:
+            return await coro
+        try:
+            return await asyncio.wait_for(coro, timeout=float(timeout))
+        except asyncio.TimeoutError:
+            msg = f"{key} 抓取超时 ({int(float(timeout))}s)"
+            logger.error(f"❌ {msg}")
+            self.errors.append(msg)
+            return None
         
     async def fetch_stock_cn(self) -> Optional[Dict]:
         """抓取A股数据"""
@@ -152,7 +171,8 @@ class MarketTracker:
                 "nitter_instance": twitter_conf.nitter_instance,
                 "accounts": twitter_conf.get_all_accounts(),
                 "max_tweets_per_user": twitter_conf.max_tweets_per_user,
-                "timeout": twitter_conf.timeout
+                "timeout": twitter_conf.timeout,
+                "trending_engagement_threshold": twitter_conf.trending_engagement_threshold,
             }
             
             fetcher = NitterRSSFetcher(config)
@@ -160,38 +180,86 @@ class MarketTracker:
                 max_age_hours = twitter_conf.max_age_hours
                 logger.info(f"🐦 正在抓取 Twitter 热点 (实例: {twitter_conf.nitter_instance}, 时间范围: {max_age_hours}小时)...")
                 logger.info(f"   关注账号: {len(config['accounts'])} 个")
-                data = await fetcher.fetch()
-                
-                # 按时间过滤推文（与微信一致的12小时窗口）
-                if max_age_hours > 0 and data.get("tweets"):
-                    from datetime import timedelta
-                    from email.utils import parsedate_to_datetime as _parse_dt
-                    cutoff_time = datetime.now().astimezone()
-                    cutoff_time = cutoff_time - timedelta(hours=max_age_hours)
-                    
-                    before_count = len(data["tweets"])
+                follow_result = await fetcher.fetch()
+                follow_tweets = follow_result.get("tweets", []) or []
+                for item in follow_tweets:
+                    if isinstance(item, dict):
+                        item.setdefault("is_trending", False)
+
+                trending_tweets = []
+                trending_errors = []
+                if twitter_conf.fetch_trending:
+                    keywords = twitter_conf.trending_keywords or None
+                    logger.info(f"   热门关键词: {len(keywords or [])} 个")
+                    trending_result = await fetcher.fetch_trending(
+                        keywords=keywords,
+                        max_results=twitter_conf.trending_max_results
+                    )
+                    trending_errors = trending_result.get("errors", []) or []
+                    for item in trending_result.get("trending_tweets", []) or []:
+                        if not isinstance(item, dict):
+                            continue
+                        engagement = item.get("likes", 0) + item.get("retweets", 0) + item.get("replies", 0)
+                        if engagement < twitter_conf.trending_engagement_threshold:
+                            continue
+                        item["is_trending"] = True
+                        trending_tweets.append(item)
+                else:
+                    logger.info("   热门推文抓取已禁用")
+
+                # 合并去重：热门优先，随后是关注账号
+                merged = []
+                seen = set()
+                for tweet in trending_tweets + follow_tweets:
+                    if not isinstance(tweet, dict):
+                        continue
+                    dedup_key = tweet.get("id") or tweet.get("url") or f"{tweet.get('username','')}::{tweet.get('text','')[:120]}"
+                    if dedup_key in seen:
+                        continue
+                    seen.add(dedup_key)
+                    merged.append(tweet)
+
+                # 按时间过滤推文（与微信一致的 12 小时窗口）
+                if max_age_hours > 0 and merged:
+                    from datetime import timedelta, timezone
+                    cutoff_time = datetime.now().astimezone() - timedelta(hours=max_age_hours)
+
+                    before_count = len(merged)
                     filtered_tweets = []
-                    for tweet in data["tweets"]:
+                    for tweet in merged:
                         created_at = tweet.get("created_at", "")
-                        if created_at:
-                            try:
-                                tweet_time = datetime.fromisoformat(created_at)
-                                # 确保有时区信息用于比较
-                                if tweet_time.tzinfo is None:
-                                    import pytz
-                                    tweet_time = pytz.UTC.localize(tweet_time)
-                                if tweet_time >= cutoff_time:
-                                    filtered_tweets.append(tweet)
-                            except (ValueError, TypeError):
-                                filtered_tweets.append(tweet)  # 解析失败保留
-                        else:
-                            filtered_tweets.append(tweet)  # 无时间信息保留
-                    
-                    data["tweets"] = filtered_tweets
-                    logger.info(f"   时间过滤: {before_count}条 → {len(filtered_tweets)}条 (过去{max_age_hours}小时内)")
-                
-                logger.info(f"✅ Twitter 数据抓取完成，共 {len(data.get('tweets', []))} 条推文")
-                return data
+                        if not created_at:
+                            filtered_tweets.append(tweet)
+                            continue
+
+                        try:
+                            dt_text = str(created_at).replace("Z", "+00:00")
+                            tweet_time = datetime.fromisoformat(dt_text)
+                            if tweet_time.tzinfo is None:
+                                tweet_time = tweet_time.replace(tzinfo=timezone.utc)
+                            if tweet_time.astimezone(cutoff_time.tzinfo) >= cutoff_time:
+                                filtered_tweets.append(tweet)
+                        except (ValueError, TypeError):
+                            filtered_tweets.append(tweet)
+
+                    merged = filtered_tweets
+                    logger.info(f"   时间过滤: {before_count}条 → {len(merged)}条 (过去{max_age_hours}小时内)")
+
+                # 按创建时间排序（热门搜索结果没有原始时间，保留其当前位置）
+                merged.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+
+                logger.info(
+                    "✅ Twitter 数据抓取完成，共 %s 条 (关注: %s, 热门: %s)",
+                    len(merged), len(follow_tweets), len(trending_tweets)
+                )
+                return {
+                    "tweets": merged,
+                    "follow_tweets_count": len(follow_tweets),
+                    "trending_tweets_count": len(trending_tweets),
+                    "trending_errors": trending_errors,
+                    "instance_used": follow_result.get("instance_used", fetcher.current_instance),
+                    "timestamp": datetime.now().isoformat(),
+                }
         except ImportError as e:
             logger.warning(f"⚠️ Twitter模块未安装: {e}")
             self.errors.append(f"Twitter模块: {e}")
@@ -203,7 +271,7 @@ class MarketTracker:
     async def fetch_wechat(self) -> Optional[Dict]:
         """抓取微信公众号文章（从config.yaml读取配置）"""
         try:
-            from .fetcher.wechat_article import WechatArticleFetcher, WechatArticle
+            from .fetcher.wechat_article import WechatArticleFetcher
             from .fetcher.social_config import SocialSourceConfig
             
             # 从全局配置读取
@@ -274,26 +342,88 @@ class MarketTracker:
                         all_articles.extend(articles)
                 except Exception as e:
                     logger.warning(f"获取 {account_name} 文章失败: {e}")
+
+            # 微信热门文章（跨账号维度）
+            hot_articles = []
+            hot_errors = []
+            if wechat_conf.fetch_hot_articles:
+                logger.info("🔥 正在抓取微信公众号热门文章...")
+                hot_result = await fetcher.fetch_hot_articles(
+                    max_results=wechat_conf.hot_max_results,
+                    hours_ago=wechat_conf.hot_hours_ago,
+                    categories=wechat_conf.hot_categories or None
+                )
+                hot_errors = hot_result.get("errors", []) or []
+                hot_articles = hot_result.get("hot_articles", []) or []
+
+                # 可选：为热门文章补抓全文，便于后续 AI 深度总结
+                if fetch_content and hot_articles:
+                    for i, article in enumerate(hot_articles, 1):
+                        if getattr(article, "content", "") or not getattr(article, "url", ""):
+                            continue
+                        try:
+                            article.content = await fetcher.get_article_content(article.url)
+                        except Exception as e:
+                            logger.debug(f"获取热门文章全文失败 {getattr(article, 'title', '')}: {e}")
+                        if i < len(hot_articles):
+                            await asyncio.sleep(wechat_conf.content_delay)
             
             # 按发布时间排序（最新的在前）
             all_articles.sort(key=lambda x: x.publish_time if x.publish_time else datetime.min, reverse=True)
-            
-            logger.info(f"✅ 微信公众号文章抓取完成，共 {len(all_articles)} 篇 (过去{max_age_hours}小时内)")
+
+            # 合并普通文章 + 热门文章，热门优先并去重
+            merged_articles = []
+            seen_articles = {}
+
+            def _article_to_dict(article, is_hot=False):
+                return {
+                    "title": article.title,
+                    "author": article.author,
+                    "account_name": article.account_name,
+                    "publish_time": article.publish_time.isoformat() if article.publish_time else "",
+                    "url": article.url,
+                    "digest": article.digest,
+                    "content": article.content if hasattr(article, "content") and article.content else "",
+                    "read_count": getattr(article, "read_count", 0),
+                    "like_count": getattr(article, "like_count", 0),
+                    "comment_count": getattr(article, "comment_count", 0),
+                    "is_hot": bool(is_hot),
+                }
+
+            for article in hot_articles:
+                if not article:
+                    continue
+                data = _article_to_dict(article, is_hot=True)
+                key = data["url"] or f"{data['account_name']}::{data['title']}"
+                seen_articles[key] = data
+                merged_articles.append(data)
+
+            for article in all_articles:
+                data = _article_to_dict(article, is_hot=False)
+                key = data["url"] or f"{data['account_name']}::{data['title']}"
+                if key in seen_articles:
+                    # 已有热门版本，补全正文/摘要字段
+                    current = seen_articles[key]
+                    if not current.get("content") and data.get("content"):
+                        current["content"] = data["content"]
+                    if not current.get("digest") and data.get("digest"):
+                        current["digest"] = data["digest"]
+                    continue
+                seen_articles[key] = data
+                merged_articles.append(data)
+
+            logger.info(
+                "✅ 微信公众号文章抓取完成，共 %s 篇 (普通: %s, 热门: %s)",
+                len(merged_articles), len(all_articles), len(hot_articles)
+            )
             await fetcher.close()
             
             return {
-                "articles": [
-                    {
-                        "title": a.title,
-                        "author": a.author,
-                        "account_name": a.account_name,
-                        "publish_time": a.publish_time.isoformat() if a.publish_time else "",
-                        "url": a.url,
-                        "digest": a.digest,
-                        "content": a.content if hasattr(a, 'content') and a.content else ""
-                    } for a in all_articles[:50]  # 最多返回50篇（时间过滤后数量减少，可以多返回一些）
-                ],
-                "timestamp": datetime.now().isoformat()
+                "articles": merged_articles[:80],
+                "follow_articles_count": len(all_articles),
+                "hot_articles_count": len(hot_articles),
+                "hot_errors": hot_errors,
+                "timestamp": datetime.now().isoformat(),
             }
         except ImportError as e:
             logger.warning(f"⚠️ 微信公众号模块未安装: {e}")
@@ -322,18 +452,18 @@ class MarketTracker:
         
         if mode in ("all", "market"):
             tasks += [
-                self.fetch_stock_cn(),
-                self.fetch_precious_metal(),
-                self.fetch_crypto(),
-                self.fetch_futures(),
-                self.fetch_github(),
+                self._run_with_timeout("stock_cn", self.fetch_stock_cn()),
+                self._run_with_timeout("precious_metal", self.fetch_precious_metal()),
+                self._run_with_timeout("crypto", self.fetch_crypto()),
+                self._run_with_timeout("futures", self.fetch_futures()),
+                self._run_with_timeout("github", self.fetch_github()),
             ]
             keys += ["stock_cn", "precious_metal", "crypto", "futures", "github"]
         
         if mode in ("all", "social"):
             tasks += [
-                self.fetch_twitter(),
-                self.fetch_wechat(),
+                self._run_with_timeout("twitter", self.fetch_twitter()),
+                self._run_with_timeout("wechat", self.fetch_wechat()),
             ]
             keys += ["twitter", "wechat"]
         
@@ -363,7 +493,9 @@ class MarketTracker:
             report_lines.append("\n🇨🇳 【A股市场】")
             report_lines.append("-" * 40)
             stock_data = self.results["stock_cn"]
-            if stock_data.get("indices"):
+            if isinstance(stock_data, dict) and stock_data.get("market_closed"):
+                report_lines.append(f"  ⏸ {stock_data.get('market_status', 'A股休市')}")
+            elif stock_data.get("indices"):
                 for idx in stock_data["indices"][:5]:
                     if isinstance(idx, dict):
                         name = idx.get("name", "未知")
@@ -371,6 +503,8 @@ class MarketTracker:
                         change_pct = idx.get("change_pct", 0)
                         icon = "📈" if change_pct >= 0 else "📉"
                         report_lines.append(f"  {icon} {name}: {price:.2f} ({change_pct:+.2f}%)")
+            else:
+                report_lines.append("  ⚠️ 暂无可用A股行情数据")
         
         # 贵金属
         if self.results.get("precious_metal"):
@@ -433,13 +567,19 @@ class MarketTracker:
             report_lines.append("-" * 40)
             twitter_data = self.results["twitter"]
             tweets = twitter_data.get("tweets", [])
+            if twitter_data.get("trending_tweets_count") is not None:
+                report_lines.append(
+                    f"  来源统计: 关注账号 {twitter_data.get('follow_tweets_count', 0)} 条 | "
+                    f"热门讨论 {twitter_data.get('trending_tweets_count', 0)} 条"
+                )
             if tweets:
                 for tweet in tweets[:5]:
                     if isinstance(tweet, dict):
                         username = tweet.get("username", "未知")
                         text = tweet.get("text", "")[:80].replace("\n", " ")
                         likes = tweet.get("likes", 0)
-                        report_lines.append(f"  @{username}: {text}...")
+                        hot_tag = "🔥" if tweet.get("is_trending") else "  "
+                        report_lines.append(f"  {hot_tag} @{username}: {text}...")
                         report_lines.append(f"     ❤️ {likes}")
             else:
                 report_lines.append("  暂无推文数据")
@@ -450,12 +590,18 @@ class MarketTracker:
             report_lines.append("-" * 40)
             wechat_data = self.results["wechat"]
             articles = wechat_data.get("articles", [])
+            if wechat_data.get("hot_articles_count") is not None:
+                report_lines.append(
+                    f"  来源统计: 关注公众号 {wechat_data.get('follow_articles_count', 0)} 篇 | "
+                    f"热门文章 {wechat_data.get('hot_articles_count', 0)} 篇"
+                )
             if articles:
                 for article in articles[:5]:
                     if isinstance(article, dict):
                         title = article.get("title", "未知")[:40]
                         account = article.get("account_name", "未知")
-                        report_lines.append(f"  📄 [{account}] {title}")
+                        hot_tag = "🔥" if article.get("is_hot") else "📄"
+                        report_lines.append(f"  {hot_tag} [{account}] {title}")
             else:
                 report_lines.append("  暂无公众号文章")
         
@@ -492,11 +638,11 @@ class MarketTracker:
         suffix = ""
         if mode == "social":
             hour = now.hour
-            # 05:00-11:00 算早报，17:00-23:00 算晚报
-            if 5 <= hour < 11:
+            # 05:00-14:00 算早报，14:00-24:00 算晚报
+            if 5 <= hour < 14:
                 suffix = "_morning"
                 label = "早报"
-            elif 17 <= hour < 23:
+            elif 14 <= hour < 24:
                 suffix = "_evening"
                 label = "晚报"
             else:

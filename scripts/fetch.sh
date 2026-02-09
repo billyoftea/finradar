@@ -1,20 +1,23 @@
 #!/bin/bash
 # finradar 每日数据抓取脚本
 # 使用方法:
-#   ./scripts/fetch.sh           # 抓取所有数据
-#   ./scripts/fetch.sh -t        # 仅 Twitter
-#   ./scripts/fetch.sh -w        # 仅微信公众号
-#   ./scripts/fetch.sh -m        # 仅金融市场
-#   ./scripts/fetch.sh -r        # 仅热榜新闻
-#   ./scripts/fetch.sh -t -w     # Twitter + 微信
+#   ./scripts/fetch.sh           # 抓取全部 (all)
+#   ./scripts/fetch.sh all       # 同上
+#   ./scripts/fetch.sh news      # 仅热榜新闻
+#   ./scripts/fetch.sh market    # 仅金融市场
+#   ./scripts/fetch.sh social    # 仅社交媒体
+#   ./scripts/fetch.sh report evening  # 生成晚报 (可选 morning/evening/auto)
+
+set -euo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
 
-# 激活 conda 环境（如果存在）
-if command -v conda &> /dev/null; then
-    eval "$(conda shell.bash hook)"
-    conda activate base 2>/dev/null
+if [ "${1:-all}" = "report" ]; then
+    TYPE="${2:-auto}"
+    shift 2 || true
+    ./scripts/local.sh report "$TYPE" "${1:-}"
+    exit 0
 fi
 
-# 运行 Python 脚本
-python scripts/daily_fetch.py "$@"
+MODE="${1:-all}"
+./scripts/local.sh run "$MODE"

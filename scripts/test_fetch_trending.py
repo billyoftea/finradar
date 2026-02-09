@@ -115,8 +115,8 @@ async def test_wechat_hot():
     if not is_available:
         print("❌ 微信服务不可用")
         print("\n请先确保微信服务已启动:")
-        print("  cd fin_module/wechat-article")
-        print("  docker-compose up -d")
+        print("  ./run.sh start all")
+        print("  或访问 http://127.0.0.1:3001 完成扫码登录")
         return []
     
     print("✅ 服务可用")

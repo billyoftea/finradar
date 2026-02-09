@@ -14,6 +14,7 @@ import logging
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
+from pathlib import Path
 from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
@@ -51,7 +52,7 @@ class WechatArticleFetcher:
     微信公众号文章获取器
     
     需要先部署 wechat-article-exporter 服务:
-    cd fin_module/wechat-article && docker-compose up -d
+    ./run.sh start all
     
     使用示例:
         fetcher = WechatArticleFetcher()
@@ -85,7 +86,23 @@ class WechatArticleFetcher:
         self.base_url = (base_url or self._global_service_url or "http://localhost:3001").rstrip('/')
         self.timeout = aiohttp.ClientTimeout(total=timeout or self._global_timeout or 30)
         self.auth_key = auth_key or self._global_auth_key
+        if not self.auth_key:
+            self.auth_key = self._load_auth_key_from_cookie_dir()
         self._session: Optional[aiohttp.ClientSession] = None
+
+    def _load_auth_key_from_cookie_dir(self) -> str:
+        """从 cookie 目录读取最新 auth_key（文件名即 key）。"""
+        try:
+            cookie_dir = Path(__file__).resolve().parents[3] / "output" / "wechat" / ".data" / "kv" / "cookie"
+            if not cookie_dir.exists():
+                return ""
+            files = [p for p in cookie_dir.iterdir() if p.is_file()]
+            if not files:
+                return ""
+            newest = sorted(files, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+            return newest.name.strip()
+        except Exception:
+            return ""
     
     def get_accounts_by_category(self, category: str) -> List[str]:
         """按分类获取公众号"""
@@ -195,6 +212,12 @@ class WechatArticleFetcher:
                 
                 # 检查 API 返回状态
                 if data.get("base_resp", {}).get("ret") != 0:
+                    # key 可能已过期，尝试自动刷新一次
+                    if data.get("base_resp", {}).get("err_msg") == "认证信息无效":
+                        latest_key = self._load_auth_key_from_cookie_dir()
+                        if latest_key and latest_key != self.auth_key:
+                            self.auth_key = latest_key
+                            return await self.search_accounts(keyword, limit)
                     print(f"搜索公众号失败: {data.get('base_resp', {}).get('err_msg', '未知错误')}")
                     return []
                 
@@ -252,6 +275,11 @@ class WechatArticleFetcher:
                 
                 # 检查 API 返回状态
                 if data.get("base_resp", {}).get("ret") != 0:
+                    if data.get("base_resp", {}).get("err_msg") == "认证信息无效":
+                        latest_key = self._load_auth_key_from_cookie_dir()
+                        if latest_key and latest_key != self.auth_key:
+                            self.auth_key = latest_key
+                            return await self.get_articles(fakeid, offset, count, account_name)
                     print(f"获取文章列表失败: {data.get('base_resp', {}).get('err_msg', '未知错误')}")
                     return []
                 
@@ -563,8 +591,7 @@ async def test_fetcher():
         if not is_available:
             print("❌ wechat-article-exporter 服务不可用")
             print("\n请先启动服务:")
-            print("  cd fin_module/wechat-article")
-            print("  docker-compose up -d")
+            print("  ./run.sh start all")
             print("\n然后访问 http://localhost:3001 扫码登录")
             return
             

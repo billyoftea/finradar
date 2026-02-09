@@ -1,39 +1,39 @@
 ==================================================
 📊 每日市场追踪报告
-📅 2026年02月09日 16:58
+📅 2026年02月09日 15:30
 ==================================================
 
 🇨🇳 【A股市场】
 ----------------------------------------
-  📉 上证指数: 4065.58 (-0.25%)
-  📉 深证成指: 13906.73 (-0.33%)
-  📉 沪深300: 4643.60 (-0.57%)
-  📉 创业板指: 3236.46 (-0.73%)
-  📉 科创50: 1422.41 (-0.71%)
+  📈 上证指数: 4123.09 (+1.41%)
+  📈 深证成指: 14208.44 (+2.17%)
+  📈 沪深300: 4719.06 (+1.63%)
+  📈 创业板指: 3332.77 (+2.98%)
+  📈 科创50: 1458.16 (+2.51%)
 
 🥇 【贵金属】
 ----------------------------------------
 
 ₿ 【加密货币】
 ----------------------------------------
-  📉 BTC: $69,895.00 (-1.02%)
-  📉 ETH: $2,051.74 (-2.80%)
-  📉 SOL: $84.52 (-4.32%)
+  📉 BTC: $68,842.00 (-2.86%)
+  📉 ETH: $2,034.28 (-3.19%)
+  📉 SOL: $84.52 (-3.87%)
 
 📈 【期货市场】
 ----------------------------------------
 
 💻 【GitHub 趋势】
 ----------------------------------------
-  ⭐ ClawRouter (1878 stars)
-     Smart LLM router — save 78% on inference costs. 30...
-  ⭐ vouch (1756 stars)
+  ⭐ vouch (2037 stars)
      A community trust management system based on expli...
-  ⭐ claudes-c-compiler (1752 stars)
+  ⭐ ClawRouter (1904 stars)
+     Smart LLM router — save 78% on inference costs. 30...
+  ⭐ claudes-c-compiler (1803 stars)
      Claude Opus 4.6 wrote a dependency-free C compiler...
-  ⭐ excalidraw-mcp-app (996 stars)
-     Excalidraw MCP App...
-  ⭐ clash-master (915 stars)
+  ⭐ excalidraw-mcp-app (1013 stars)
+     Fast and streamable Excalidraw MCP App...
+  ⭐ clash-master (936 stars)
      A modern and elegant dashboard for visualizing and...
 
 ==================================================

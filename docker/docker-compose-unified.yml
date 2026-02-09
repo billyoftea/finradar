@@ -50,10 +50,11 @@ services:
       - ENABLE_GITHUB=${ENABLE_GITHUB:-true}
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - ENABLE_TWITTER=${ENABLE_TWITTER:-true}
-      - NITTER_INSTANCE=${NITTER_INSTANCE:-}
+      - NITTER_INSTANCE=${NITTER_INSTANCE:-http://nitter:8080}
       - TWITTER_ACCOUNTS=${TWITTER_ACCOUNTS:-}
       - ENABLE_WECHAT=${ENABLE_WECHAT:-false}
-      - WECHAT_SERVICE_URL=${WECHAT_SERVICE_URL:-http://localhost:3001}
+      - WECHAT_SERVICE_URL=${WECHAT_SERVICE_URL:-http://wechat-exporter:3000}
+      - WECHAT_AUTH_KEY=${WECHAT_AUTH_KEY:-}
 
       # ==================== 通知配置 ====================
       - FEISHU_WEBHOOK_URL=${FEISHU_WEBHOOK_URL:-}
@@ -94,6 +95,53 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # 可选: Twitter/Nitter 社交源
+  nitter:
+    profiles: ["social-sources"]
+    image: zedeus/nitter:latest
+    platform: linux/amd64
+    container_name: finradar-nitter
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${NITTER_PORT:-8080}:8080"
+    volumes:
+      - ../finradar/nitter/nitter.conf:/src/nitter.conf:ro
+      - ../finradar/nitter/sessions.jsonl:/src/sessions.jsonl:ro
+    depends_on:
+      - nitter-redis
+
+  nitter-redis:
+    profiles: ["social-sources"]
+    image: redis:6-alpine
+    container_name: finradar-nitter-redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - nitter-redis:/data
+
+  # 可选: 微信公众号抓取服务（首次需要扫码登录）
+  # 说明：这里使用了一个轻量自定义镜像，移除了登录 cookie 的 Secure 标记，
+  # 以支持 http://<公网IP>/ 直接扫码登录。
+  wechat-exporter:
+    profiles: ["social-sources"]
+    build:
+      context: ./wechat-exporter
+      dockerfile: Dockerfile
+    image: finradar-wechat-exporter-http:latest
+    container_name: finradar-wechat-exporter
+    restart: unless-stopped
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-lc", "mkdir -p /app/.data/kv/cookie && exec node server/index.mjs"]
+    ports:
+      - "${WECHAT_BIND_HOST:-0.0.0.0}:${WECHAT_EXPORTER_PORT:-3000}:3000"
+    volumes:
+      - ../output/wechat/.data:/app/.data
+    environment:
+      - TZ=Asia/Shanghai
+
 networks:
   default:
     name: finradar-network
+
+volumes:
+  nitter-redis:

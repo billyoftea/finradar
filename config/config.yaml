@@ -114,13 +114,13 @@ rss:
 # 4. Twitter/Nitter RSS 订阅
 #
 # 通过 Nitter 实例获取 Twitter 推文（无需 Twitter API）
-# 自建实例部署: fin_module/nitter/README.md
+# 自建实例部署: finradar/nitter/README.md
 # ===============================================================
 twitter:
   enabled: true                         # 是否启用 Twitter 追踪
 
   # Nitter 实例配置
-  nitter_instance: "http://172.31.42.175:8080"  # 自建 Nitter 实例地址
+  nitter_instance: "http://localhost:8080"  # 自建 Nitter 实例地址
                                             # 留空则使用公共实例（不稳定）
 
   # 关注账号列表（已验证可用）
@@ -222,17 +222,17 @@ twitter:
 # 5. 微信公众号文章追踪
 #
 # 通过 wechat-article-exporter 获取公众号文章
-# 服务部署: fin_module/wechat-article/README.md
+# 服务部署: Docker profile `social-sources`（见 README.local.md）
 # ===============================================================
 wechat:
   enabled: true                         # 是否启用公众号追踪
 
   # wechat-article-exporter 服务配置
-  service_url: "http://172.31.42.175:3001"  # 服务地址
+  service_url: "http://localhost:3001"  # 服务地址
   timeout: 30                           # 请求超时时间（秒）
   
   # API 认证密钥（登录后从 data/kv/cookie 目录获取文件名）
-  auth_key: "3dc311e6ed1d4f4897ee47a30d680773"
+  auth_key: "4b6c116db799429ba19c9d7b83388ee1"
   
   # 文章全文抓取配置
   fetch_content: true                   # 是否抓取文章全文内容（会增加抓取时间）
@@ -325,7 +325,7 @@ wechat:
 
   # 获取设置
   max_articles_per_account: 20          # 每个公众号获取的文章数量
-  max_age_hours: 12                     # 最大文章年龄（小时），配合每12小时抓取一次（07:00/19:00），0=不限制
+  max_age_hours: 12                     # 最大文章年龄（小时），配合每12小时抓取一次（08:00/20:00），0=不限制
 
 
 # ===============================================================

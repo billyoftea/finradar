@@ -8,7 +8,7 @@ Nitter 是一个开源的 Twitter 前端替代品，提供 RSS 订阅功能
     2. 公共 Nitter 实例 (可能不可用)
 
 自建实例部署:
-    参考 fin_module/nitter/README.md
+    参考 finradar/nitter/README.md
 
 使用方法:
     # 方式1: 使用自建实例 (推荐)
@@ -57,7 +57,7 @@ class NitterRSSFetcher(BaseFetcher):
     
     # 公共 Nitter 实例备用列表 (2024年后大部分已失效)
     # 注意: 公共实例可能随时下线，强烈建议自建实例
-    # 自建部署文档: fin_module/nitter/README.md
+    # 自建部署文档: finradar/nitter/README.md
     NITTER_INSTANCES = [
         # 这些公共实例可能已经失效，仅作为后备
         "https://nitter.privacydev.net",
@@ -116,6 +116,7 @@ class NitterRSSFetcher(BaseFetcher):
         
         # 请求超时时间
         self.timeout = self.config.get("timeout", 15)
+        self.trending_engagement_threshold = int(self.config.get("trending_engagement_threshold", 10) or 10)
         
         # 是否启用
         self.enabled = self.config.get("enabled", True)
@@ -191,25 +192,57 @@ class NitterRSSFetcher(BaseFetcher):
         errors = []
         
         # 请求间隔（秒），避免触发速率限制
-        request_delay = self.config.get("request_delay", 1.0)
+        # 本地实例无需限速，公共实例需要较长间隔
+        if self.using_local_instance:
+            request_delay = self.config.get("request_delay", 0.1)
+            concurrency = self.config.get("concurrency", 5)
+        else:
+            request_delay = self.config.get("request_delay", 1.0)
+            concurrency = 1  # 公共实例不并发
         
         async with aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=self.timeout),
             headers={"User-Agent": "Mozilla/5.0 (compatible; finradar/1.0)"}
         ) as session:
-            # 串行获取，避免并发请求触发 429 限流
-            for i, username in enumerate(self.accounts):
-                try:
-                    result = await self._fetch_user_rss(session, username)
-                    if result:
-                        all_tweets.extend(result)
-                except Exception as e:
-                    errors.append(f"@{username}: {str(e)}")
-                    logger.warning(f"Failed to fetch @{username}: {e}")
+            if self.using_local_instance and concurrency > 1:
+                # 本地实例: 使用信号量控制并发
+                sem = asyncio.Semaphore(concurrency)
                 
-                # 添加请求间隔，避免触发速率限制（最后一个不需要等待）
-                if i < len(self.accounts) - 1:
-                    await asyncio.sleep(request_delay)
+                async def _fetch_one(username):
+                    async with sem:
+                        try:
+                            result = await self._fetch_user_rss(session, username)
+                            if result:
+                                return ("ok", username, result)
+                        except Exception as e:
+                            return ("err", username, str(e))
+                        return ("ok", username, [])
+                
+                tasks = [_fetch_one(u) for u in self.accounts]
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                for r in results:
+                    if isinstance(r, Exception):
+                        errors.append(str(r))
+                    elif r[0] == "ok" and r[2]:
+                        all_tweets.extend(r[2])
+                    elif r[0] == "err":
+                        errors.append(f"@{r[1]}: {r[2]}")
+                        logger.warning(f"Failed to fetch @{r[1]}: {r[2]}")
+            else:
+                # 公共实例: 串行获取，避免并发请求触发 429 限流
+                for i, username in enumerate(self.accounts):
+                    try:
+                        result = await self._fetch_user_rss(session, username)
+                        if result:
+                            all_tweets.extend(result)
+                    except Exception as e:
+                        errors.append(f"@{username}: {str(e)}")
+                        logger.warning(f"Failed to fetch @{username}: {e}")
+                    
+                    # 添加请求间隔（最后一个不需要等待）
+                    if i < len(self.accounts) - 1:
+                        await asyncio.sleep(request_delay)
         
         # 按时间排序（最新在前）
         all_tweets.sort(key=lambda x: x.get("created_at", ""), reverse=True)
@@ -396,8 +429,13 @@ class NitterRSSFetcher(BaseFetcher):
                             # 解析数值
                             value = 0
                             try:
-                                # 处理带逗号的数字，如 "14,091"
-                                value = int(value_text.replace(",", "").replace("K", "000").replace("M", "000000"))
+                                normalized = value_text.replace(",", "").strip().upper()
+                                if normalized.endswith("K"):
+                                    value = int(float(normalized[:-1]) * 1_000)
+                                elif normalized.endswith("M"):
+                                    value = int(float(normalized[:-1]) * 1_000_000)
+                                else:
+                                    value = int(normalized or "0")
                             except:
                                 pass
                             
@@ -414,7 +452,7 @@ class NitterRSSFetcher(BaseFetcher):
                     
                     # 只添加有一定互动量的推文（过滤低质量内容）
                     total_engagement = likes + retweets + replies
-                    if total_engagement < 10:  # 阈值：总互动数至少10
+                    if total_engagement < self.trending_engagement_threshold:
                         continue
                     
                     tweets.append({
@@ -460,9 +498,9 @@ class NitterRSSFetcher(BaseFetcher):
         # 构建实例列表: 自建实例优先，公共实例作为后备
         instances_to_try = [self.current_instance]
         
-        # 如果使用自建实例，不添加公共实例作为后备
-        # 如果使用公共实例，添加其他公共实例作为后备
-        if not self.using_local_instance:
+        # 本地实例失败时可回退到公共实例（用于缓解本地 token 失效/限流）
+        allow_public_fallback = bool(self.config.get("fallback_public_on_local_failure", True))
+        if (not self.using_local_instance) or allow_public_fallback:
             for inst in self.NITTER_INSTANCES:
                 if inst != self.current_instance and inst not in instances_to_try:
                     instances_to_try.append(inst)
@@ -497,6 +535,11 @@ class NitterRSSFetcher(BaseFetcher):
                     elif response.status == 403:
                         logger.warning(f"Access denied (403) from {instance}, may need authentication tokens")
                         last_error = f"403 Forbidden - instance may require tokens"
+                        continue
+
+                    elif response.status == 429:
+                        logger.warning(f"Rate limited (429) from {instance}")
+                        last_error = "HTTP 429"
                         continue
                     
                     else:
@@ -750,7 +793,7 @@ class NitterRSSFetcher(BaseFetcher):
             "max_tweets_per_user": self.max_tweets_per_user,
             "timeout": self.timeout,
             "env_instance": os.environ.get("NITTER_INSTANCE", "(not set)"),
-            "setup_guide": "See fin_module/nitter/README.md for self-hosted setup"
+            "setup_guide": "See finradar/nitter/README.md for self-hosted setup"
         }
 
 

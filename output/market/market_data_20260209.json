@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-02-09T16:58:53.420357",
+  "timestamp": "2026-02-09T15:30:35.742411",
   "mode": "market",
   "report_type": "latest",
   "data": {
@@ -8,68 +8,68 @@
         {
           "name": "上证指数",
           "code": "000001",
-          "price": 4065.583,
-          "change": -10.333999999999833,
-          "change_pct": -0.25,
-          "volume": 55670980100.0,
-          "open": 4040.299,
-          "high": 4095.03,
-          "low": 4029.973
+          "price": 4123.09,
+          "change": 57.50700000000006,
+          "change_pct": 1.41,
+          "volume": 57263258200.0,
+          "open": 4103.54,
+          "high": 4123.159,
+          "low": 4093.056
         },
         {
           "name": "深证成指",
           "code": "399001",
-          "price": 13906.734,
-          "change": -45.977999999999156,
-          "change_pct": -0.33,
-          "volume": 73034954834.0,
-          "open": 13801.031,
-          "high": 14065.776,
-          "low": 13726.859
+          "price": 14208.436,
+          "change": 301.7019999999993,
+          "change_pct": 2.17,
+          "volume": 72636960194.0,
+          "open": 14115.141,
+          "high": 14211.704,
+          "low": 14060.667
         },
         {
           "name": "沪深300",
           "code": "000300",
-          "price": 4643.596,
-          "change": -26.82300000000032,
-          "change_pct": -0.57,
-          "volume": 20271647700.0,
-          "open": 4622.975,
-          "high": 4678.262,
-          "low": 4606.638
+          "price": 4719.056,
+          "change": 75.46000000000004,
+          "change_pct": 1.63,
+          "volume": 20725193800.0,
+          "open": 4693.672,
+          "high": 4719.964,
+          "low": 4679.904
         },
         {
           "name": "创业板指",
           "code": "399006",
-          "price": 3236.464,
-          "change": -23.81399999999985,
-          "change_pct": -0.73,
-          "volume": 20940122955.0,
-          "open": 3222.884,
-          "high": 3288.032,
-          "low": 3199.144
+          "price": 3332.77,
+          "change": 96.30600000000004,
+          "change_pct": 2.98,
+          "volume": 23531193301.0,
+          "open": 3299.597,
+          "high": 3340.329,
+          "low": 3276.567
         },
         {
           "name": "科创50",
           "code": "000688",
-          "price": 1422.406,
-          "change": -10.115999999999985,
-          "change_pct": -0.71,
-          "volume": 1303509900.0,
-          "open": 1415.047,
-          "high": 1440.808,
-          "low": 1405.874
+          "price": 1458.163,
+          "change": 35.75700000000006,
+          "change_pct": 2.51,
+          "volume": 1574783900.0,
+          "open": 1453.54,
+          "high": 1458.927,
+          "low": 1441.897
         },
         {
           "name": "中证500",
           "code": "000905",
-          "price": 8146.413,
-          "change": 0.30599999999958527,
-          "change_pct": 0.0,
-          "volume": 21864214400.0,
-          "open": 8054.218,
-          "high": 8247.297,
-          "low": 8014.66
+          "price": 8311.283,
+          "change": 164.8699999999999,
+          "change_pct": 2.02,
+          "volume": 21166756600.0,
+          "open": 8280.109,
+          "high": 8313.469,
+          "low": 8229.003
         }
       ],
       "north_flow": {
@@ -858,7 +858,9 @@
         "limit_up_count": 83,
         "limit_down_count": 3
       },
-      "timestamp": "2026-02-09 16:58:53.206496"
+      "market_closed": false,
+      "market_status": "正常交易",
+      "timestamp": "2026-02-09 15:30:03.846003"
     },
     "precious_metal": {
       "metals": {
@@ -866,13 +868,13 @@
           "symbol": "GC=F",
           "name": "黄金",
           "name_en": "Gold",
-          "price": 5049.3,
-          "change": 98.1,
+          "price": 5049.1,
+          "change": 97.9,
           "change_pct": 1.98,
           "open": 5003.6,
           "high": 5069.0,
           "low": 4988.6,
-          "volume": 43245,
+          "volume": 78573,
           "unit": "美元/盎司",
           "prev_close": 4951.2
         },
@@ -880,18 +882,18 @@
           "symbol": "SI=F",
           "name": "白银",
           "name_en": "Silver",
-          "price": 81.7,
-          "change": 4.96,
-          "change_pct": 6.47,
+          "price": 81.14,
+          "change": 4.4,
+          "change_pct": 5.73,
           "open": 78.1,
           "high": 82.12,
           "low": 78.1,
-          "volume": 19399,
+          "volume": 40720,
           "unit": "美元/盎司",
           "prev_close": 76.74
         }
       },
-      "timestamp": "2026-02-09 16:58:51.926414"
+      "timestamp": "2026-02-09 15:30:04.708014"
     },
     "crypto": {
       "coins": [
@@ -899,16 +901,16 @@
           "id": "bitcoin",
           "symbol": "BTC",
           "name": "Bitcoin",
-          "price": 69895,
-          "market_cap": 1397364844945,
+          "price": 68842,
+          "market_cap": 1377330453301,
           "market_cap_rank": 1,
-          "volume_24h": 46306265489,
-          "change_24h": -1.02179,
-          "change_7d": -8.518737136229236,
+          "volume_24h": 49746795838,
+          "change_24h": -2.86384,
+          "change_7d": -11.410285386379678,
           "high_24h": 71852,
-          "low_24h": 69536,
+          "low_24h": 68428,
           "ath": 126080,
-          "ath_change_pct": -44.5631,
+          "ath_change_pct": -45.39828,
           "is_meme": false,
           "category": "mainstream",
           "image": "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png?1696501400"
@@ -917,16 +919,16 @@
           "id": "ethereum",
           "symbol": "ETH",
           "name": "Ethereum",
-          "price": 2051.74,
-          "market_cap": 247844772155,
+          "price": 2034.28,
+          "market_cap": 245469843023,
           "market_cap_rank": 2,
-          "volume_24h": 21388514057,
-          "change_24h": -2.80465,
-          "change_7d": -7.958506794269547,
-          "high_24h": 2136.13,
-          "low_24h": 2040.76,
+          "volume_24h": 21520662447,
+          "change_24h": -3.19064,
+          "change_7d": -12.55326412078717,
+          "high_24h": 2133.29,
+          "low_24h": 2012.58,
           "ath": 4946.05,
-          "ath_change_pct": -58.5175,
+          "ath_change_pct": -58.87066,
           "is_meme": false,
           "category": "mainstream",
           "image": "https://coin-images.coingecko.com/coins/images/279/large/ethereum.png?1696501628"
@@ -936,85 +938,24 @@
           "symbol": "SOL",
           "name": "Solana",
           "price": 84.52,
-          "market_cap": 47960817097,
+          "market_cap": 47995847932,
           "market_cap_rank": 7,
-          "volume_24h": 3814363537,
-          "change_24h": -4.32269,
-          "change_7d": -16.706061136937954,
-          "high_24h": 88.59,
-          "low_24h": 84.4,
+          "volume_24h": 4035997743,
+          "change_24h": -3.86939,
+          "change_7d": -18.72174462851006,
+          "high_24h": 88.36,
+          "low_24h": 82.99,
           "ath": 293.31,
-          "ath_change_pct": -71.18362,
+          "ath_change_pct": -71.18305,
           "is_meme": false,
           "category": "mainstream",
           "image": "https://coin-images.coingecko.com/coins/images/4128/large/solana.png?1718769756"
         }
       ],
-      "timestamp": "2026-02-09 16:58:52.138959"
+      "timestamp": "2026-02-09 15:30:05.080900"
     },
     "futures": {
-      "commodity": [
-        {
-          "code": "AU",
-          "name": "沪金",
-          "exchange": "SHFE",
-          "price": 1115.86,
-          "spot_price": 1114.61,
-          "dominant_contract": "au2604",
-          "basis_rate": 0.11,
-          "change": 0,
-          "change_pct": 0,
-          "type": "commodity"
-        },
-        {
-          "code": "AG",
-          "name": "沪银",
-          "exchange": "SHFE",
-          "price": 19892.0,
-          "spot_price": 22331.67,
-          "dominant_contract": "ag2604",
-          "basis_rate": -10.92,
-          "change": 0,
-          "change_pct": 0,
-          "type": "commodity"
-        },
-        {
-          "code": "CU",
-          "name": "沪铜",
-          "exchange": "SHFE",
-          "price": 101510.0,
-          "spot_price": 100996.67,
-          "dominant_contract": "cu2603",
-          "basis_rate": 0.51,
-          "change": 0,
-          "change_pct": 0,
-          "type": "commodity"
-        },
-        {
-          "code": "RB",
-          "name": "螺纹钢",
-          "exchange": "SHFE",
-          "price": 3069.0,
-          "spot_price": 3170.0,
-          "dominant_contract": "rb2605",
-          "basis_rate": -3.19,
-          "change": 0,
-          "change_pct": 0,
-          "type": "commodity"
-        },
-        {
-          "code": "I",
-          "name": "铁矿石",
-          "exchange": "DCE",
-          "price": 761.5,
-          "spot_price": 781.44,
-          "dominant_contract": "i2605",
-          "basis_rate": -2.55,
-          "change": 0,
-          "change_pct": 0,
-          "type": "commodity"
-        }
-      ],
+      "commodity": [],
       "index_futures": [
         {
           "code": "IF",
@@ -1057,50 +998,64 @@
         {
           "code": "CL=F",
           "name": "WTI原油",
-          "price": 62.91,
-          "change": -0.64,
-          "change_pct": -1.01,
+          "price": 64.01,
+          "change": 0.46,
+          "change_pct": 0.72,
           "unit": "美元/桶",
           "type": "international"
         },
         {
           "code": "BZ=F",
           "name": "布伦特原油",
-          "price": 67.4,
-          "change": -0.65,
-          "change_pct": -0.96,
+          "price": 68.59,
+          "change": 0.54,
+          "change_pct": 0.79,
           "unit": "美元/桶",
           "type": "international"
         },
         {
           "code": "NG=F",
           "name": "天然气",
-          "price": 3.21,
-          "change": -0.21,
-          "change_pct": -6.2,
+          "price": 3.19,
+          "change": -0.23,
+          "change_pct": -6.84,
           "unit": "美元/MMBtu",
           "type": "international"
         },
         {
           "code": "HG=F",
           "name": "COMEX铜",
-          "price": 5.9,
-          "change": 0.04,
-          "change_pct": 0.69,
+          "price": 5.93,
+          "change": 0.06,
+          "change_pct": 1.1,
           "unit": "美元/磅",
           "type": "international"
         }
       ],
-      "timestamp": "2026-02-09 16:58:52.600176"
+      "timestamp": "2026-02-09 15:30:35.742186"
     },
     "github": {
       "trending": [
+        {
+          "name": "vouch",
+          "full_name": "mitchellh/vouch",
+          "description": "A community trust management system based on explicit vouches to participate.",
+          "url": "https://github.com/mitchellh/vouch",
+          "stars": 2037,
+          "forks": 34,
+          "language": "Nushell",
+          "topics": [],
+          "created_at": "2026-02-05T20:50:58+00:00",
+          "updated_at": "2026-02-09T15:29:31+00:00",
+          "owner": "mitchellh",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/1299?v=4"
+        },
         {
           "name": "ClawRouter",
           "full_name": "BlockRunAI/ClawRouter",
           "description": "Smart LLM router — save 78% on inference costs. 30+ models, one wallet, x402 micropayments.",
           "url": "https://github.com/BlockRunAI/ClawRouter",
-          "stars": 1878,
+          "stars": 1904,
           "forks": 180,
           "language": "TypeScript",
           "topics": [
@@ -1121,49 +1076,35 @@
             "x402"
           ],
           "created_at": "2026-02-03T17:32:00+00:00",
-          "updated_at": "2026-02-09T08:56:54+00:00",
+          "updated_at": "2026-02-09T15:17:04+00:00",
           "owner": "BlockRunAI",
           "owner_avatar": "https://avatars.githubusercontent.com/u/250889376?v=4"
-        },
-        {
-          "name": "vouch",
-          "full_name": "mitchellh/vouch",
-          "description": "A community trust management system based on explicit vouches to participate.",
-          "url": "https://github.com/mitchellh/vouch",
-          "stars": 1756,
-          "forks": 29,
-          "language": "Nushell",
-          "topics": [],
-          "created_at": "2026-02-05T20:50:58+00:00",
-          "updated_at": "2026-02-09T08:56:42+00:00",
-          "owner": "mitchellh",
-          "owner_avatar": "https://avatars.githubusercontent.com/u/1299?v=4"
         },
         {
           "name": "claudes-c-compiler",
           "full_name": "anthropics/claudes-c-compiler",
           "description": "Claude Opus 4.6 wrote a dependency-free C compiler in Rust, with backends targeting x86 (64- and 32-bit), ARM, and RISC-V, capable of compiling a booting Linux kernel.",
           "url": "https://github.com/anthropics/claudes-c-compiler",
-          "stars": 1752,
-          "forks": 94,
+          "stars": 1803,
+          "forks": 96,
           "language": "Rust",
           "topics": [],
           "created_at": "2026-02-04T22:42:22+00:00",
-          "updated_at": "2026-02-09T08:58:22+00:00",
+          "updated_at": "2026-02-09T15:25:46+00:00",
           "owner": "anthropics",
           "owner_avatar": "https://avatars.githubusercontent.com/u/76263028?v=4"
         },
         {
           "name": "excalidraw-mcp-app",
           "full_name": "antonpk1/excalidraw-mcp-app",
-          "description": "Excalidraw MCP App",
+          "description": "Fast and streamable Excalidraw MCP App",
           "url": "https://github.com/antonpk1/excalidraw-mcp-app",
-          "stars": 996,
-          "forks": 67,
+          "stars": 1013,
+          "forks": 70,
           "language": "TypeScript",
           "topics": [],
           "created_at": "2026-02-04T23:04:00+00:00",
-          "updated_at": "2026-02-09T08:56:24+00:00",
+          "updated_at": "2026-02-09T15:19:50+00:00",
           "owner": "antonpk1",
           "owner_avatar": "https://avatars.githubusercontent.com/u/105124934?v=4"
         },
@@ -1172,8 +1113,8 @@
           "full_name": "foru17/clash-master",
           "description": "A modern and elegant dashboard for visualizing and managing Clash network traffic.",
           "url": "https://github.com/foru17/clash-master",
-          "stars": 915,
-          "forks": 58,
+          "stars": 936,
+          "forks": 60,
           "language": "TypeScript",
           "topics": [
             "clash",
@@ -1181,34 +1122,71 @@
             "traffic-monitor"
           ],
           "created_at": "2026-02-05T17:22:09+00:00",
-          "updated_at": "2026-02-09T08:57:05+00:00",
+          "updated_at": "2026-02-09T15:21:10+00:00",
           "owner": "foru17",
           "owner_avatar": "https://avatars.githubusercontent.com/u/1920586?v=4"
+        },
+        {
+          "name": "CodePilot",
+          "full_name": "op7418/CodePilot",
+          "description": "A native desktop GUI for Claude Code — chat, code, and manage projects visually. Built with Electron + Next.js.",
+          "url": "https://github.com/op7418/CodePilot",
+          "stars": 763,
+          "forks": 101,
+          "language": "TypeScript",
+          "topics": [
+            "ai",
+            "anthropic",
+            "claude",
+            "claude-code",
+            "desktop-app",
+            "electron",
+            "gui",
+            "nextjs"
+          ],
+          "created_at": "2026-02-06T12:38:55+00:00",
+          "updated_at": "2026-02-09T15:28:18+00:00",
+          "owner": "op7418",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/13505770?v=4"
         },
         {
           "name": "rememory",
           "full_name": "eljojo/rememory",
           "description": "have a plan for the worst-case scenario",
           "url": "https://github.com/eljojo/rememory",
-          "stars": 734,
-          "forks": 28,
+          "stars": 757,
+          "forks": 29,
           "language": "Go",
           "topics": [
             "age-encryption",
             "shamir-secret-sharing"
           ],
           "created_at": "2026-02-03T08:13:42+00:00",
-          "updated_at": "2026-02-09T08:29:42+00:00",
+          "updated_at": "2026-02-09T15:04:05+00:00",
           "owner": "eljojo",
           "owner_avatar": "https://avatars.githubusercontent.com/u/491230?v=4"
+        },
+        {
+          "name": "codemoss",
+          "full_name": "zhukunpenglinyutong/codemoss",
+          "description": "下一代VibeCoding，何须用IDE",
+          "url": "https://github.com/zhukunpenglinyutong/codemoss",
+          "stars": 657,
+          "forks": 28,
+          "language": "TypeScript",
+          "topics": [],
+          "created_at": "2026-02-03T15:08:25+00:00",
+          "updated_at": "2026-02-09T15:18:31+00:00",
+          "owner": "zhukunpenglinyutong",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/31264015?v=4"
         },
         {
           "name": "paqctl",
           "full_name": "SamNet-dev/paqctl",
           "description": "Unified proxy manager for bypassing firewalls - supports Paqet (KCP/raw socket) and GFW-Knocker (violated TCP/QUIC) with dual-backend simultaneous operation",
           "url": "https://github.com/SamNet-dev/paqctl",
-          "stars": 607,
-          "forks": 74,
+          "stars": 617,
+          "forks": 77,
           "language": "Shell",
           "topics": [
             "china",
@@ -1225,60 +1203,23 @@
             "windows"
           ],
           "created_at": "2026-02-04T04:39:02+00:00",
-          "updated_at": "2026-02-09T08:41:53+00:00",
+          "updated_at": "2026-02-09T15:09:11+00:00",
           "owner": "SamNet-dev",
           "owner_avatar": "https://avatars.githubusercontent.com/u/243033894?v=4"
-        },
-        {
-          "name": "CodePilot",
-          "full_name": "op7418/CodePilot",
-          "description": "A native desktop GUI for Claude Code — chat, code, and manage projects visually. Built with Electron + Next.js.",
-          "url": "https://github.com/op7418/CodePilot",
-          "stars": 549,
-          "forks": 86,
-          "language": "TypeScript",
-          "topics": [
-            "ai",
-            "anthropic",
-            "claude",
-            "claude-code",
-            "desktop-app",
-            "electron",
-            "gui",
-            "nextjs"
-          ],
-          "created_at": "2026-02-06T12:38:55+00:00",
-          "updated_at": "2026-02-09T08:58:15+00:00",
-          "owner": "op7418",
-          "owner_avatar": "https://avatars.githubusercontent.com/u/13505770?v=4"
         },
         {
           "name": "code-review-expert",
           "full_name": "sanyuan0704/code-review-expert",
           "description": "Expert code review skill: SOLID, security, performance, error handling, boundary conditions",
           "url": "https://github.com/sanyuan0704/code-review-expert",
-          "stars": 541,
-          "forks": 54,
+          "stars": 569,
+          "forks": 59,
           "language": "Unknown",
           "topics": [],
           "created_at": "2026-02-04T06:44:11+00:00",
-          "updated_at": "2026-02-09T08:51:02+00:00",
+          "updated_at": "2026-02-09T15:28:08+00:00",
           "owner": "sanyuan0704",
           "owner_avatar": "https://avatars.githubusercontent.com/u/39261479?v=4"
-        },
-        {
-          "name": "jcp",
-          "full_name": "run-bigpig/jcp",
-          "description": "韭菜盘 (JCP AI) - AI 驱动的智能股票分析系统，基于 Wails + Go + React，支持多 Agent 协作分析",
-          "url": "https://github.com/run-bigpig/jcp",
-          "stars": 528,
-          "forks": 122,
-          "language": "Go",
-          "topics": [],
-          "created_at": "2026-02-04T10:29:51+00:00",
-          "updated_at": "2026-02-09T08:45:03+00:00",
-          "owner": "run-bigpig",
-          "owner_avatar": "https://avatars.githubusercontent.com/u/85109084?v=4"
         }
       ],
       "ai_trending": [
@@ -1287,12 +1228,12 @@
           "full_name": "vercel-labs/agent-browser",
           "description": "Browser automation CLI for AI agents",
           "url": "https://github.com/vercel-labs/agent-browser",
-          "stars": 13338,
-          "forks": 772,
+          "stars": 13384,
+          "forks": 778,
           "language": "TypeScript",
           "topics": [],
           "created_at": "2026-01-11T05:38:15+00:00",
-          "updated_at": "2026-02-09T08:51:43+00:00",
+          "updated_at": "2026-02-09T15:26:29+00:00",
           "owner": "vercel-labs",
           "owner_avatar": "https://avatars.githubusercontent.com/u/108547162?v=4"
         },
@@ -1301,8 +1242,8 @@
           "full_name": "sickn33/antigravity-awesome-skills",
           "description": "The Ultimate Collection of 700+ Agentic Skills for Claude Code/Antigravity/Cursor. Battle-tested, high-performance skills for AI agents including official skills from Anthropic and Vercel.",
           "url": "https://github.com/sickn33/antigravity-awesome-skills",
-          "stars": 8003,
-          "forks": 1655,
+          "stars": 8054,
+          "forks": 1665,
           "language": "Python",
           "topics": [
             "agentic-skills",
@@ -1315,7 +1256,7 @@
             "security-auditing"
           ],
           "created_at": "2026-01-14T17:48:09+00:00",
-          "updated_at": "2026-02-09T08:21:48+00:00",
+          "updated_at": "2026-02-09T15:16:01+00:00",
           "owner": "sickn33",
           "owner_avatar": "https://avatars.githubusercontent.com/u/184072420?v=4"
         },
@@ -1324,8 +1265,8 @@
           "full_name": "coreyhaines31/marketingskills",
           "description": "Marketing skills for Claude Code and AI agents. CRO, copywriting, SEO, analytics, and growth engineering.",
           "url": "https://github.com/coreyhaines31/marketingskills",
-          "stars": 6916,
-          "forks": 778,
+          "stars": 6962,
+          "forks": 782,
           "language": "Unknown",
           "topics": [
             "claude",
@@ -1333,7 +1274,7 @@
             "marketing"
           ],
           "created_at": "2026-01-15T19:45:23+00:00",
-          "updated_at": "2026-02-09T08:57:42+00:00",
+          "updated_at": "2026-02-09T15:26:58+00:00",
           "owner": "coreyhaines31",
           "owner_avatar": "https://avatars.githubusercontent.com/u/34802794?v=4"
         },
@@ -1342,12 +1283,12 @@
           "full_name": "Leey21/awesome-ai-research-writing",
           "description": "Elevate your AI research writing, no more tedious polishing ✨ ",
           "url": "https://github.com/Leey21/awesome-ai-research-writing",
-          "stars": 4962,
-          "forks": 389,
+          "stars": 5046,
+          "forks": 397,
           "language": "Unknown",
           "topics": [],
           "created_at": "2026-01-30T07:59:30+00:00",
-          "updated_at": "2026-02-09T08:56:09+00:00",
+          "updated_at": "2026-02-09T15:18:55+00:00",
           "owner": "Leey21",
           "owner_avatar": "https://avatars.githubusercontent.com/u/112166430?v=4"
         },
@@ -1356,12 +1297,12 @@
           "full_name": "blader/humanizer",
           "description": "Claude Code skill that removes signs of AI-generated writing from text",
           "url": "https://github.com/blader/humanizer",
-          "stars": 4464,
-          "forks": 369,
+          "stars": 4485,
+          "forks": 370,
           "language": "Unknown",
           "topics": [],
           "created_at": "2026-01-18T05:30:15+00:00",
-          "updated_at": "2026-02-09T08:45:17+00:00",
+          "updated_at": "2026-02-09T14:56:27+00:00",
           "owner": "blader",
           "owner_avatar": "https://avatars.githubusercontent.com/u/1672?v=4"
         },
@@ -1370,12 +1311,12 @@
           "full_name": "dwzhu-pku/PaperBanana",
           "description": "PaperBanana: Automating Academic Illustration For AI Scientists",
           "url": "https://github.com/dwzhu-pku/PaperBanana",
-          "stars": 2840,
-          "forks": 137,
+          "stars": 2959,
+          "forks": 142,
           "language": "JavaScript",
           "topics": [],
           "created_at": "2026-01-30T06:55:48+00:00",
-          "updated_at": "2026-02-09T08:56:01+00:00",
+          "updated_at": "2026-02-09T15:24:40+00:00",
           "owner": "dwzhu-pku",
           "owner_avatar": "https://avatars.githubusercontent.com/u/52273452?v=4"
         },
@@ -1384,12 +1325,12 @@
           "full_name": "DevAgentForge/Open-Claude-Cowork",
           "description": "OpenSource Claude Cowork. A desktop AI assistant that helps you with programming, file management, and any task you can describe.",
           "url": "https://github.com/DevAgentForge/Open-Claude-Cowork",
-          "stars": 2813,
-          "forks": 380,
+          "stars": 2817,
+          "forks": 381,
           "language": "TypeScript",
           "topics": [],
           "created_at": "2026-01-13T09:34:40+00:00",
-          "updated_at": "2026-02-09T07:28:31+00:00",
+          "updated_at": "2026-02-09T15:26:04+00:00",
           "owner": "DevAgentForge",
           "owner_avatar": "https://avatars.githubusercontent.com/u/253069662?v=4"
         },
@@ -1398,12 +1339,12 @@
           "full_name": "op7418/Humanizer-zh",
           "description": "Humanizer 的汉化版本，Claude Code Skills，旨在消除文本中 AI 生成的痕迹。",
           "url": "https://github.com/op7418/Humanizer-zh",
-          "stars": 2771,
-          "forks": 264,
+          "stars": 2791,
+          "forks": 265,
           "language": "Unknown",
           "topics": [],
           "created_at": "2026-01-19T04:23:44+00:00",
-          "updated_at": "2026-02-09T08:37:27+00:00",
+          "updated_at": "2026-02-09T15:12:58+00:00",
           "owner": "op7418",
           "owner_avatar": "https://avatars.githubusercontent.com/u/13505770?v=4"
         },
@@ -1412,8 +1353,8 @@
           "full_name": "Dimillian/CodexMonitor",
           "description": "An app to monitor the (Codex) situation",
           "url": "https://github.com/Dimillian/CodexMonitor",
-          "stars": 2336,
-          "forks": 213,
+          "stars": 2340,
+          "forks": 214,
           "language": "TypeScript",
           "topics": [
             "ai",
@@ -1423,7 +1364,7 @@
             "tauri-app"
           ],
           "created_at": "2026-01-11T07:56:35+00:00",
-          "updated_at": "2026-02-09T08:57:57+00:00",
+          "updated_at": "2026-02-09T15:14:47+00:00",
           "owner": "Dimillian",
           "owner_avatar": "https://avatars.githubusercontent.com/u/535509?v=4"
         },
@@ -1432,8 +1373,8 @@
           "full_name": "benjitaylor/agentation",
           "description": "The visual feedback tool for agents.",
           "url": "https://github.com/benjitaylor/agentation",
-          "stars": 2035,
-          "forks": 146,
+          "stars": 2048,
+          "forks": 147,
           "language": "TypeScript",
           "topics": [
             "ai",
@@ -1442,12 +1383,12 @@
             "ui"
           ],
           "created_at": "2026-01-18T02:01:24+00:00",
-          "updated_at": "2026-02-09T08:25:04+00:00",
+          "updated_at": "2026-02-09T15:28:24+00:00",
           "owner": "benjitaylor",
           "owner_avatar": "https://avatars.githubusercontent.com/u/30378142?v=4"
         }
       ],
-      "timestamp": "2026-02-09 16:58:53.418022"
+      "timestamp": "2026-02-09 15:30:06.562277"
     }
   },
   "errors": []

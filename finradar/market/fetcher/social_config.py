@@ -115,15 +115,24 @@ class SocialSourceConfig:
                 self._raw_config = yaml.safe_load(f) or {}
         except Exception as e:
             print(f"❌ 读取配置文件失败: {e}")
+
+    @staticmethod
+    def _env_bool(name: str, default: bool) -> bool:
+        value = os.environ.get(name)
+        if value is None:
+            return default
+        return str(value).strip().lower() in ("1", "true", "yes", "on")
     
     @property
     def twitter(self) -> TwitterConfig:
         """获取 Twitter/Nitter RSS 配置"""
         if self._twitter is None:
             twitter_config = self._raw_config.get("twitter", {})
+            config_enabled = twitter_config.get("enabled", True)
+            config_instance = twitter_config.get("nitter_instance", "http://localhost:8080")
             self._twitter = TwitterConfig(
-                enabled=twitter_config.get("enabled", True),
-                nitter_instance=twitter_config.get("nitter_instance", "http://localhost:8080"),
+                enabled=self._env_bool("ENABLE_TWITTER", config_enabled),
+                nitter_instance=os.environ.get("NITTER_INSTANCE", config_instance),
                 accounts=twitter_config.get("accounts", {}),
                 max_tweets_per_user=twitter_config.get("max_tweets_per_user", 10),
                 max_age_hours=twitter_config.get("max_age_hours", 12),
@@ -140,11 +149,14 @@ class SocialSourceConfig:
         """获取微信公众号配置"""
         if self._wechat is None:
             wechat_config = self._raw_config.get("wechat", {})
+            config_enabled = wechat_config.get("enabled", True)
+            config_service_url = wechat_config.get("service_url", "http://localhost:3001")
+            config_auth_key = wechat_config.get("auth_key", "")
             self._wechat = WechatConfig(
-                enabled=wechat_config.get("enabled", True),
-                service_url=wechat_config.get("service_url", "http://localhost:3001"),
+                enabled=self._env_bool("ENABLE_WECHAT", config_enabled),
+                service_url=os.environ.get("WECHAT_SERVICE_URL", config_service_url),
                 timeout=wechat_config.get("timeout", 30),
-                auth_key=wechat_config.get("auth_key", ""),
+                auth_key=os.environ.get("WECHAT_AUTH_KEY", config_auth_key),
                 accounts=wechat_config.get("accounts", {}),
                 max_articles_per_account=wechat_config.get("max_articles_per_account", 20),
                 max_age_hours=wechat_config.get("max_age_hours", 24),

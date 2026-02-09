@@ -29,27 +29,27 @@ case "${RUN_MODE:-cron}" in
     # ┌──────────────────────────────────────────────┐
     # │  调度策略:                                    │
     # │  • 市场数据 + NewsNow热榜: 每30分钟           │
-    # │  • Twitter + 微信公众号:   07:00 / 19:00      │
-    # │  早报覆盖 19:00→07:00，晚报覆盖 07:00→19:00   │
+    # │  • Twitter + 微信公众号:   08:00 / 20:00      │
+    # │  早报覆盖 20:00→08:00，晚报覆盖 08:00→20:00   │
     # └──────────────────────────────────────────────┘
 
     cat > /tmp/crontab <<'EOF'
 # 每30分钟: 市场数据 + NewsNow热榜
 */30 * * * * cd /app && /usr/local/bin/python -m finradar --mode market >> /var/log/market.log 2>&1 && /usr/local/bin/python -m finradar --mode news >> /var/log/finradar.log 2>&1
 
-# 每天 07:00: 抓取 Twitter + 微信 (早报素材，覆盖过去12小时 19:00→07:00)
+# 每天 08:00: 抓取 Twitter + 微信 (早报素材，覆盖过去12小时 20:00→08:00)
 # 抓取完成后自动生成早报
-0 7 * * * cd /app && /usr/local/bin/python -m finradar --mode social >> /var/log/social.log 2>&1 && /usr/local/bin/python scripts/generate_report.py --type morning >> /var/log/report.log 2>&1
+0 8 * * * cd /app && /usr/local/bin/python -m finradar --mode social >> /var/log/social.log 2>&1 && /usr/local/bin/python scripts/generate_report.py --type morning >> /var/log/report.log 2>&1
 
-# 每天 19:00: 抓取 Twitter + 微信 (晚报素材，覆盖过去12小时 07:00→19:00)
+# 每天 20:00: 抓取 Twitter + 微信 (晚报素材，覆盖过去12小时 08:00→20:00)
 # 抓取完成后自动生成晚报
-0 19 * * * cd /app && /usr/local/bin/python -m finradar --mode social >> /var/log/social.log 2>&1 && /usr/local/bin/python scripts/generate_report.py --type evening >> /var/log/report.log 2>&1
+0 20 * * * cd /app && /usr/local/bin/python -m finradar --mode social >> /var/log/social.log 2>&1 && /usr/local/bin/python scripts/generate_report.py --type evening >> /var/log/report.log 2>&1
 EOF
 
     echo "📅 定时任务配置:"
     echo "   ⏱  每30分钟  → 市场数据 + NewsNow热榜"
-    echo "   🌅 每奩07:00 → Twitter + 微信 + 生成早报"
-    echo "   🌇 每奩19:00 → Twitter + 微信 + 生成晚报"
+    echo "   🌅 每天08:00 → Twitter + 微信 + 生成早报"
+    echo "   🌇 每天20:00 → Twitter + 微信 + 生成晚报"
     echo ""
 
     if ! /usr/local/bin/supercronic -test /tmp/crontab; then

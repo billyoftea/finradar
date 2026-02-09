@@ -1,188 +1,41 @@
-╔═══════════════════════════════════════════════════════════════╗
-║                  finradar 每日数据抓取                        ║
-║                     快速参考卡片                              ║
-║                  服务器: 13.212.190.29                        ║
-╚═══════════════════════════════════════════════════════════════╝
+finradar 快速开始（本地优先）
 
-┌─────────────────────────────────────────────────────────────┐
-│  📊 系统运行状态检查（必读！）                                │
-└─────────────────────────────────────────────────────────────┘
+1) 初始化环境（首次）
+./scripts/local.sh setup
 
-    # 1️⃣ 检查所有相关容器是否在运行
-    docker ps -a | grep -E "(nitter|wechat|finradar)"
-    
-    应该看到 4 个容器都是 "Up" 状态：
-    ✅ finradar-market              (自动调度以下任务)
-       ⏱  每30分钟 → 金融市场数据 (A股/期货/贵金属/加密货币) + NewsNow热榜
-       🌅 每天07:00 → Twitter (12个账号) + 微信公众号 (67个) [早报]
-       🌇 每天19:00 → Twitter + 微信公众号 [晚报]
-    
-    ✅ wechat-article-exporter      (微信文章服务, 端口3001)
-    ✅ nitter                        (Twitter RSS服务, 端口8080)
-    ✅ nitter-redis                  (Redis缓存数据库, nitter依赖它)
+2) 安装定时任务（08:00/20:00 报告 + 每30分钟市场/热榜）
+./scripts/local.sh cron-install
 
-    💡 为什么有 nitter 和 nitter-redis 两个容器？
-       - nitter: Twitter RSS 主服务（你访问的是这个）
-       - nitter-redis: Redis 数据库（nitter 用它缓存数据，提高速度）
-       它们是配套使用的，类似于"应用程序+数据库"的关系
-    
-    💡 wechat-article-exporter 显示 (unhealthy) 是正常的
-       只要状态是 "Up" 就可以使用
+3) 单次测试
+./scripts/local.sh run social
+./scripts/local.sh report evening
 
-    # 2️⃣ 快速检查核心服务
-    docker ps | grep finradar-market
-    
-    看到 "Up XX hours" 表示服务正常运行
+4) 查看状态
+./scripts/local.sh status
 
-    # 3️⃣ 检查最新日志（查看是否有错误）
-    docker logs finradar-market --tail 50
-    
-    # 4️⃣ 查看今天的输出文件
-    ls -lh output/market/ | tail -3
-    ls -lh output/news/ | tail -3
-    
-    # 5️⃣ 查看最近一次执行时间
-    docker logs finradar-market 2>&1 | grep "开始市场追踪" | tail -1
+-----------------------------
+可选：Docker 方式
+-----------------------------
 
+构建并启动（含社交源容器）：
+./run.sh build
+./run.sh start all
 
-┌─────────────────────────────────────────────────────────────┐
-│  🤖 自动化调度策略                                           │
-└─────────────────────────────────────────────────────────────┘
+只启主服务，不拉起社交源：
+./run.sh start all --no-sources
 
-    ⏱  每30分钟:  市场数据 + NewsNow热榜
-    🌅 每天07:00: Twitter + 微信公众号 → 早报 (覆盖 19:00→07:00)
-    🌇 每天19:00: Twitter + 微信公众号 → 晚报 (覆盖 07:00→19:00)
-    
-    输出文件：
-    📊 金融市场    → output/market/market_data_20260207.json (每30分钟覆盖)
-    🌅 早报数据    → output/market/market_data_20260207_morning.json (07:00)
-    🌇 晚报数据    → output/market/market_data_20260207_evening.json (19:00)
-    🔥 NewsNow热榜 → output/news/*.db
-    
-    早报和晚报数据不会相互覆盖，分别保存
-    无需手动操作，全自动运行
+查看日志：
+./run.sh logs
 
+-----------------------------
+微信登录说明
+-----------------------------
 
-┌─────────────────────────────────────────────────────────────┐
-│  🚀 手动执行（测试用）                                        │
-└─────────────────────────────────────────────────────────────┘
+如果微信抓取为空，请先登录 wechat-exporter：
+1. 打开 http://127.0.0.1:3001
+2. 微信扫码登录
+3. 更新 auth key（config/config.yaml 的 wechat.auth_key，或 WECHAT_AUTH_KEY 环境变量）
 
-    # 全部执行
-    docker exec finradar-market python -m finradar --mode all
-
-    # 仅市场数据
-    docker exec finradar-market python -m finradar --mode market
-    
-    # 仅 Twitter + 微信
-    docker exec finradar-market python -m finradar --mode social
-    
-    # 仅热榜新闻
-    docker exec finradar-market python -m finradar
-
-
-┌─────────────────────────────────────────────────────────────┐
-│  📂 输出文件位置                                             │
-└─────────────────────────────────────────────────────────────┘
-
-    output/market/market_data_20260207.json          → 最新市场数据 (每30分钟更新)
-    output/market/market_data_20260207_morning.json  → 早报数据 (07:00, Twitter+微信)
-    output/market/market_data_20260207_evening.json  → 晚报数据 (19:00, Twitter+微信)
-    output/news/2026-02-07.db                        → NewsNow热榜数据库
-
-
-┌─────────────────────────────────────────────────────────────┐
-│  🔧 常见问题排查（Docker 新手友好版）                        │
-└─────────────────────────────────────────────────────────────┘
-
-    问题1: 容器没有运行？
-    ────────────────────────────────────────────────
-    # 检查容器状态
-    docker ps -a | grep finradar-market
-    
-    # 如果显示 "Exited"，重启容器
-    cd /home/ubuntu/finradar/docker
-    docker compose -f docker-compose-market.yml up -d
-
-
-    问题2: Twitter HTTP 429 错误 (速率限制)
-    ────────────────────────────────────────────────
-    # 更新 Twitter token
-    ./scripts/update-twitter-token.sh
-
-
-    问题3: 微信公众号抓取失败
-    ────────────────────────────────────────────────
-    # 方法1: 更新登录密钥
-    ./scripts/update-wechat-key.sh
-    
-    # 方法2: 重新登录（用浏览器打开）
-    http://13.212.190.29:3001
-
-
-    问题4: 查看详细错误日志
-    ────────────────────────────────────────────────
-    # 查看最近100行日志
-    docker logs finradar-market --tail 100
-    
-    # 实时监控日志（按 Ctrl+C 退出）
-    docker logs finradar-market -f
-
-
-    问题5: 容器需要重新构建？
-    ────────────────────────────────────────────────
-    cd /home/ubuntu/finradar
-    docker build -f docker/Dockerfile.market -t finradar-market:latest .
-    cd docker
-    docker compose -f docker-compose-market.yml up -d --force-recreate
-
-
-┌─────────────────────────────────────────────────────────────┐
-│  🌐 访问服务网页                                             │
-└─────────────────────────────────────────────────────────────┘
-
-    Nitter (Twitter RSS):
-      http://13.212.190.29:8080
-    
-    微信公众号导出器:
-      http://13.212.190.29:3001
-      
-    用浏览器打开以上网址即可访问
-
-
-┌─────────────────────────────────────────────────────────────┐
-│  🔍 Docker 基础命令速查                                       │
-└─────────────────────────────────────────────────────────────┘
-
-    查看所有容器:              docker ps -a
-    查看运行中的容器:          docker ps
-    启动容器:                  docker start <容器名>
-    停止容器:                  docker stop <容器名>
-    重启容器:                  docker restart <容器名>
-    查看日志:                  docker logs <容器名>
-    进入容器内部:              docker exec -it <容器名> bash
-    
-    示例：
-    docker logs finradar-market --tail 50   # 查看最新50行日志
-    docker restart finradar-market          # 重启市场追踪容器
-
-
-┌─────────────────────────────────────────────────────────────┐
-│  📖 详细文档                                                 │
-└─────────────────────────────────────────────────────────────┘
-
-    cat docs/每日市场追踪使用指南.md  # 配置说明
-
-
-┌─────────────────────────────────────────────────────────────┐
-│  ✅ 调度总结                                                 │
-└─────────────────────────────────────────────────────────────┘
-
-    ⏱  每30分钟 → 市场数据 (A股/期货/贵金属/加密货币) + NewsNow热榜
-    🌅 07:00    → Twitter + 微信公众号 (过去12小时, 早报素材)
-    🌇 19:00    → Twitter + 微信公众号 (过去12小时, 晚报素材)
-    
-    早报和晚报各覆盖12小时，内容不重叠
-
-╔═══════════════════════════════════════════════════════════════╗
-║  💡 提示：手动测试用 docker exec finradar-market 命令        ║
-╚═══════════════════════════════════════════════════════════════╝
+详细说明见：
+- README.local.md
+- docs/项目体检与改造报告.md

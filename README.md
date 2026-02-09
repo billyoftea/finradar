@@ -1,5 +1,7 @@
 <div align="center" id="FinRadar">
 
+> 你当前仓库的本地化改造说明请优先查看：[`README.local.md`](README.local.md) 与 [`docs/项目体检与改造报告.md`](docs/项目体检与改造报告.md)
+
 <a href="https://github.com/sansan0/FinRadar" title="FinRadar">
   <img src="/_image/banner.webp" alt="FinRadar Banner" width="80%">
 </a>

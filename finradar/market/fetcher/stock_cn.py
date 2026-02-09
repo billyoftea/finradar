@@ -16,7 +16,7 @@ AkShare 功能概览:
 """
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Dict, Any, Optional
 import logging
 
@@ -73,6 +73,7 @@ class StockCNFetcher(BaseFetcher):
         
         # 合并默认配置和用户配置
         self.focus_sectors = self.config.get("focus_sectors", self.DEFAULT_FOCUS_SECTORS)
+        self._trade_day_cache: Dict[str, bool] = {}
     
     async def fetch(self) -> Dict[str, Any]:
         """
@@ -81,6 +82,19 @@ class StockCNFetcher(BaseFetcher):
         Returns:
             包含指数、板块、资金流向等数据的字典
         """
+        now = datetime.now()
+        if not self._is_trading_day(now.date()):
+            logger.info("📅 今日A股休市，跳过A股行情抓取")
+            return {
+                "indices": [],
+                "north_flow": {},
+                "sectors": [],
+                "market_stats": {},
+                "market_closed": True,
+                "market_status": "A股休市",
+                "timestamp": now,
+            }
+
         # 使用线程池执行同步的 akshare 调用
         loop = asyncio.get_event_loop()
         
@@ -100,8 +114,36 @@ class StockCNFetcher(BaseFetcher):
             "north_flow": north_flow if not isinstance(north_flow, Exception) else None,
             "sectors": sectors if not isinstance(sectors, Exception) else None,
             "market_stats": market_stats if not isinstance(market_stats, Exception) else None,
-            "timestamp": datetime.now()
+            "market_closed": False,
+            "market_status": "正常交易",
+            "timestamp": now
         }
+
+    def _is_trading_day(self, check_day: date) -> bool:
+        """
+        判断是否为A股交易日。
+
+        优先使用 AkShare 交易日历，失败时回退到“周一至周五”规则。
+        """
+        key = check_day.isoformat()
+        if key in self._trade_day_cache:
+            return self._trade_day_cache[key]
+
+        try:
+            df = ak.tool_trade_date_hist_sina()
+            if df is not None and not df.empty:
+                # 兼容 datetime/date/string 等类型
+                trade_days = {str(v)[:10] for v in df.iloc[:, 0].tolist()}
+                is_trade_day = key in trade_days
+                self._trade_day_cache[key] = is_trade_day
+                return is_trade_day
+        except Exception as e:
+            logger.warning(f"交易日历查询失败，回退周规则: {e}")
+
+        # 回退规则：周一到周五
+        is_trade_day = check_day.weekday() < 5
+        self._trade_day_cache[key] = is_trade_day
+        return is_trade_day
     
     def _fetch_indices(self) -> List[Dict]:
         """获取主要指数数据"""

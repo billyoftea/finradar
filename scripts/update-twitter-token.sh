@@ -26,7 +26,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 # 配置文件路径
-SESSIONS_FILE="$PROJECT_ROOT/fin_module/nitter/sessions.jsonl"
+SESSIONS_FILE="$PROJECT_ROOT/finradar/nitter/sessions.jsonl"
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BLUE}   Twitter Token 一键更新脚本${NC}"
@@ -88,11 +88,11 @@ echo -e "${YELLOW}📝 更新配置文件...${NC}"
 echo "{\"kind\": \"cookie\", \"auth_token\": \"$AUTH_TOKEN\", \"ct0\": \"$CT0\", \"id\": \"$USER_ID\"}" > "$SESSIONS_FILE"
 echo -e "${GREEN}✅ 配置文件已更新${NC}"
 
-# 重启 Nitter
+# 重启 Nitter（如果在 Docker 中运行）
 echo ""
 echo -e "${YELLOW}🔄 重启 Nitter 服务...${NC}"
-cd "$PROJECT_ROOT/fin_module/nitter"
-sudo docker compose restart
+cd "$PROJECT_ROOT/finradar/nitter"
+docker compose restart || true
 
 # 等待服务启动
 echo -e "${YELLOW}⏳ 等待服务启动...${NC}"
@@ -102,6 +102,9 @@ sleep 5
 echo ""
 echo -e "${YELLOW}🧪 测试 Twitter RSS...${NC}"
 NITTER_HOST=$(grep -oP 'nitter_instance:\s*"\K[^"]+' "$PROJECT_ROOT/config/config.yaml" 2>/dev/null || echo "http://localhost:8080")
+if [[ "$NITTER_HOST" == "http://nitter:8080" ]]; then
+    NITTER_HOST="http://127.0.0.1:8080"
+fi
 TEST_URL="${NITTER_HOST}/elonmusk/rss"
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$TEST_URL" 2>/dev/null || echo "000")
 

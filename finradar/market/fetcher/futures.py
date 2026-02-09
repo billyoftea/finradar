@@ -115,6 +115,7 @@ class FuturesFetcher(BaseFetcher):
         """
         loop = asyncio.get_event_loop()
         tasks = []
+        task_timeout = float(self.config.get("task_timeout", 45))
         
         if self.fetch_commodity and AKSHARE_AVAILABLE:
             tasks.append(("commodity", loop.run_in_executor(None, self._fetch_commodity_futures)))
@@ -129,8 +130,14 @@ class FuturesFetcher(BaseFetcher):
         results = {}
         for name, task in tasks:
             try:
-                result = await task
+                if task_timeout > 0:
+                    result = await asyncio.wait_for(task, timeout=task_timeout)
+                else:
+                    result = await task
                 results[name] = result if not isinstance(result, Exception) else []
+            except asyncio.TimeoutError:
+                logger.error(f"Error fetching {name} futures: timeout({task_timeout}s)")
+                results[name] = []
             except Exception as e:
                 logger.error(f"Error fetching {name} futures: {e}")
                 results[name] = []
@@ -267,11 +274,13 @@ class FuturesFetcher(BaseFetcher):
     def _fetch_international_futures(self) -> List[Dict]:
         """获取国际期货数据 (通过 yfinance)"""
         results = []
+        req_timeout = float(self.config.get("international_timeout", 10))
         
         for symbol, info in self.INTERNATIONAL_FUTURES.items():
             try:
                 ticker = yf.Ticker(symbol)
-                hist = ticker.history(period="5d")
+                # 避免网络阻塞导致整体市场任务长时间卡住
+                hist = ticker.history(period="5d", timeout=req_timeout)
                 
                 if hist.empty:
                     continue
@@ -349,10 +358,11 @@ class FuturesFetcher(BaseFetcher):
     
     def get_oil_price(self) -> Optional[Dict]:
         """快速获取原油价格"""
+        req_timeout = float(self.config.get("international_timeout", 10))
         for symbol in ["CL=F", "BZ=F"]:
             try:
                 ticker = yf.Ticker(symbol)
-                hist = ticker.history(period="2d")
+                hist = ticker.history(period="2d", timeout=req_timeout)
                 if not hist.empty:
                     return {
                         "symbol": symbol,
