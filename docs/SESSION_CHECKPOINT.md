@@ -101,3 +101,49 @@ a828342 stable v1.2
 bdf2b26 one docker
 ```
 
+## 2026-02-11 16:34:31 CST
+- 分支: `main`
+- 最新提交: `eddef6d`
+- 当前意图: 已新增自动提交脚本并完善流程文档
+- 下一步: 下一步在真实晚报窗口观察AI输出质量
+- 工作区状态:
+```
+ M finradar/market/fetcher/wechat_article.py
+ M finradar/market/tracker.py
+ M index.html
+ M output/html/latest/current.html
+ M output/index.html
+ M scripts/push_to_notion.py
+?? output/html/2026-02-10/
+?? output/html/2026-02-11/
+?? output/market/market_data_20260210.json
+?? output/market/market_data_20260210_evening.json
+?? output/market/market_data_20260210_morning.json
+?? output/market/market_data_20260211.json
+?? output/market/market_data_20260211_morning.json
+?? output/market/market_report_20260210.txt
+?? output/market/market_report_20260210_evening.txt
+?? output/market/market_report_20260210_morning.txt
+?? output/market/market_report_20260211.txt
+?? output/market/market_report_20260211_morning.txt
+?? output/news/2026-02-10.db
+?? output/news/2026-02-11.db
+?? output/report/daily_20260210_evening.md
+?? output/report/daily_20260210_morning.md
+?? output/report/daily_20260211_evening.md
+?? output/report/daily_20260211_morning.md
+?? output/rss/2026-02-10.db
+?? output/rss/2026-02-11.db
+```
+- 最近提交:
+```
+eddef6d feat(process): add safe auto-commit helper with checkpoint logging
+3fe6e08 docs(process): update session checkpoint after report refactor
+43f7d1a docs(process): add session handoff workflow and checkpoint tooling
+f527c73 feat(report): add web search context and structured brief format
+0426360 v2.0
+c672326 v 1.3
+a828342 stable v1.2
+7f8a8e8 stable v1.1
+```
+
