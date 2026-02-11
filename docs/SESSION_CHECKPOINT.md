@@ -55,3 +55,49 @@ af65521 feat: 添加时间过滤功能和全文抓取功能
 c6784b0 docs: 添加使用指南和一键更新脚本
 ```
 
+## 2026-02-11 16:32:40 CST
+- 分支: `main`
+- 最新提交: `43f7d1a`
+- 当前意图: 已完成联网检索与结构化摘要改造并提交
+- 下一步: 下一步观察报告质量并迭代检索关键词
+- 工作区状态:
+```
+ M finradar/market/fetcher/wechat_article.py
+ M finradar/market/tracker.py
+ M index.html
+ M output/html/latest/current.html
+ M output/index.html
+ M scripts/push_to_notion.py
+?? output/html/2026-02-10/
+?? output/html/2026-02-11/
+?? output/market/market_data_20260210.json
+?? output/market/market_data_20260210_evening.json
+?? output/market/market_data_20260210_morning.json
+?? output/market/market_data_20260211.json
+?? output/market/market_data_20260211_morning.json
+?? output/market/market_report_20260210.txt
+?? output/market/market_report_20260210_evening.txt
+?? output/market/market_report_20260210_morning.txt
+?? output/market/market_report_20260211.txt
+?? output/market/market_report_20260211_morning.txt
+?? output/news/2026-02-10.db
+?? output/news/2026-02-11.db
+?? output/report/daily_20260210_evening.md
+?? output/report/daily_20260210_morning.md
+?? output/report/daily_20260211_evening.md
+?? output/report/daily_20260211_morning.md
+?? output/rss/2026-02-10.db
+?? output/rss/2026-02-11.db
+```
+- 最近提交:
+```
+43f7d1a docs(process): add session handoff workflow and checkpoint tooling
+f527c73 feat(report): add web search context and structured brief format
+0426360 v2.0
+c672326 v 1.3
+a828342 stable v1.2
+7f8a8e8 stable v1.1
+650e931 stable v1
+bdf2b26 one docker
+```
+
