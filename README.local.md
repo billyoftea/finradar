@@ -22,6 +22,8 @@
 ```bash
 ./scripts/local.sh run social
 ./scripts/local.sh report evening
+# 指定联网检索关键词（逗号分隔）
+./.venv/bin/python scripts/generate_report.py --type evening --keywords "A股,美股,比特币,AI芯片"
 ```
 
 ## 3. DeepSeek 配置
@@ -86,9 +88,21 @@
 ./run.sh start all --no-sources
 ```
 
-## 7. 当前状态
+## 7. 开发连续性（跨会话）
+
+```bash
+# 记录当前进展与下一步，写入 docs/SESSION_CHECKPOINT.md
+./scripts/dev_checkpoint.sh "当前目标" "下一步"
+```
+
+建议先阅读：
+- `docs/开发流程与会话交接.md`
+- `docs/SESSION_CHECKPOINT.md`
+
+## 8. 当前状态
 
 - Twitter：已支持“关注账号 + 热门讨论（关键词搜索）”合并抓取
 - 微信：已支持“关注公众号 + 热门文章”合并抓取，支持正文采集
-- 报告：早报/晚报按 12 小时窗口汇总，并调用 DeepSeek 生成摘要
+- 报告：早报/晚报按 12 小时窗口汇总，并调用 DeepSeek 生成结构化摘要（Summary + 分段拆解）
+- 报告：支持联网检索补充（Google News RSS），并自动衔接上一期报告上下文
 - 推送：已支持 Notion 子页面自动写入（08:00 / 20:00），飞书可按原配置继续使用
