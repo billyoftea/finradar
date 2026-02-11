@@ -80,6 +80,7 @@ from .stock_cn import StockCNFetcher
 from .precious_metal import PreciousMetalFetcher
 from .crypto import CryptoFetcher
 from .futures import FuturesFetcher
+from .yahoo_stock import YahooStockFetcher
 
 # 社交媒体抓取器
 from .twitter import TwitterFetcher
@@ -102,6 +103,7 @@ __all__ = [
     "PreciousMetalFetcher", 
     "CryptoFetcher",
     "FuturesFetcher",
+    "YahooStockFetcher",
     
     # 社交媒体
     "TwitterFetcher",

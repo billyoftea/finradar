@@ -5,6 +5,7 @@
 
 功能：
 - A股大盘与板块动态
+- Yahoo Finance 全球股票总览
 - 贵金属（黄金/白银）走势
 - 加密货币市场行情
 - 期货市场变化
@@ -22,6 +23,7 @@ import json
 import logging
 from datetime import datetime
 from typing import Dict, Any, List, Optional
+from zoneinfo import ZoneInfo
 
 # 设置日志
 logging.basicConfig(
@@ -29,6 +31,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+BEIJING_TZ = ZoneInfo("Asia/Shanghai")
 
 
 class MarketTracker:
@@ -131,6 +134,24 @@ class MarketTracker:
         except Exception as e:
             logger.error(f"❌ 期货数据抓取失败: {e}")
             self.errors.append(f"期货数据: {e}")
+        return None
+
+    async def fetch_yahoo_stock(self) -> Optional[Dict]:
+        """抓取 Yahoo Finance 全球股票概览"""
+        try:
+            from .fetcher.yahoo_stock import YahooStockFetcher
+            fetcher = YahooStockFetcher(self.config.get("yahoo_stock", {}))
+            if fetcher.enabled:
+                logger.info("🌍 正在抓取 Yahoo Finance 全球股票概览...")
+                data = await fetcher.fetch()
+                logger.info("✅ Yahoo Finance 股票概览抓取完成")
+                return data
+        except ImportError as e:
+            logger.warning(f"⚠️ Yahoo Finance 模块未安装: {e}")
+            self.errors.append(f"Yahoo Finance模块: {e}")
+        except Exception as e:
+            logger.error(f"❌ Yahoo Finance 数据抓取失败: {e}")
+            self.errors.append(f"Yahoo Finance数据: {e}")
         return None
     
     async def fetch_github(self) -> Optional[Dict]:
@@ -258,7 +279,7 @@ class MarketTracker:
                     "trending_tweets_count": len(trending_tweets),
                     "trending_errors": trending_errors,
                     "instance_used": follow_result.get("instance_used", fetcher.current_instance),
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": datetime.now(BEIJING_TZ).isoformat(),
                 }
         except ImportError as e:
             logger.warning(f"⚠️ Twitter模块未安装: {e}")
@@ -423,7 +444,7 @@ class MarketTracker:
                 "follow_articles_count": len(all_articles),
                 "hot_articles_count": len(hot_articles),
                 "hot_errors": hot_errors,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(BEIJING_TZ).isoformat(),
             }
         except ImportError as e:
             logger.warning(f"⚠️ 微信公众号模块未安装: {e}")
@@ -444,7 +465,7 @@ class MarketTracker:
         """
         logger.info("=" * 60)
         logger.info(f"🚀 开始市场追踪... [模式: {mode}]")
-        logger.info(f"📅 时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        logger.info(f"📅 时间: {datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info("=" * 60)
         
         tasks = []
@@ -453,12 +474,13 @@ class MarketTracker:
         if mode in ("all", "market"):
             tasks += [
                 self._run_with_timeout("stock_cn", self.fetch_stock_cn()),
+                self._run_with_timeout("yahoo_stock", self.fetch_yahoo_stock()),
                 self._run_with_timeout("precious_metal", self.fetch_precious_metal()),
                 self._run_with_timeout("crypto", self.fetch_crypto()),
                 self._run_with_timeout("futures", self.fetch_futures()),
                 self._run_with_timeout("github", self.fetch_github()),
             ]
-            keys += ["stock_cn", "precious_metal", "crypto", "futures", "github"]
+            keys += ["stock_cn", "yahoo_stock", "precious_metal", "crypto", "futures", "github"]
         
         if mode in ("all", "social"):
             tasks += [
@@ -481,7 +503,7 @@ class MarketTracker:
     def generate_report(self) -> str:
         """生成市场日报"""
         report_lines = []
-        now = datetime.now()
+        now = datetime.now(BEIJING_TZ)
         
         report_lines.append("=" * 50)
         report_lines.append(f"📊 每日市场追踪报告")
@@ -517,6 +539,31 @@ class MarketTracker:
             if pm_data.get("silver"):
                 silver = pm_data["silver"]
                 report_lines.append(f"  🥈 白银: ${silver.get('price', 0):.2f} ({silver.get('change_pct', 0):+.2f}%)")
+
+        # Yahoo Finance 全球股票概览
+        if self.results.get("yahoo_stock"):
+            report_lines.append("\n🌍 【Yahoo Finance 全球股票总览】")
+            report_lines.append("-" * 40)
+            yahoo_data = self.results["yahoo_stock"]
+            markets = yahoo_data.get("markets", []) if isinstance(yahoo_data, dict) else []
+            if markets:
+                for item in markets[:10]:
+                    if not isinstance(item, dict):
+                        continue
+                    name = item.get("name", item.get("symbol", "未知"))
+                    region = item.get("region", "全球")
+                    try:
+                        price = float(item.get("price", 0) or 0)
+                    except (TypeError, ValueError):
+                        price = 0.0
+                    try:
+                        change = float(item.get("change_pct", 0) or 0)
+                    except (TypeError, ValueError):
+                        change = 0.0
+                    icon = "📈" if change >= 0 else "📉"
+                    report_lines.append(f"  {icon} [{region}] {name}: {price:.2f} ({change:+.2f}%)")
+            else:
+                report_lines.append("  ⚠️ 暂无可用 Yahoo Finance 股票概览数据")
         
         # 加密货币
         if self.results.get("crypto"):
@@ -631,7 +678,7 @@ class MarketTracker:
         """
         os.makedirs(output_dir, exist_ok=True)
         
-        now = datetime.now()
+        now = datetime.now(BEIJING_TZ)
         date_str = now.strftime("%Y%m%d")
         
         # 如果是社交媒体模式（早报/晚报），添加时间标签避免覆盖

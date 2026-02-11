@@ -255,8 +255,18 @@ def market_snapshot_filter(market: dict, date_str: str, report_type: str) -> tup
         if gh_age > 72:
             _drop("github", f"GitHub 趋势快照过旧（timestamp={gh_ts or 'N/A'}，{gh_age:.1f}h）")
 
-    if "us_stock" not in data:
-        notes.append("当前未接入美股直连行情源；美股解读仅来自 Twitter/热榜/联网检索的文本证据")
+    yahoo_stock = data.get("yahoo_stock")
+    if isinstance(yahoo_stock, dict):
+        ys_ts = parse_iso_datetime(yahoo_stock.get("timestamp"))
+        ys_age = hours_ago(anchor, ys_ts)
+        max_age = 22 if is_morning else 36
+        if ys_age > max_age:
+            _drop("yahoo_stock", f"Yahoo Finance 股票快照过旧（timestamp={ys_ts or 'N/A'}，{ys_age:.1f}h）")
+        elif not yahoo_stock.get("markets"):
+            _drop("yahoo_stock", "Yahoo Finance 股票快照为空")
+
+    if "us_stock" not in data and "yahoo_stock" not in data:
+        notes.append("当前无可用美股直连行情源；美股解读仅来自 Twitter/热榜/联网检索文本证据")
 
     # 清理空壳字段
     for key in list(data.keys()):
@@ -494,6 +504,16 @@ def choose_market_queries(market: dict, iso_date: str, include_a_share: bool = T
             idx_change = float(top_index.get("change_pct", 0) or 0)
             direction = "上涨" if idx_change >= 0 else "下跌"
             queries.append(f"{idx_name} {direction} 原因")
+
+    yahoo_stock = data.get("yahoo_stock", {}) if isinstance(data, dict) else {}
+    if isinstance(yahoo_stock, dict):
+        markets = [m for m in yahoo_stock.get("markets", []) if isinstance(m, dict)]
+        if markets:
+            top_market = sorted(markets, key=lambda x: abs(float(x.get("change_pct", 0) or 0)), reverse=True)[0]
+            market_name = normalize_plain_text(top_market.get("name", top_market.get("symbol", "美股指数")))
+            market_change = float(top_market.get("change_pct", 0) or 0)
+            direction = "上涨" if market_change >= 0 else "下跌"
+            queries.append(f"{market_name} {direction} 原因")
 
     crypto = data.get("crypto", {}) if isinstance(data, dict) else {}
     if isinstance(crypto, dict):
@@ -863,6 +883,35 @@ def format_market_for_ai(market: dict, include_a_share: bool = True) -> str:
             lines.append("【市场统计】")
             for k, v in mstats.items():
                 lines.append(f"  {k}: {v}")
+
+    # Yahoo Finance 全球股票总览
+    yahoo_stock = data.get("yahoo_stock", {})
+    if isinstance(yahoo_stock, dict):
+        markets = [m for m in yahoo_stock.get("markets", []) if isinstance(m, dict)]
+        if markets:
+            lines.append("【全球股票总览（Yahoo Finance）】")
+            for item in markets:
+                region = item.get("region", "全球")
+                name = item.get("name", item.get("symbol", "未知"))
+                symbol = item.get("symbol", "")
+                currency = item.get("currency", "")
+                try:
+                    price = float(item.get("price", 0) or 0)
+                except (TypeError, ValueError):
+                    price = 0.0
+                try:
+                    change_pct = float(item.get("change_pct", 0) or 0)
+                except (TypeError, ValueError):
+                    change_pct = 0.0
+                lines.append(
+                    f"  [{region}] {name}({symbol}): {price} {currency} ({change_pct:+.2f}%)"
+                )
+            overview = yahoo_stock.get("overview", {})
+            if isinstance(overview, dict):
+                lines.append(
+                    f"  统计: 上涨{overview.get('up', 0)} / 下跌{overview.get('down', 0)} / "
+                    f"平盘{overview.get('flat', 0)} (总计{overview.get('total', len(markets))})"
+                )
     
     # 贵金属
     pm = data.get("precious_metal", {})
@@ -1162,6 +1211,15 @@ def build_ai_citation_link_pools(market: dict, social: dict, news: list, web_con
     market_data = market.get("data", {}) if isinstance(market, dict) else {}
     market_sources: list[tuple[str, str]] = []
     if isinstance(market_data, dict):
+        yahoo_stock = market_data.get("yahoo_stock", {}) if isinstance(market_data.get("yahoo_stock"), dict) else {}
+        yahoo_markets = [
+            m for m in yahoo_stock.get("markets", [])
+            if isinstance(m, dict) and clean_external_url(m.get("url"))
+        ]
+        for row in yahoo_markets[:8]:
+            name = row.get("name") or row.get("symbol") or "Yahoo 股票"
+            symbol = row.get("symbol", "")
+            market_sources.append((f"Yahoo Finance {name} ({symbol})", clean_external_url(row.get("url"))))
         if market_data.get("crypto"):
             market_sources.append(("CoinGecko API 文档", "https://www.coingecko.com/en/api/documentation"))
         if market_data.get("precious_metal") or (
@@ -2533,7 +2591,41 @@ def generate_raw_market_section(market: dict) -> str:
                 icon = "🟢" if v >= 0 else "🔴"
                 lines.append(f"| {k} | {icon} {v:.2f} |")
         lines.append("")
-    
+
+    # Yahoo Finance 全球股票概览
+    yahoo_stock = data.get("yahoo_stock", {})
+    yahoo_markets = yahoo_stock.get("markets", []) if isinstance(yahoo_stock, dict) else []
+    if yahoo_markets:
+        lines.append("### 🌍 全球股票概览（Yahoo Finance）\n")
+        lines.append("| 区域 | 指标 | 最新价 | 涨跌幅 | 币种 |")
+        lines.append("|------|------|--------|--------|------|")
+        for item in yahoo_markets:
+            if not isinstance(item, dict):
+                continue
+            region = item.get("region", "全球")
+            name = item.get("name", item.get("symbol", "未知"))
+            try:
+                price = float(item.get("price", 0) or 0)
+            except (TypeError, ValueError):
+                price = 0.0
+            try:
+                change_pct = float(item.get("change_pct", 0) or 0)
+            except (TypeError, ValueError):
+                change_pct = 0.0
+            icon = "🟢" if change_pct >= 0 else "🔴"
+            currency = item.get("currency", "")
+            url = clean_external_url(item.get("url", ""))
+            label = f"[{name}]({url})" if url else name
+            lines.append(f"| {region} | {label} | {price:,.2f} | {icon} {change_pct:+.2f}% | {currency} |")
+        overview = yahoo_stock.get("overview", {})
+        if isinstance(overview, dict):
+            lines.append("")
+            lines.append(
+                f"> 概览：上涨 {overview.get('up', 0)} | 下跌 {overview.get('down', 0)} | "
+                f"平盘 {overview.get('flat', 0)} | 总计 {overview.get('total', len(yahoo_markets))}"
+            )
+        lines.append("")
+
     # 贵金属
     pm = data.get("precious_metal", {})
     if pm and pm.get("metals"):
@@ -2740,6 +2832,7 @@ def generate_ai_reference_section(
     max_wechat = int(os.environ.get("AI_REF_MAX_WECHAT", "20"))
     max_news = int(os.environ.get("AI_REF_MAX_NEWS", "30"))
     max_github = int(os.environ.get("AI_REF_MAX_GITHUB", "10"))
+    max_yahoo = int(os.environ.get("AI_REF_MAX_YAHOO_STOCK", "12"))
     max_web = int(os.environ.get("AI_REF_MAX_WEB", "24"))
 
     def clean_url(value) -> str:
@@ -2825,6 +2918,29 @@ def generate_ai_reference_section(
         lines.append("- 暂无可用链接")
     lines.append("")
 
+    yahoo_stock = (market.get("data", {}).get("yahoo_stock", {}) or {})
+    yahoo_markets = yahoo_stock.get("markets", []) if isinstance(yahoo_stock, dict) else []
+    yahoo_with_url = [m for m in yahoo_markets if isinstance(m, dict) and clean_url(m.get("url"))]
+    selected_yahoo = yahoo_with_url[:max_yahoo]
+    lines.append(f"### 🌍 Yahoo Finance 股票 ({len(selected_yahoo)}/{len(yahoo_with_url)} 条)\n")
+    if selected_yahoo:
+        has_any_link = True
+        for item in selected_yahoo:
+            name = item.get("name", item.get("symbol", "未知"))
+            symbol = item.get("symbol", "")
+            region = item.get("region", "全球")
+            change = item.get("change_pct", 0)
+            try:
+                change = float(change or 0)
+            except (TypeError, ValueError):
+                change = 0.0
+            lines.append(
+                f"- [{region} | {name} ({symbol}) | {change:+.2f}%]({clean_url(item.get('url'))})"
+            )
+    else:
+        lines.append("- 暂无可用链接")
+    lines.append("")
+
     web_items = []
     if isinstance(web_context, dict):
         web_items = [
@@ -2864,6 +2980,7 @@ def generate_source_link_index_section(
     max_wechat = int(os.environ.get("LINK_INDEX_MAX_WECHAT", "80"))
     max_news = int(os.environ.get("LINK_INDEX_MAX_NEWS", "120"))
     max_github = int(os.environ.get("LINK_INDEX_MAX_GITHUB", "20"))
+    max_yahoo = int(os.environ.get("LINK_INDEX_MAX_YAHOO_STOCK", "40"))
     max_web = int(os.environ.get("LINK_INDEX_MAX_WEB", "120"))
 
     def clean_url(value) -> str:
@@ -2960,6 +3077,29 @@ def generate_source_link_index_section(
                 lines.append(f"- [{name} | ⭐ {stars} | {desc}]({url})")
             else:
                 lines.append(f"- [{name} | ⭐ {stars}]({url})")
+    else:
+        lines.append("- 暂无可用链接")
+    lines.append("")
+
+    # Yahoo Finance links
+    yahoo_stock = (market.get("data", {}).get("yahoo_stock", {}) or {})
+    yahoo_markets = yahoo_stock.get("markets", []) if isinstance(yahoo_stock, dict) else []
+    yahoo_with_url = [m for m in yahoo_markets if isinstance(m, dict) and clean_url(m.get("url"))]
+    selected_yahoo = yahoo_with_url[:max_yahoo]
+    lines.append(f"### 🌍 Yahoo Finance 原文 ({len(selected_yahoo)}/{len(yahoo_with_url)} 条)\n")
+    if selected_yahoo:
+        has_any_link = True
+        for item in selected_yahoo:
+            url = clean_url(item.get("url"))
+            name = short_text(item.get("name", item.get("symbol", "未知")), 60)
+            symbol = item.get("symbol", "")
+            region = item.get("region", "全球")
+            change = item.get("change_pct", 0)
+            try:
+                change = float(change or 0)
+            except (TypeError, ValueError):
+                change = 0.0
+            lines.append(f"- [{region} | {name} ({symbol}) | {change:+.2f}%]({url})")
     else:
         lines.append("- 暂无可用链接")
     lines.append("")
