@@ -93,6 +93,9 @@
 ```bash
 # 记录当前进展与下一步，写入 docs/SESSION_CHECKPOINT.md
 ./scripts/dev_checkpoint.sh "当前目标" "下一步"
+
+# 自动提交（默认提交已跟踪文件）并记录 checkpoint
+./scripts/dev_autocommit.sh "feat: xxx" --intent "当前目标" --next "下一步"
 ```
 
 建议先阅读：
