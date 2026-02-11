@@ -6,6 +6,8 @@
 #   ./scripts/local.sh setup
 #   ./scripts/local.sh run [all|news|market|social]
 #   ./scripts/local.sh report [morning|evening|auto] [YYYYMMDD] [generate_report extra args]
+#   ./scripts/local.sh checkpoint [intent] [next-step]
+#   ./scripts/local.sh autocommit "<message>" [dev_autocommit extra args]
 #   ./scripts/local.sh cron-install
 #   ./scripts/local.sh cron-remove
 #   ./scripts/local.sh status
@@ -20,6 +22,8 @@ LOG_DIR="$ROOT_DIR/output/logs"
 CRON_BEGIN="# >>> finradar local schedule >>>"
 CRON_END="# <<< finradar local schedule <<<"
 NOTION_ENV_FILE="${NOTION_ENV_FILE:-$ROOT_DIR/.notion.env}"
+CHECKPOINT_SCRIPT="$ROOT_DIR/scripts/dev_checkpoint.sh"
+AUTOCOMMIT_SCRIPT="$ROOT_DIR/scripts/dev_autocommit.sh"
 
 ensure_venv() {
     if [ ! -x "$PYTHON_BIN" ]; then
@@ -157,6 +161,30 @@ cmd_status() {
     crontab -l 2>/dev/null | sed -n "/^$CRON_BEGIN\$/,/^$CRON_END\$/p" || true
 }
 
+cmd_checkpoint() {
+    local intent="${1:-}"
+    local next_step="${2:-}"
+    if [ ! -x "$CHECKPOINT_SCRIPT" ]; then
+        echo "❌ 未找到可执行脚本: $CHECKPOINT_SCRIPT"
+        exit 1
+    fi
+    (cd "$ROOT_DIR" && "$CHECKPOINT_SCRIPT" "$intent" "$next_step")
+}
+
+cmd_autocommit() {
+    local commit_message="${1:-}"
+    shift || true
+    if [ -z "$commit_message" ]; then
+        echo "❌ 用法: ./scripts/local.sh autocommit \"<message>\" [dev_autocommit extra args]"
+        exit 1
+    fi
+    if [ ! -x "$AUTOCOMMIT_SCRIPT" ]; then
+        echo "❌ 未找到可执行脚本: $AUTOCOMMIT_SCRIPT"
+        exit 1
+    fi
+    (cd "$ROOT_DIR" && "$AUTOCOMMIT_SCRIPT" "$commit_message" "$@")
+}
+
 case "${1:-help}" in
 setup)
     cmd_setup
@@ -176,6 +204,12 @@ cron-remove)
 status)
     cmd_status
     ;;
+checkpoint)
+    cmd_checkpoint "${2:-}" "${3:-}"
+    ;;
+autocommit)
+    cmd_autocommit "${2:-}" "${@:3}"
+    ;;
 notion-config)
     cmd_notion_config "${2:-}" "${3:-}"
     ;;
@@ -190,6 +224,8 @@ finradar 本地运行工具
   setup                    初始化本地虚拟环境并安装依赖
   run [mode]               单次执行 (all/news/market/social)
   report [type] [date] [extra-args]  生成报告 (morning/evening/auto)
+  checkpoint [intent] [next-step]     记录会话 checkpoint
+  autocommit "<msg>" [extra-args]     自动提交并记录 checkpoint
   notion-config <token> <parent>  写入 Notion 配置到 .notion.env
   notion-push [type] [date]        推送报告到 Notion 子页面
   cron-install             安装本地定时任务（08:00 / 20:00 + 每30分钟）
@@ -201,6 +237,8 @@ finradar 本地运行工具
   ./scripts/local.sh run social
   ./scripts/local.sh report morning
   ./scripts/local.sh report evening 20260211 --keywords "A股,美股,AI芯片"
+  ./scripts/local.sh checkpoint "补充联网检索" "继续优化关键词"
+  ./scripts/local.sh autocommit "feat(report): xxx" --include "scripts/generate_report.py,README.local.md"
   ./scripts/local.sh notion-config ntn_xxx https://www.notion.so/xxx
   ./scripts/local.sh notion-push morning 20260209
   ./scripts/local.sh cron-install
