@@ -24,6 +24,7 @@ CRON_END="# <<< finradar local schedule <<<"
 NOTION_ENV_FILE="${NOTION_ENV_FILE:-$ROOT_DIR/.notion.env}"
 CHECKPOINT_SCRIPT="$ROOT_DIR/scripts/dev_checkpoint.sh"
 AUTOCOMMIT_SCRIPT="$ROOT_DIR/scripts/dev_autocommit.sh"
+AUTO_CHECKPOINT_ON_REPORT="${AUTO_CHECKPOINT_ON_REPORT:-1}"
 
 ensure_venv() {
     if [ ! -x "$PYTHON_BIN" ]; then
@@ -61,12 +62,28 @@ cmd_report() {
     fi
     local extra_args=("$@")
     mkdir -p "$LOG_DIR"
+    local ai_mode="with-ai"
+    for arg in "${extra_args[@]}"; do
+        if [ "$arg" = "--no-ai" ]; then
+            ai_mode="no-ai"
+            break
+        fi
+    done
     if [ -n "$date_arg" ]; then
         echo "📝 生成报告: type=$report_type, date=$date_arg ${extra_args[*]}"
         (cd "$ROOT_DIR" && "$PYTHON_BIN" scripts/generate_report.py --type "$report_type" --date "$date_arg" "${extra_args[@]}")
     else
         echo "📝 生成报告: type=$report_type ${extra_args[*]}"
         (cd "$ROOT_DIR" && "$PYTHON_BIN" scripts/generate_report.py --type "$report_type" "${extra_args[@]}")
+    fi
+    if [ "$AUTO_CHECKPOINT_ON_REPORT" = "1" ] && [ -x "$CHECKPOINT_SCRIPT" ]; then
+        local cp_date="$date_arg"
+        if [ -z "$cp_date" ]; then
+            cp_date="$(TZ=Asia/Shanghai date '+%Y%m%d')"
+        fi
+        local cp_intent="生成${cp_date} ${report_type} 报告（${ai_mode}）"
+        local cp_next="查看 output/report 结果并持续优化分板块结构与时效过滤规则"
+        (cd "$ROOT_DIR" && "$CHECKPOINT_SCRIPT" "$cp_intent" "$cp_next") || true
     fi
 }
 

@@ -15,9 +15,11 @@ finradar 每日综合报告生成器
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from copy import deepcopy
 from email.utils import parsedate_to_datetime
 from html import unescape
 import json
+import math
 import os
 import sqlite3
 import sys
@@ -140,6 +142,140 @@ def get_report_window(date_str: str, report_type: str) -> tuple[datetime, dateti
         start_dt = report_day.replace(hour=8, minute=0, second=0, microsecond=0)
         end_dt = report_day.replace(hour=20, minute=0, second=0, microsecond=0)
     return start_dt, end_dt
+
+
+def parse_iso_datetime(raw_value) -> datetime | None:
+    """解析 ISO 时间并统一为北京时间。"""
+    if raw_value is None:
+        return None
+    text = str(raw_value).strip()
+    if not text:
+        return None
+    try:
+        dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=BEIJING_TZ)
+    return dt.astimezone(BEIJING_TZ)
+
+
+def report_anchor_datetime(date_str: str, report_type: str) -> datetime:
+    """报告时效锚点：早报取当日08:00，晚报取当日20:00（北京时间）。"""
+    day = datetime.strptime(date_str, "%Y%m%d").replace(tzinfo=BEIJING_TZ)
+    hour = 8 if report_type == "morning" else 20
+    return day.replace(hour=hour, minute=0, second=0, microsecond=0)
+
+
+def hours_ago(anchor: datetime, ref: datetime | None) -> float:
+    """计算 ref 相对 anchor 的小时差，缺失返回极大值。"""
+    if ref is None:
+        return 10_000.0
+    return (anchor - ref).total_seconds() / 3600.0
+
+
+def is_trading_day(date_str: str) -> bool:
+    """简单交易日判断（周一到周五）。"""
+    day = datetime.strptime(date_str, "%Y%m%d")
+    return day.weekday() < 5
+
+
+def market_snapshot_filter(market: dict, date_str: str, report_type: str) -> tuple[dict, list[str]]:
+    """
+    过滤市场快照，避免 AI 使用过时数据。
+    返回: (filtered_market, notes)
+    """
+    filtered = deepcopy(market) if isinstance(market, dict) else {}
+    data = filtered.get("data", {}) if isinstance(filtered, dict) else {}
+    if not isinstance(data, dict):
+        return filtered, ["市场数据结构异常，已跳过时效过滤"]
+
+    notes: list[str] = []
+    anchor = report_anchor_datetime(date_str, report_type)
+    trade_day = is_trading_day(date_str)
+    is_morning = report_type == "morning"
+
+    def _drop(key: str, reason: str) -> None:
+        if key in data:
+            data.pop(key, None)
+            notes.append(reason)
+
+    stock = data.get("stock_cn")
+    stock_ts = parse_iso_datetime(stock.get("timestamp")) if isinstance(stock, dict) else None
+    stock_age = hours_ago(anchor, stock_ts)
+    if is_morning:
+        _drop("stock_cn", "早报阶段不纳入 A 股盘面，避免使用非交易时段快照")
+    elif not trade_day:
+        _drop("stock_cn", "非交易日，不纳入 A 股盘面")
+    else:
+        stock_day_ok = bool(stock_ts and stock_ts.date() == anchor.date())
+        stock_time_ok = bool(stock_ts and stock_ts.hour >= 14)
+        if not stock_day_ok or not stock_time_ok or stock_age > 12:
+            _drop(
+                "stock_cn",
+                f"A 股快照时效不足（timestamp={stock_ts or 'N/A'}，距锚点约 {stock_age:.1f}h）",
+            )
+
+    futures = data.get("futures")
+    if isinstance(futures, dict):
+        futures_ts = parse_iso_datetime(futures.get("timestamp"))
+        futures_age = hours_ago(anchor, futures_ts)
+        if is_morning:
+            # 早报仅保留国际期货，移除日盘主导的国内/股指期货
+            futures.pop("commodity", None)
+            futures.pop("index_futures", None)
+            if not futures.get("international"):
+                futures.pop("international", None)
+            if not futures.get("international"):
+                _drop("futures", "早报时段无可用国际期货快照")
+            elif futures_age > 16:
+                _drop("futures", f"国际期货快照过旧（timestamp={futures_ts or 'N/A'}，{futures_age:.1f}h）")
+        else:
+            if futures_age > 14:
+                _drop("futures", f"期货快照过旧（timestamp={futures_ts or 'N/A'}，{futures_age:.1f}h）")
+
+    pm = data.get("precious_metal")
+    if isinstance(pm, dict):
+        pm_ts = parse_iso_datetime(pm.get("timestamp"))
+        pm_age = hours_ago(anchor, pm_ts)
+        if pm_age > 16:
+            _drop("precious_metal", f"贵金属快照过旧（timestamp={pm_ts or 'N/A'}，{pm_age:.1f}h）")
+
+    crypto = data.get("crypto")
+    if isinstance(crypto, dict):
+        crypto_ts = parse_iso_datetime(crypto.get("timestamp"))
+        crypto_age = hours_ago(anchor, crypto_ts)
+        if crypto_age > 10:
+            _drop("crypto", f"加密市场快照过旧（timestamp={crypto_ts or 'N/A'}，{crypto_age:.1f}h）")
+
+    github = data.get("github")
+    if isinstance(github, dict):
+        gh_ts = parse_iso_datetime(github.get("timestamp"))
+        gh_age = hours_ago(anchor, gh_ts)
+        if gh_age > 72:
+            _drop("github", f"GitHub 趋势快照过旧（timestamp={gh_ts or 'N/A'}，{gh_age:.1f}h）")
+
+    if "us_stock" not in data:
+        notes.append("当前未接入美股直连行情源；美股解读仅来自 Twitter/热榜/联网检索的文本证据")
+
+    # 清理空壳字段
+    for key in list(data.keys()):
+        value = data.get(key)
+        if isinstance(value, dict) and not value:
+            data.pop(key, None)
+
+    filtered["data"] = data
+    return filtered, notes
+
+
+def format_market_filter_notes(notes: list[str]) -> str:
+    """格式化市场时效过滤说明。"""
+    if not notes:
+        return "市场时效过滤：未发现需要剔除的数据。"
+    lines = ["市场时效过滤结果："]
+    for idx, note in enumerate(notes, start=1):
+        lines.append(f"{idx}. {note}")
+    return "\n".join(lines)
 
 
 # ══════════════════════════════════════════════════════
@@ -1358,6 +1494,277 @@ def normalize_plain_text(text: str) -> str:
     return re.sub(r"\s+", " ", str(text or "")).strip()
 
 
+AI_PREFACE_LINE_RE = re.compile(
+    r"^(好的|当然|明白|收到|以下|下面|作为|根据您|基于您|我将|我会|很高兴|感谢|可以|没问题)"
+)
+
+
+def sanitize_ai_response_text(text: str) -> str:
+    """
+    清洗模型输出中的对话式前缀，保留结构化正文。
+    例如去掉“好的，作为……我将……”，直接从标题/要点开始。
+    """
+    cleaned = str(text or "").replace("\r\n", "\n").strip()
+    if not cleaned:
+        return ""
+
+    # 若存在结构化标题且前缀是客套句，直接裁切到标题起点
+    heading_positions = []
+    for marker in ("## 一、摘要", "## 摘要", "## 二、分板块汇报", "### 2.1"):
+        pos = cleaned.find(marker)
+        if pos >= 0:
+            heading_positions.append(pos)
+    if heading_positions:
+        first_heading_pos = min(heading_positions)
+        if first_heading_pos > 0:
+            preface_text = cleaned[:first_heading_pos]
+            if re.search(r"(好的|作为|我将|我会|根据您|基于您|以下|下面)", preface_text):
+                cleaned = cleaned[first_heading_pos:].lstrip()
+
+    lines = cleaned.splitlines()
+    while lines:
+        first = lines[0].strip()
+        if not first:
+            lines.pop(0)
+            continue
+        if first.startswith("#"):
+            break
+        if AI_PREFACE_LINE_RE.match(first) and len(lines) > 1:
+            lines.pop(0)
+            while lines and not lines[0].strip():
+                lines.pop(0)
+            continue
+        break
+
+    return "\n".join(lines).strip()
+
+
+WECHAT_TOPIC_STOPWORDS = {
+    "今天", "今日", "最新", "重磅", "市场", "行业", "公司", "中国", "美国", "我们", "你们",
+    "已经", "继续", "相关", "进行", "发布", "报道", "观点", "影响", "数据", "分析", "财经",
+    "金融", "投资", "风险", "关注", "什么", "如何", "这个", "那个", "一次", "本次", "以及",
+}
+
+
+def text_tokens_for_topic(text: str) -> list[str]:
+    """提取中英文主题词（轻量规则）。"""
+    plain = normalize_plain_text(text).lower()
+    tokens: list[str] = []
+    for zh in re.findall(r"[\u4e00-\u9fff]{2,8}", plain):
+        if zh in WECHAT_TOPIC_STOPWORDS:
+            continue
+        tokens.append(zh)
+    for en in re.findall(r"[a-z][a-z0-9\\-]{2,24}", plain):
+        if en in {"the", "and", "for", "with", "from", "that", "this", "are", "was", "were", "can"}:
+            continue
+        tokens.append(en)
+    return tokens
+
+
+def build_wechat_consensus_and_signal_text(social: dict) -> str:
+    """提取“跨公众号共识议题 + 弱信号”。"""
+    wechat_data = get_social_section(social, "wechat")
+    articles = [a for a in wechat_data.get("articles", []) if isinstance(a, dict)]
+    if not articles:
+        return "暂无微信公众号数据"
+
+    token_map: dict[str, dict] = {}
+    for article in articles:
+        account = normalize_plain_text(article.get("account_name", "") or "未知公众号")
+        title = normalize_plain_text(article.get("title", ""))
+        digest = normalize_plain_text(article.get("digest", ""))
+        if not title:
+            continue
+
+        text = f"{title} {digest}"
+        uniq_tokens = set(text_tokens_for_topic(text))
+        for token in uniq_tokens:
+            bucket = token_map.setdefault(token, {"accounts": set(), "count": 0, "samples": []})
+            bucket["accounts"].add(account)
+            bucket["count"] += 1
+            if len(bucket["samples"]) < 3:
+                bucket["samples"].append((account, title))
+
+    topic_rows = []
+    for token, meta in token_map.items():
+        account_count = len(meta["accounts"])
+        if account_count < 2:
+            continue
+        score = account_count * 10 + int(meta["count"])
+        topic_rows.append((score, token, meta))
+    topic_rows.sort(reverse=True)
+
+    lines = []
+    if topic_rows:
+        lines.append("跨公众号共识议题（出现于 2 个及以上公众号）：")
+        for idx, (_, token, meta) in enumerate(topic_rows[:8], start=1):
+            accounts = sorted(meta["accounts"])[:4]
+            sample_titles = [f"《{title}》" for _, title in meta["samples"][:2]]
+            lines.append(
+                f"{idx}. 议题={token} | 覆盖={len(meta['accounts'])}个公众号 | "
+                f"样例={ ' / '.join(sample_titles) if sample_titles else '无' } | "
+                f"账号={ '、'.join(accounts) }"
+            )
+    else:
+        lines.append("跨公众号共识议题：暂无明显重合")
+
+    scored_articles = sorted(articles, key=wechat_article_score, reverse=True)
+    weak_rows = []
+    for article in scored_articles:
+        title = normalize_plain_text(article.get("title", ""))
+        if not title:
+            continue
+        account = normalize_plain_text(article.get("account_name", "") or "未知公众号")
+        read_count = int(article.get("read_count", 0) or 0)
+        like_count = int(article.get("like_count", 0) or 0)
+        comment_count = int(article.get("comment_count", 0) or 0)
+        signal_score = read_count + like_count * 15 + comment_count * 25
+        if signal_score < 150:
+            continue
+        weak_rows.append((signal_score, account, title, read_count, like_count, comment_count))
+    weak_rows.sort(reverse=True)
+
+    lines.append("")
+    lines.append("弱信号候选（单篇互动较高、可能提前反映资金/产业关注）：")
+    if weak_rows:
+        for idx, (score, account, title, read_count, like_count, comment_count) in enumerate(weak_rows[:6], start=1):
+            lines.append(
+                f"{idx}. 【{account}】《{title}》 | 互动分={score} "
+                f"(阅读{read_count}/点赞{like_count}/评论{comment_count})"
+            )
+    else:
+        lines.append("1. 暂无明显弱信号候选")
+
+    return "\n".join(lines)
+
+
+def is_mostly_english(text: str) -> bool:
+    """粗略判断是否英文为主。"""
+    raw = str(text or "")
+    if not raw:
+        return False
+    en = len(re.findall(r"[A-Za-z]", raw))
+    zh = len(re.findall(r"[\u4e00-\u9fff]", raw))
+    return en >= max(24, zh * 2)
+
+
+def format_twitter_focus_for_ai(social: dict) -> str:
+    """提取 Twitter 英文/中文重点推文，供结构化汇报。"""
+    twitter_data = get_social_section(social, "twitter")
+    tweets = [t for t in twitter_data.get("tweets", []) if isinstance(t, dict)]
+    if not tweets:
+        return "暂无 Twitter 数据"
+
+    tweets = sorted(tweets, key=tweet_engagement, reverse=True)
+    en_tweets = [t for t in tweets if is_mostly_english(t.get("text", ""))]
+    zh_tweets = [t for t in tweets if not is_mostly_english(t.get("text", ""))]
+
+    lines = [
+        f"Twitter 高互动样本：英文 {len(en_tweets)} 条，非英文 {len(zh_tweets)} 条（按互动排序）"
+    ]
+
+    lines.append("\n英文重点（请在最终报告中翻译成中文并保留关键信号）：")
+    for idx, t in enumerate(en_tweets[:20], start=1):
+        text = normalize_plain_text(t.get("text", ""))[:280]
+        lines.append(
+            f"{idx}. @{t.get('username','unknown')} | {tweet_engagement(t)} 互动 | "
+            f"{str(t.get('created_at',''))[:16]} | {text}"
+        )
+
+    lines.append("\n中文/其他语种补充：")
+    for idx, t in enumerate(zh_tweets[:12], start=1):
+        text = normalize_plain_text(t.get("text", ""))[:220]
+        lines.append(
+            f"{idx}. @{t.get('username','unknown')} | {tweet_engagement(t)} 互动 | "
+            f"{str(t.get('created_at',''))[:16]} | {text}"
+        )
+
+    return "\n".join(lines)
+
+
+REPO_THEME_KEYWORDS = {
+    "fintech": ("quant", "trading", "finance", "fintech", "risk", "portfolio", "payment", "broker", "bank"),
+    "web3": ("web3", "blockchain", "defi", "wallet", "ethereum", "bitcoin", "solidity", "token", "nft", "zk"),
+    "ai": ("ai", "llm", "agent", "gpt", "rag", "diffusion", "model", "inference", "prompt"),
+}
+
+
+def github_repo_theme(repo: dict) -> str:
+    """识别 GitHub 项目主题（金融科技/AI/Web3/通用）。"""
+    text = normalize_plain_text(
+        f"{repo.get('name','')} {repo.get('full_name','')} {repo.get('description','')} {repo.get('language','')}"
+    ).lower()
+    scores = {k: 0 for k in REPO_THEME_KEYWORDS}
+    for theme, words in REPO_THEME_KEYWORDS.items():
+        for word in words:
+            if word in text:
+                scores[theme] += 1
+    theme, score = max(scores.items(), key=lambda x: x[1])
+    if score == 0:
+        return "general"
+    return theme
+
+
+def github_repo_score(repo: dict) -> float:
+    """GitHub 项目排序分，兼顾热度与主题相关性。"""
+    stars = float(repo.get("stars", 0) or 0)
+    theme = github_repo_theme(repo)
+    bonus = {"fintech": 40.0, "ai": 28.0, "web3": 24.0, "general": 0.0}.get(theme, 0.0)
+    return math.log1p(max(stars, 0.0)) * 12.0 + bonus
+
+
+def build_github_focus_snapshot(market: dict, top_n: int = 18) -> list[dict]:
+    """抽取 GitHub 重点项目（融合 trending + ai_trending）。"""
+    github_data = (market.get("data", {}) or {}).get("github", {}) if isinstance(market, dict) else {}
+    if not isinstance(github_data, dict):
+        return []
+
+    merged: list[dict] = []
+    seen = set()
+    for key in ("trending", "ai_trending"):
+        rows = github_data.get(key, []) or []
+        for repo in rows:
+            if not isinstance(repo, dict):
+                continue
+            repo_key = repo.get("full_name") or repo.get("url") or repo.get("name")
+            if not repo_key or repo_key in seen:
+                continue
+            seen.add(repo_key)
+            copied = dict(repo)
+            copied["theme"] = github_repo_theme(repo)
+            copied["score"] = github_repo_score(repo)
+            merged.append(copied)
+
+    merged.sort(key=lambda x: (x.get("score", 0), float(x.get("stars", 0) or 0)), reverse=True)
+    return merged[:top_n]
+
+
+def format_github_focus_for_ai(market: dict) -> str:
+    """格式化 GitHub 热门项目重点，强调金融科技/AI/Web3。"""
+    repos = build_github_focus_snapshot(market)
+    if not repos:
+        return "暂无 GitHub 趋势数据"
+
+    lines = [f"GitHub 重点项目 {len(repos)} 个（按热度+主题相关性排序）："]
+    grouped: dict[str, list[dict]] = {"fintech": [], "ai": [], "web3": [], "general": []}
+    for repo in repos:
+        grouped.setdefault(repo.get("theme", "general"), []).append(repo)
+
+    label_map = {"fintech": "金融科技", "ai": "AI", "web3": "Web3", "general": "通用开发"}
+    for theme in ("fintech", "ai", "web3", "general"):
+        rows = grouped.get(theme, [])
+        if not rows:
+            continue
+        lines.append(f"\n[{label_map.get(theme, theme)}] {len(rows)} 个：")
+        for idx, repo in enumerate(rows[:8], start=1):
+            name = repo.get("full_name") or repo.get("name") or "unknown"
+            desc = normalize_plain_text(repo.get("description", ""))[:180]
+            lang = repo.get("language", "Unknown")
+            stars = int(float(repo.get("stars", 0) or 0))
+            lines.append(f"{idx}. {name} | ⭐{stars} | {lang} | {desc}")
+    return "\n".join(lines)
+
+
 def extract_wechat_article_body(article: dict, max_chars: int) -> tuple[str, str]:
     """提取并截断公众号文章正文。"""
     digest = normalize_plain_text(article.get("digest", "") or "")
@@ -1529,7 +1936,10 @@ def call_deepseek(system_prompt: str, user_prompt: str, api_key: str,
                 return "AI 分析失败: empty response"
             usage = result.get("usage", {})
             logger.info(f"✅ 完成 (prompt_tokens={usage.get('prompt_tokens',0)}, completion_tokens={usage.get('completion_tokens',0)})")
-            return content
+            cleaned_content = sanitize_ai_response_text(content)
+            if cleaned_content != content:
+                logger.info("🧹 已清洗 AI 输出前缀")
+            return cleaned_content
         except requests.exceptions.HTTPError as e:
             status_code = resp.status_code if resp is not None else None
             logger.error(f"❌ DeepSeek API 错误: {e}")
@@ -1588,10 +1998,17 @@ def run_ai_analysis(market: dict, social: dict, news: list,
         "可正常分析 A 股与其他市场。"
     )
     logger.info(f"⚙️ DeepSeek 分片并发: {parallelism} 路")
-    
+
+    filtered_market, market_filter_notes = market_snapshot_filter(market, date_str, report_type)
+    market_filter_note_text = format_market_filter_notes(market_filter_notes)
+    wechat_consensus_text = build_wechat_consensus_and_signal_text(social)
+    twitter_focus_text = format_twitter_focus_for_ai(social)
+    github_focus_text = format_github_focus_for_ai(filtered_market)
+    logger.info("🧪 市场时效过滤后可用模块: %s", ",".join((filtered_market.get("data", {}) or {}).keys()))
+
     # ─── 第1步: 市场数据分析 ────────────────────────
     logger.info("🔍 [1/5] 分析市场数据...")
-    market_text = format_market_for_ai(market, include_a_share=not is_morning_report)
+    market_text = format_market_for_ai(filtered_market, include_a_share=not is_morning_report)
     if market_text != "暂无市场数据":
         summary = call_deepseek(
             system_prompt=(
@@ -1678,6 +2095,30 @@ def run_ai_analysis(market: dict, social: dict, news: list,
         else:
             summary = "AI 分析失败: Twitter 全部分片调用失败"
         section_summaries["twitter"] = summary
+
+    # ─── 2.5: Twitter 海外英文信号补充 ─────────────────
+    if twitter_focus_text != "暂无 Twitter 数据":
+        logger.info("🔍 [2.5/5] 汇总 Twitter 英文信号...")
+        twitter_focus_summary = call_deepseek(
+            system_prompt=(
+                "你是跨市场情报分析师。请基于给定的 Twitter 高互动样本，输出中文汇报：\n"
+                "1) 海外英文信号主线（不要直译整段，提炼观点）；\n"
+                "2) 与金融科技/AI/Web3 相关的具体线索；\n"
+                "3) 可执行关注点与潜在误导噪音。\n\n"
+                "输出 Markdown，300-500字，引用关键结论时加 [来源: Twitter]。\n\n"
+                f"{grounding_rules}"
+            ),
+            user_prompt=f"{date_context} 的 Twitter 英文信号样本：\n\n{twitter_focus_text}",
+            api_key=api_key,
+            api_base=api_base,
+            model=model,
+            max_tokens=1500,
+            temperature=0.4,
+        )
+        if not is_ai_failure(twitter_focus_summary):
+            section_summaries["twitter_focus"] = twitter_focus_summary
+        else:
+            section_summaries["twitter_focus"] = "暂无可用 Twitter 英文信号总结"
     
     # ─── 第3步: 微信公众号分析 ────────────────────────
     logger.info("🔍 [3/5] 分析微信公众号文章（20 路分片并行）...")
@@ -1744,6 +2185,30 @@ def run_ai_analysis(market: dict, social: dict, news: list,
         else:
             summary = "AI 分析失败: 微信公众号全部分片调用失败"
         section_summaries["wechat"] = summary
+
+    # ─── 3.5: 微信共识与弱信号 ────────────────────────
+    if wechat_consensus_text != "暂无微信公众号数据":
+        logger.info("🔍 [3.5/5] 提炼微信共识与弱信号...")
+        wechat_consensus_summary = call_deepseek(
+            system_prompt=(
+                "你是中文财经信息架构师。请基于输入的“跨公众号共识议题+弱信号候选”输出简洁汇报：\n"
+                "1) 先写跨公众号共识（最多4点，强调哪些公众号反复提及）；\n"
+                "2) 再写弱信号（最多3点，强调为什么值得提前关注）；\n"
+                "3) 全文禁止空话，保持可执行。\n\n"
+                "输出 Markdown，280-480字。关键句末加 [来源: 微信]。\n\n"
+                f"{grounding_rules}"
+            ),
+            user_prompt=f"{date_context} 微信共识与弱信号原始抽取：\n\n{wechat_consensus_text}",
+            api_key=api_key,
+            api_base=api_base,
+            model=model,
+            max_tokens=1400,
+            temperature=0.4,
+        )
+        if is_ai_failure(wechat_consensus_summary):
+            section_summaries["wechat_consensus"] = wechat_consensus_text
+        else:
+            section_summaries["wechat_consensus"] = wechat_consensus_summary
     
     # ─── 第4步: 热榜分析 ────────────────────────
     logger.info("🔍 [4/5] 分析热榜新闻（分片并行）...")
@@ -1819,7 +2284,31 @@ def run_ai_analysis(market: dict, social: dict, news: list,
             summary = generate_news_rule_based_summary(news)
 
         section_summaries["news"] = summary
-    
+
+    # ─── 第4.5步: GitHub 趋势（金融科技/AI/Web3） ───────────
+    if github_focus_text != "暂无 GitHub 趋势数据":
+        logger.info("🔍 [4.5/5] 分析 GitHub 项目雷达...")
+        github_summary = call_deepseek(
+            system_prompt=(
+                "你是技术趋势分析师。请把 GitHub 热门项目按“金融科技 / AI / Web3 / 通用”做中文汇报：\n"
+                "1) 先挑出最值得关注的5-8个项目；\n"
+                "2) 说明它们可能对应的应用场景和落地价值；\n"
+                "3) 标注可能的泡沫噪音或重复概念。\n\n"
+                "输出 Markdown，450-700字；结论句加 [来源: GitHub]。\n\n"
+                f"{grounding_rules}"
+            ),
+            user_prompt=f"{date_context} GitHub 项目样本：\n\n{github_focus_text}",
+            api_key=api_key,
+            api_base=api_base,
+            model=model,
+            max_tokens=2200,
+            temperature=0.45,
+        )
+        if is_ai_failure(github_summary):
+            section_summaries["github"] = github_focus_text
+        else:
+            section_summaries["github"] = github_summary
+
     # ─── 第5步: 综合汇总 ────────────────────────
     logger.info("🔍 [5/5] 生成综合分析报告（含上下文增强）...")
 
@@ -1829,18 +2318,25 @@ def run_ai_analysis(market: dict, social: dict, news: list,
     web_context_text = format_web_context_for_ai(web_context or {})
 
     synthesis_input = f"以下是 {date_context} 各数据源的分析结果，请进行最终综合汇总：{weekend_note}\n\n"
+    synthesis_input += f"## 市场时效过滤说明\n{market_filter_note_text}\n\n"
 
     if previous_context:
         synthesis_input += f"## 上一期报告上下文\n{previous_context}\n\n"
 
     if "market" in section_summaries:
         synthesis_input += f"## 市场数据分析\n{section_summaries['market']}\n\n"
+    if "wechat_consensus" in section_summaries:
+        synthesis_input += f"## 微信共识与弱信号\n{section_summaries['wechat_consensus']}\n\n"
     if "twitter" in section_summaries:
         synthesis_input += f"## Twitter 推文分析\n{section_summaries['twitter']}\n\n"
+    if "twitter_focus" in section_summaries:
+        synthesis_input += f"## Twitter 英文信号补充\n{section_summaries['twitter_focus']}\n\n"
     if "wechat" in section_summaries:
         synthesis_input += f"## 微信公众号分析\n{section_summaries['wechat']}\n\n"
     if "news" in section_summaries:
         synthesis_input += f"## 热榜新闻分析\n{section_summaries['news']}\n\n"
+    if "github" in section_summaries:
+        synthesis_input += f"## GitHub 项目雷达\n{section_summaries['github']}\n\n"
     if web_context_text != "暂无联网检索补充":
         synthesis_input += f"## 联网检索补充\n{web_context_text}\n\n"
     else:
@@ -1849,14 +2345,23 @@ def run_ai_analysis(market: dict, social: dict, news: list,
     if not section_summaries:
         logger.warning("⚠️ 各数据源均无可用原始数据，跳过综合 AI 生成。")
         return (
-            "## 🧭 Summary\n"
+            "## 一、摘要\n"
             "- 社会：暂无可用数据。\n"
             "- 经济：暂无可用数据。\n"
             "- 市场：暂无可用数据。\n"
             "- 科技：暂无可用数据。\n\n"
-            "## 📌 今日核心结论\n"
-            "本次报告覆盖时段内未读取到有效原始数据（市场/社交/热榜均为空），已停止 AI 综合生成，避免输出推测内容。\n\n"
-            "## 🔭 明日观察清单\n"
+            "## 二、分板块汇报\n"
+            "### 2.1 市场概况（仅有效交易时段数据）\n"
+            "暂无可用市场数据，无法形成有效盘面结论。\n\n"
+            "### 2.2 微信公众号共识与弱信号\n"
+            "暂无可用微信公众号数据。\n\n"
+            "### 2.3 GitHub 热门项目雷达（金融科技/AI/Web3）\n"
+            "暂无可用 GitHub 趋势数据。\n\n"
+            "### 2.4 Twitter 海外信号（英文内容中文汇报）\n"
+            "暂无可用 Twitter 数据。\n\n"
+            "### 2.5 国内新闻与政策脉络\n"
+            "暂无可用热榜数据。\n\n"
+            "## 三、明日跟踪清单\n"
             "1. 检查定时任务触发时间。\n"
             "2. 检查抓取服务状态（Nitter / 微信服务 / NewsNow）。\n"
             "3. 补齐数据后重新生成报告。"
@@ -1865,45 +2370,43 @@ def run_ai_analysis(market: dict, social: dict, news: list,
     final_summary = call_deepseek(
         system_prompt=(
             "你是资深金融市场首席分析师，正在编写今日市场综合研报。\n"
-            "用户会提供来自市场数据、Twitter、微信公众号、新闻热榜的分析结果。\n"
-            "请将它们融合为一份结构清晰的综合报告，包括：\n\n"
-            "请严格按以下固定结构输出，不允许改一级标题名称：\n\n"
-            "## 🧭 Summary\n"
-            "- 社会：...\n"
-            "- 经济：...\n"
-            "- 市场：...\n"
-            "- 科技：...\n\n"
-            "## 📌 今日核心结论\n"
-            "3-5条，强调最重要变化。\n\n"
-            "## 📈 市场与资产拆解\n"
-            "### 发生了什么\n"
+            "你将获得来自市场数据、Twitter、微信公众号、NewsNow、GitHub、联网检索的材料。\n"
+            "请产出“摘要 + 分板块汇报”，并优先覆盖金融科技、AI、Web3线索。\n\n"
+            "请严格按以下固定结构输出，不允许改一级/二级标题名称：\n\n"
+            "## 一、摘要\n"
+            "- 社会：\n"
+            "- 经济：\n"
+            "- 市场：\n"
+            "- 科技：\n\n"
+            "## 二、分板块汇报\n"
+            "### 2.1 市场概况（仅有效交易时段数据）\n"
             + (
-                "仅可分析加密货币、贵金属、期货等非 A 股市场（早报禁分析 A 股盘面）。\n"
+                "早报阶段不得分析 A 股盘面；仅分析非 A 股市场与可验证数据。\n"
                 if is_morning_report else
-                "可分析 A 股、加密货币、贵金属、期货。\n"
+                "仅基于“市场时效过滤说明”里保留的数据，禁止使用被过滤掉的旧快照。\n"
             ) +
-            "### 为什么会这样\n"
-            "给出“事件/政策/情绪 -> 资金行为 -> 价格表现”的链条，并标注证据强弱（高/中/低）。\n"
-            "### 分歧点\n"
-            "指出当前叙事中最容易误判的1-2处。\n\n"
-            "## 📰 社会与宏观事件上下文\n"
-            "### 事件脉络\n"
-            "要把今天与上一期（如果有）串起来，说明延续与变化。\n"
-            "### 对市场影响\n"
-            "区分短期与中期影响。\n\n"
-            "## 🤖 科技与产业动态\n"
-            "### 关键进展\n"
-            "### 机会与风险\n\n"
-            "## 🔭 明日观察清单\n"
+            "必须包含“发生了什么”“为什么会这样（证据强弱：高/中/低）”“下一步观察”。\n\n"
+            "### 2.2 微信公众号共识与弱信号\n"
+            "先写跨公众号重复提及的共识议题，再写弱信号候选，并给出判断依据。\n\n"
+            "### 2.3 GitHub 热门项目雷达（金融科技/AI/Web3）\n"
+            "挑出最值得关注的项目，说明应用场景、可落地价值、噪音风险。\n\n"
+            "### 2.4 Twitter 海外信号（英文内容中文汇报）\n"
+            "把英文高互动内容翻译并提炼成中文结论，不要整段直译。\n\n"
+            "### 2.5 国内新闻与政策脉络\n"
+            "聚焦国内社会/经济/监管动态，并说明对市场和产业链的影响。\n\n"
+            "## 三、明日跟踪清单\n"
             "1. ...\n2. ...\n3. ...\n\n"
             "要求：\n"
             "- 用中文，语言精炼专业\n"
             "- Markdown 格式，每个版块用 ## 标题\n"
             "- 重要数据用 **加粗**，关键判断要明确\n"
             "- 去除重复信息，交叉引用不同来源，优先回答“为什么会这样”\n"
-            "- 在关键结论句末标注来源标签，如 [来源: 市场数据] / [来源: Twitter] / [来源: 微信] / [来源: 热榜] / [来源: 联网搜索]\n"
+            "- 在关键结论句末标注来源标签，如 [来源: 市场数据] / [来源: Twitter] / [来源: 微信] / [来源: 热榜] / [来源: GitHub] / [来源: 联网搜索]\n"
             "- 单节避免空话，尽量给出可验证事实；输入缺失时明确写“数据不足”\n"
-            "- 总字数 1800-3200 字\n\n"
+            "- 字数控制：摘要 180-260 字；2.1~2.5 每节 220-380 字；跟踪清单每条 25-50 字\n"
+            "- 当 2.1 缺少有效交易时段数据时，只写“数据不足 + 需补充信息”，禁止方向性推断\n"
+            "- 不要输出任何关于读者身份背景的信息\n"
+            "- 总字数 1500-2600 字\n\n"
             f"{grounding_rules}\n"
             f"5) {a_share_rule}"
         ),
@@ -1917,14 +2420,23 @@ def run_ai_analysis(market: dict, social: dict, news: list,
     if is_ai_failure(final_summary):
         logger.warning("⚠️ 综合分析失败，使用降级模板输出。")
         final_summary = (
-            "## 🧭 Summary\n"
+            "## 一、摘要\n"
             "- 社会：综合分析调用失败，请参考下方分板块内容。\n"
-            "- 经济：当前自动汇总不可用。\n"
-            "- 市场：请优先看下方市场和热榜分析。\n"
-            "- 科技：请优先看下方 Twitter/微信科技条目。\n\n"
-            "## 📌 今日核心结论\n"
-            "本次综合模型不可用，已保留各板块详细分析与原始数据供人工研判。\n\n"
-            "## 🔭 明日观察清单\n"
+            "- 经济：自动综合暂不可用。\n"
+            "- 市场：请优先查看市场与热榜详细分析。\n"
+            "- 科技：请优先查看 GitHub 与 Twitter 详细分析。\n\n"
+            "## 二、分板块汇报\n"
+            "### 2.1 市场概况（仅有效交易时段数据）\n"
+            "综合模型失败，已保留原始市场明细与分板块分析。\n\n"
+            "### 2.2 微信公众号共识与弱信号\n"
+            "请参考下方“微信公众号详细分析”。\n\n"
+            "### 2.3 GitHub 热门项目雷达（金融科技/AI/Web3）\n"
+            "请参考下方“GitHub 项目详细分析”。\n\n"
+            "### 2.4 Twitter 海外信号（英文内容中文汇报）\n"
+            "请参考下方“Twitter 英文信号详细分析”。\n\n"
+            "### 2.5 国内新闻与政策脉络\n"
+            "请参考下方“热榜详细分析”。\n\n"
+            "## 三、明日跟踪清单\n"
             "1. 核查数据抓取任务是否完整。\n"
             "2. 对照联网检索补充核验关键事件。\n"
             "3. 重新生成报告并比对结论差异。"
@@ -1939,12 +2451,19 @@ def run_ai_analysis(market: dict, social: dict, news: list,
     
     if "market" in section_summaries:
         result_parts.append(f"### 📊 市场数据详细分析\n\n{section_summaries['market']}\n")
+    result_parts.append(f"### ⏱ 市场时效过滤说明\n\n{market_filter_note_text}\n")
     if "twitter" in section_summaries:
         result_parts.append(f"### 🐦 Twitter 详细分析\n\n{section_summaries['twitter']}\n")
+    if "twitter_focus" in section_summaries:
+        result_parts.append(f"### 🌐 Twitter 英文信号详细分析\n\n{section_summaries['twitter_focus']}\n")
     if "wechat" in section_summaries:
         result_parts.append(f"### 📱 微信公众号详细分析\n\n{section_summaries['wechat']}\n")
+    if "wechat_consensus" in section_summaries:
+        result_parts.append(f"### 🛰 微信共识与弱信号\n\n{section_summaries['wechat_consensus']}\n")
     if "news" in section_summaries:
         result_parts.append(f"### 📰 热榜详细分析\n\n{section_summaries['news']}\n")
+    if "github" in section_summaries:
+        result_parts.append(f"### 💻 GitHub 项目详细分析\n\n{section_summaries['github']}\n")
     if isinstance(web_context, dict) and web_context.get("items"):
         result_parts.append(f"### 🌐 联网检索摘要\n\n{format_web_context_for_ai(web_context)}\n")
 
