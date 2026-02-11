@@ -5,7 +5,7 @@
 # 用法:
 #   ./scripts/local.sh setup
 #   ./scripts/local.sh run [all|news|market|social]
-#   ./scripts/local.sh report [morning|evening|auto] [YYYYMMDD]
+#   ./scripts/local.sh report [morning|evening|auto] [YYYYMMDD] [generate_report extra args]
 #   ./scripts/local.sh cron-install
 #   ./scripts/local.sh cron-remove
 #   ./scripts/local.sh status
@@ -49,14 +49,20 @@ cmd_run() {
 cmd_report() {
     ensure_venv
     local report_type="${1:-auto}"
-    local date_arg="${2:-}"
+    shift || true
+    local date_arg=""
+    if [ "${1:-}" != "" ] && [[ "${1}" =~ ^[0-9]{8}$ ]]; then
+        date_arg="$1"
+        shift || true
+    fi
+    local extra_args=("$@")
     mkdir -p "$LOG_DIR"
     if [ -n "$date_arg" ]; then
-        echo "📝 生成报告: type=$report_type, date=$date_arg"
-        (cd "$ROOT_DIR" && "$PYTHON_BIN" scripts/generate_report.py --type "$report_type" --date "$date_arg")
+        echo "📝 生成报告: type=$report_type, date=$date_arg ${extra_args[*]}"
+        (cd "$ROOT_DIR" && "$PYTHON_BIN" scripts/generate_report.py --type "$report_type" --date "$date_arg" "${extra_args[@]}")
     else
-        echo "📝 生成报告: type=$report_type"
-        (cd "$ROOT_DIR" && "$PYTHON_BIN" scripts/generate_report.py --type "$report_type")
+        echo "📝 生成报告: type=$report_type ${extra_args[*]}"
+        (cd "$ROOT_DIR" && "$PYTHON_BIN" scripts/generate_report.py --type "$report_type" "${extra_args[@]}")
     fi
 }
 
@@ -105,10 +111,9 @@ cmd_notion_push() {
 build_cron_block() {
     cat <<EOF
 $CRON_BEGIN
-CRON_TZ=Asia/Shanghai
 */30 * * * * cd $ROOT_DIR && $PYTHON_BIN -m finradar --mode market >> $LOG_DIR/cron-market.log 2>&1 && $PYTHON_BIN -m finradar --mode news >> $LOG_DIR/cron-news.log 2>&1
-0 8 * * * cd $ROOT_DIR && $PYTHON_BIN -m finradar --mode social >> $LOG_DIR/cron-social.log 2>&1 && $PYTHON_BIN scripts/generate_report.py --type morning >> $LOG_DIR/cron-report.log 2>&1 && $ROOT_DIR/scripts/local.sh notion-push morning >> $LOG_DIR/cron-notion.log 2>&1
-0 20 * * * cd $ROOT_DIR && $PYTHON_BIN -m finradar --mode social >> $LOG_DIR/cron-social.log 2>&1 && $PYTHON_BIN scripts/generate_report.py --type evening >> $LOG_DIR/cron-report.log 2>&1 && $ROOT_DIR/scripts/local.sh notion-push evening >> $LOG_DIR/cron-notion.log 2>&1
+0 * * * * cd $ROOT_DIR && [ "\$(TZ=Asia/Shanghai date +\%H)" = "08" ] && $PYTHON_BIN -m finradar --mode social >> $LOG_DIR/cron-social.log 2>&1 && $PYTHON_BIN scripts/generate_report.py --type morning >> $LOG_DIR/cron-report.log 2>&1 && $ROOT_DIR/scripts/local.sh notion-push morning >> $LOG_DIR/cron-notion.log 2>&1
+0 * * * * cd $ROOT_DIR && [ "\$(TZ=Asia/Shanghai date +\%H)" = "20" ] && $PYTHON_BIN -m finradar --mode social >> $LOG_DIR/cron-social.log 2>&1 && $PYTHON_BIN scripts/generate_report.py --type evening >> $LOG_DIR/cron-report.log 2>&1 && $ROOT_DIR/scripts/local.sh notion-push evening >> $LOG_DIR/cron-notion.log 2>&1
 $CRON_END
 EOF
 }
@@ -160,7 +165,7 @@ run)
     cmd_run "${2:-all}"
     ;;
 report)
-    cmd_report "${2:-auto}" "${3:-}"
+    cmd_report "${2:-auto}" "${@:3}"
     ;;
 cron-install)
     cmd_cron_install
@@ -184,7 +189,7 @@ finradar 本地运行工具
 命令:
   setup                    初始化本地虚拟环境并安装依赖
   run [mode]               单次执行 (all/news/market/social)
-  report [type] [date]     生成报告 (morning/evening/auto)
+  report [type] [date] [extra-args]  生成报告 (morning/evening/auto)
   notion-config <token> <parent>  写入 Notion 配置到 .notion.env
   notion-push [type] [date]        推送报告到 Notion 子页面
   cron-install             安装本地定时任务（08:00 / 20:00 + 每30分钟）
@@ -195,6 +200,7 @@ finradar 本地运行工具
   ./scripts/local.sh setup
   ./scripts/local.sh run social
   ./scripts/local.sh report morning
+  ./scripts/local.sh report evening 20260211 --keywords "A股,美股,AI芯片"
   ./scripts/local.sh notion-config ntn_xxx https://www.notion.so/xxx
   ./scripts/local.sh notion-push morning 20260209
   ./scripts/local.sh cron-install

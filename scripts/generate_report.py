@@ -15,6 +15,8 @@ finradar 每日综合报告生成器
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from email.utils import parsedate_to_datetime
+from html import unescape
 import json
 import os
 import sqlite3
@@ -24,6 +26,7 @@ import re
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+import xml.etree.ElementTree as ET
 from zoneinfo import ZoneInfo
 
 import requests
@@ -41,6 +44,7 @@ OUTPUT_REPORT = PROJECT_ROOT / "output" / "report"
 
 DEFAULT_DEEPSEEK_BASE = "https://api.deepseek.com"
 DEFAULT_DEEPSEEK_MODEL = "deepseek-chat"
+DEFAULT_WEB_SEARCH_ENDPOINT = "https://news.google.com/rss/search"
 BEIJING_TZ = ZoneInfo("Asia/Shanghai")
 
 
@@ -283,57 +287,446 @@ def load_news_data(date_str: str, report_type: str) -> list:
 
 
 # ══════════════════════════════════════════════════════
+#  1.5 联网检索上下文
+# ══════════════════════════════════════════════════════
+
+def parse_bool(value, default: bool = False) -> bool:
+    """将常见布尔文本安全转换为 bool。"""
+    if value is None:
+        return default
+    text = str(value).strip().lower()
+    if text in {"1", "true", "yes", "on", "y"}:
+        return True
+    if text in {"0", "false", "no", "off", "n"}:
+        return False
+    return default
+
+
+def parse_keywords_arg(raw_keywords: str | None) -> list[str]:
+    """解析关键词参数，支持中英文逗号/分号/换行。"""
+    if not raw_keywords:
+        return []
+    parts = re.split(r"[,\n，;；]+", str(raw_keywords))
+    keywords = []
+    for part in parts:
+        text = normalize_plain_text(part)
+        if not text:
+            continue
+        text = text[:80]
+        if text not in keywords:
+            keywords.append(text)
+    return keywords
+
+
+def parse_rfc822_datetime(raw: str) -> datetime | None:
+    """解析 RSS pubDate。"""
+    if not raw:
+        return None
+    try:
+        dt = parsedate_to_datetime(raw)
+    except (TypeError, ValueError):
+        return None
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=BEIJING_TZ)
+    return dt.astimezone(BEIJING_TZ)
+
+
+def strip_html_tags(text: str) -> str:
+    """去除 HTML 标签并压缩空白。"""
+    plain = re.sub(r"<[^>]+>", " ", str(text or ""))
+    plain = unescape(plain)
+    return normalize_plain_text(plain)
+
+
+def choose_market_queries(market: dict, iso_date: str, include_a_share: bool = True) -> list[str]:
+    """从市场数据中提取较有解释价值的检索词。"""
+    data = market.get("data", {}) if isinstance(market, dict) else {}
+    queries: list[str] = [
+        f"{iso_date} 全球市场 盘面 复盘 原因",
+        f"{iso_date} 中国 宏观 经济 政策 市场 影响",
+        f"{iso_date} AI 科技 行业 动态 影响",
+    ]
+
+    stock = data.get("stock_cn", {}) if isinstance(data, dict) else {}
+    if include_a_share and isinstance(stock, dict):
+        indices = [i for i in stock.get("indices", []) if isinstance(i, dict)]
+        if indices:
+            top_index = sorted(indices, key=lambda x: abs(float(x.get("change_pct", 0) or 0)), reverse=True)[0]
+            idx_name = normalize_plain_text(top_index.get("name", "A股主要指数"))
+            idx_change = float(top_index.get("change_pct", 0) or 0)
+            direction = "上涨" if idx_change >= 0 else "下跌"
+            queries.append(f"{idx_name} {direction} 原因")
+
+    crypto = data.get("crypto", {}) if isinstance(data, dict) else {}
+    if isinstance(crypto, dict):
+        coins = [c for c in crypto.get("coins", []) if isinstance(c, dict)]
+        if coins:
+            top_coin = sorted(coins, key=lambda x: abs(float(x.get("change_24h", 0) or 0)), reverse=True)[0]
+            symbol = str(top_coin.get("symbol", "BTC")).upper()
+            change = float(top_coin.get("change_24h", 0) or 0)
+            direction = "上涨" if change >= 0 else "下跌"
+            queries.append(f"{symbol} {direction} 原因")
+
+    pm = data.get("precious_metal", {}) if isinstance(data, dict) else {}
+    if isinstance(pm, dict):
+        metals = [m for m in pm.get("metals", []) if isinstance(m, dict)]
+        if metals:
+            top_metal = sorted(metals, key=lambda x: abs(float(x.get("change_pct", 0) or 0)), reverse=True)[0]
+            name = normalize_plain_text(top_metal.get("name", "黄金"))
+            direction = "上涨" if float(top_metal.get("change_pct", 0) or 0) >= 0 else "下跌"
+            queries.append(f"{name} {direction} 原因")
+
+    return list(dict.fromkeys([q for q in queries if normalize_plain_text(q)]))
+
+
+def choose_news_queries(news: list) -> list[str]:
+    """从热榜中抽取标题作为检索提示。"""
+    if not news:
+        return []
+    valid_items = [n for n in news if isinstance(n, dict)]
+    if not valid_items:
+        return []
+    valid_items.sort(key=lambda x: news_rank_value(x.get("rank")))
+    queries = []
+    for item in valid_items[:4]:
+        title = normalize_plain_text(item.get("title", ""))
+        if not title:
+            continue
+        title = title[:36]
+        queries.append(f"{title} 事件 背景")
+    return list(dict.fromkeys(queries))
+
+
+def build_web_search_queries(
+    market: dict,
+    news: list,
+    iso_date: str,
+    report_type: str,
+    custom_keywords: list[str] | None = None,
+) -> list[str]:
+    """构建联网检索查询词（用户关键词优先）。"""
+    if custom_keywords:
+        return list(dict.fromkeys(custom_keywords))
+
+    is_morning_report = report_type == "morning"
+    queries = choose_market_queries(market, iso_date, include_a_share=not is_morning_report)
+    queries.extend(choose_news_queries(news))
+    return list(dict.fromkeys([q for q in queries if q]))[:8]
+
+
+def fetch_google_news_rss(
+    query: str,
+    lookback: str = "1d",
+    max_items: int = 8,
+    timeout: int = 15,
+    language: str = "zh-CN",
+    country: str = "CN",
+) -> list[dict]:
+    """使用 Google News RSS 做轻量联网检索。"""
+    query = normalize_plain_text(query)
+    if not query:
+        return []
+
+    query_with_range = query
+    if lookback and "when:" not in query.lower():
+        query_with_range = f"{query} when:{lookback}"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    }
+    params = {
+        "q": query_with_range,
+        "hl": language,
+        "gl": country,
+        "ceid": f"{country}:{language}",
+    }
+    response = requests.get(DEFAULT_WEB_SEARCH_ENDPOINT, params=params, headers=headers, timeout=timeout)
+    response.raise_for_status()
+
+    root = ET.fromstring(response.text)
+    items: list[dict] = []
+    for item in root.findall("./channel/item"):
+        title = normalize_plain_text(item.findtext("title", ""))
+        if not title:
+            continue
+        link = clean_external_url(item.findtext("link", ""))
+        source_node = item.find("source")
+        source = normalize_plain_text(source_node.text if source_node is not None else "") or "Google News"
+        pub_raw = normalize_plain_text(item.findtext("pubDate", ""))
+        pub_dt = parse_rfc822_datetime(pub_raw)
+        pub_display = pub_dt.strftime("%Y-%m-%d %H:%M") if pub_dt else ""
+
+        desc_html = item.findtext("description", "")
+        snippet = strip_html_tags(desc_html)
+        if snippet and title in snippet:
+            snippet = normalize_plain_text(snippet.replace(title, "", 1))
+        snippet = snippet[:220]
+
+        items.append(
+            {
+                "query": query,
+                "title": title,
+                "source": source,
+                "published_at": pub_display,
+                "published_ts": pub_dt.timestamp() if pub_dt else 0,
+                "snippet": snippet,
+                "link": link,
+            }
+        )
+        if len(items) >= max_items:
+            break
+    return items
+
+
+def resolve_previous_report_path(date_str: str, report_type: str) -> Path | None:
+    """定位上一期早晚报文件。"""
+    report_day = datetime.strptime(date_str, "%Y%m%d")
+    if report_type == "morning":
+        prev_day = report_day - timedelta(days=1)
+        candidate = OUTPUT_REPORT / f"daily_{prev_day.strftime('%Y%m%d')}_evening.md"
+    else:
+        candidate = OUTPUT_REPORT / f"daily_{date_str}_morning.md"
+    return candidate if candidate.exists() else None
+
+
+def load_previous_report_context(date_str: str, report_type: str, max_chars: int = 2200) -> str:
+    """读取上一期 AI 摘要，补足上下文。"""
+    prev_path = resolve_previous_report_path(date_str, report_type)
+    if prev_path is None:
+        return ""
+
+    try:
+        content = prev_path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+    match = re.search(r"#\s+🤖\s+AI 分析摘要\s*(.*?)\n#\s+📋\s+原始数据", content, flags=re.S)
+    excerpt = match.group(1).strip() if match else content
+    excerpt = re.sub(r"<details>.*?</details>", "", excerpt, flags=re.S)
+    excerpt = normalize_plain_text(excerpt)
+    if len(excerpt) > max_chars:
+        excerpt = excerpt[:max_chars] + "..."
+
+    if not excerpt:
+        return ""
+    return f"上一期报告：{prev_path.name}\n{excerpt}"
+
+
+def run_web_context_search(
+    iso_date: str,
+    report_type: str,
+    market: dict,
+    news: list,
+    keywords: list[str] | None = None,
+) -> dict:
+    """执行联网检索并返回结构化上下文。"""
+    keywords = keywords or []
+    lookback_default = "2d" if report_type == "morning" else "1d"
+    lookback = os.environ.get("WEB_CONTEXT_LOOKBACK", lookback_default).strip() or lookback_default
+    max_queries = int(os.environ.get("WEB_CONTEXT_MAX_QUERIES", "8"))
+    max_items_per_query = int(os.environ.get("WEB_CONTEXT_PER_QUERY", "6"))
+    max_items_total = int(os.environ.get("WEB_CONTEXT_MAX_ITEMS", "24"))
+    max_age_hours = int(os.environ.get("WEB_CONTEXT_MAX_AGE_HOURS", "72"))
+    timeout = int(os.environ.get("WEB_CONTEXT_TIMEOUT", "18"))
+    language = os.environ.get("WEB_CONTEXT_LANGUAGE", "zh-CN")
+    country = os.environ.get("WEB_CONTEXT_COUNTRY", "CN")
+
+    queries = build_web_search_queries(
+        market=market,
+        news=news,
+        iso_date=iso_date,
+        report_type=report_type,
+        custom_keywords=keywords or None,
+    )[:max_queries]
+    if not queries:
+        return {"queries": [], "items": [], "errors": []}
+
+    results: list[dict] = []
+    errors: list[str] = []
+    workers = min(max(1, len(queries)), 4)
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        future_map = {
+            executor.submit(
+                fetch_google_news_rss,
+                query,
+                lookback,
+                max_items_per_query,
+                timeout,
+                language,
+                country,
+            ): query
+            for query in queries
+        }
+        for future in as_completed(future_map):
+            query = future_map[future]
+            try:
+                rows = future.result()
+                logger.info(f"🌐 联网检索 [{query}] 命中 {len(rows)} 条")
+                results.extend(rows)
+            except Exception as e:  # pragma: no cover - network dependent
+                err = f"{query}: {e}"
+                logger.warning(f"⚠️ 联网检索失败: {err}")
+                errors.append(err)
+
+    now_ts = now_beijing().timestamp()
+    dedup_map: dict[tuple[str, str], dict] = {}
+    for item in results:
+        title = normalize_plain_text(item.get("title", "")).lower()
+        source = normalize_plain_text(item.get("source", "")).lower()
+        if not title:
+            continue
+        ts = float(item.get("published_ts", 0) or 0)
+        if ts and (now_ts - ts) > max_age_hours * 3600:
+            continue
+        key = (title, source)
+        old = dedup_map.get(key)
+        if old is None or ts > float(old.get("published_ts", 0) or 0):
+            dedup_map[key] = item
+
+    dedup_items = sorted(dedup_map.values(), key=lambda x: float(x.get("published_ts", 0) or 0), reverse=True)
+    for item in dedup_items:
+        item.pop("published_ts", None)
+
+    return {
+        "queries": queries,
+        "items": dedup_items[:max_items_total],
+        "errors": errors,
+    }
+
+
+def format_web_context_for_ai(web_context: dict) -> str:
+    """将联网检索结果压缩为 AI 可读文本。"""
+    if not isinstance(web_context, dict):
+        return "暂无联网检索补充"
+
+    items = [i for i in web_context.get("items", []) if isinstance(i, dict)]
+    if not items:
+        return "暂无联网检索补充"
+
+    queries = [q for q in web_context.get("queries", []) if isinstance(q, str)]
+    lines = [
+        f"联网检索共 {len(items)} 条（关键词: {', '.join(queries) if queries else '自动提取'}）"
+    ]
+    for idx, item in enumerate(items, start=1):
+        published = item.get("published_at", "") or "-"
+        source = item.get("source", "unknown")
+        title = normalize_plain_text(item.get("title", ""))
+        snippet = normalize_plain_text(item.get("snippet", ""))
+        link = clean_external_url(item.get("link"))
+        lines.append(f"{idx}. [{published}] {source} | {title}")
+        if snippet:
+            lines.append(f"   摘要: {snippet}")
+        if link:
+            lines.append(f"   链接: {link}")
+    return "\n".join(lines)
+
+
+def generate_web_context_section(web_context: dict) -> str:
+    """生成报告中的联网检索来源区。"""
+    if not isinstance(web_context, dict):
+        return "## 🌐 联网检索补充\n\n暂无数据\n"
+
+    queries = [q for q in web_context.get("queries", []) if isinstance(q, str)]
+    items = [i for i in web_context.get("items", []) if isinstance(i, dict)]
+    errors = [e for e in web_context.get("errors", []) if isinstance(e, str)]
+
+    lines = ["## 🌐 联网检索补充\n"]
+    if queries:
+        lines.append(f"- 关键词：{', '.join(queries)}")
+    if not items:
+        lines.append("- 暂无可用检索结果（可能网络受限或关键词未命中）\n")
+        if errors:
+            lines.append("> 检索错误：")
+            for err in errors[:3]:
+                lines.append(f"> - {err}")
+            lines.append("")
+        return "\n".join(lines)
+
+    lines.append(f"- 命中结果：{len(items)} 条（按发布时间倒序）\n")
+    grouped: dict[str, list[dict]] = {}
+    for item in items:
+        query = normalize_plain_text(item.get("query", "")) or "自动查询"
+        grouped.setdefault(query, []).append(item)
+
+    for query, rows in grouped.items():
+        lines.append(f"### 🔎 {query}\n")
+        for row in rows[:6]:
+            title = normalize_plain_text(row.get("title", ""))
+            source = normalize_plain_text(row.get("source", "unknown"))
+            published = row.get("published_at", "") or "-"
+            link = clean_external_url(row.get("link"))
+            snippet = normalize_plain_text(row.get("snippet", ""))
+            if link:
+                lines.append(f"- [{title}]({link})")
+            else:
+                lines.append(f"- {title}")
+            lines.append(f"  - 来源: {source} | 时间: {published}")
+            if snippet:
+                lines.append(f"  - 摘要: {snippet}")
+        lines.append("")
+
+    if errors:
+        lines.append("> 部分关键词检索失败（已自动跳过）：")
+        for err in errors[:5]:
+            lines.append(f"> - {err}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+# ══════════════════════════════════════════════════════
 #  2. 数据格式化（给 AI 的全量版）
 # ══════════════════════════════════════════════════════
 
-def format_market_for_ai(market: dict) -> str:
-    """格式化市场数据给 AI 分析（含板块指数）"""
+def format_market_for_ai(market: dict, include_a_share: bool = True) -> str:
+    """格式化市场数据给 AI 分析（含板块指数，可按需排除 A 股盘面）。"""
     data = market.get("data", {})
     lines = []
     
-    # A股主要指数
+    # A股主要指数/板块（早报可按需跳过）
     stock = data.get("stock_cn", {})
-    if stock and stock.get("market_closed"):
-        lines.append(f"【A股】{stock.get('market_status', 'A股休市')}")
-    if stock and stock.get("indices"):
-        lines.append("【A股主要指数】")
-        for idx in stock["indices"]:
-            if isinstance(idx, dict):
-                lines.append(f"  {idx.get('name','')}: {idx.get('price',0):.2f} ({idx.get('change_pct',0):+.2f}%)")
-    
-    # A股板块指数
-    sectors = stock.get("sectors", []) if stock else []
-    if sectors:
-        # 按涨跌幅排序
-        sorted_sectors = sorted(
-            [s for s in sectors if isinstance(s, dict) and s.get("change_pct") is not None],
-            key=lambda x: x.get("change_pct", 0),
-            reverse=True
-        )
-        if sorted_sectors:
-            lines.append("【A股板块涨幅前15】")
-            for s in sorted_sectors[:15]:
-                leader = f" (领涨: {s['leading_stock']})" if s.get("leading_stock") else ""
-                lines.append(f"  {s.get('name','')}: {s.get('change_pct',0):+.2f}%{leader}")
-            lines.append("【A股板块跌幅前15】")
-            for s in sorted_sectors[-15:]:
-                leader = f" (领跌: {s['leading_stock']})" if s.get("leading_stock") else ""
-                lines.append(f"  {s.get('name','')}: {s.get('change_pct',0):+.2f}%{leader}")
-    
-    # 北向资金
-    north = stock.get("north_flow", {}) if stock else {}
-    if north:
-        lines.append("【北向资金】")
-        for k, v in north.items():
-            if isinstance(v, (int, float)):
-                lines.append(f"  {k}: {v:.2f}亿")
-    
-    # 市场统计
-    mstats = stock.get("market_stats", {}) if stock else {}
-    if mstats:
-        lines.append("【市场统计】")
-        for k, v in mstats.items():
-            lines.append(f"  {k}: {v}")
+    if include_a_share:
+        if stock and stock.get("market_closed"):
+            lines.append(f"【A股】{stock.get('market_status', 'A股休市')}")
+        if stock and stock.get("indices"):
+            lines.append("【A股主要指数】")
+            for idx in stock["indices"]:
+                if isinstance(idx, dict):
+                    lines.append(f"  {idx.get('name','')}: {idx.get('price',0):.2f} ({idx.get('change_pct',0):+.2f}%)")
+
+        sectors = stock.get("sectors", []) if stock else []
+        if sectors:
+            sorted_sectors = sorted(
+                [s for s in sectors if isinstance(s, dict) and s.get("change_pct") is not None],
+                key=lambda x: x.get("change_pct", 0),
+                reverse=True
+            )
+            if sorted_sectors:
+                lines.append("【A股板块涨幅前15】")
+                for s in sorted_sectors[:15]:
+                    leader = f" (领涨: {s['leading_stock']})" if s.get("leading_stock") else ""
+                    lines.append(f"  {s.get('name','')}: {s.get('change_pct',0):+.2f}%{leader}")
+                lines.append("【A股板块跌幅前15】")
+                for s in sorted_sectors[-15:]:
+                    leader = f" (领跌: {s['leading_stock']})" if s.get("leading_stock") else ""
+                    lines.append(f"  {s.get('name','')}: {s.get('change_pct',0):+.2f}%{leader}")
+
+        north = stock.get("north_flow", {}) if stock else {}
+        if north:
+            lines.append("【北向资金】")
+            for k, v in north.items():
+                if isinstance(v, (int, float)):
+                    lines.append(f"  {k}: {v:.2f}亿")
+
+        mstats = stock.get("market_stats", {}) if stock else {}
+        if mstats:
+            lines.append("【市场统计】")
+            for k, v in mstats.items():
+                lines.append(f"  {k}: {v}")
     
     # 贵金属
     pm = data.get("precious_metal", {})
@@ -354,7 +747,9 @@ def format_market_for_ai(market: dict) -> str:
     # 期货
     futures = data.get("futures", {})
     if futures:
-        cat_names = {"commodity": "国内商品期货", "index_futures": "股指期货", "international": "国际期货"}
+        cat_names = {"commodity": "国内商品期货", "international": "国际期货"}
+        if include_a_share:
+            cat_names["index_futures"] = "股指期货"
         for cat_key, cat_name in cat_names.items():
             items = futures.get(cat_key, [])
             if items:
@@ -529,6 +924,237 @@ def format_news_for_ai(news: list) -> str:
     return "\n".join(lines)
 
 
+SUPERSCRIPT_DIGITS = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
+
+
+def to_superscript(num: int) -> str:
+    """将数字转为 Unicode 角标。"""
+    return str(num).translate(SUPERSCRIPT_DIGITS)
+
+
+def clean_external_url(value) -> str:
+    """仅保留 http/https 链接。"""
+    url = str(value or "").strip()
+    if url.startswith("http://") or url.startswith("https://"):
+        return url
+    return ""
+
+
+def build_ai_citation_link_pools(market: dict, social: dict, news: list, web_context: dict | None = None) -> dict:
+    """构建 AI 引用来源链接池。"""
+    def _short(value: str, max_len: int = 72) -> str:
+        text = normalize_plain_text(value)
+        if len(text) <= max_len:
+            return text
+        return text[:max_len] + "..."
+
+    pools = {
+        "twitter": [],
+        "wechat": [],
+        "news": [],
+        "github": [],
+        "market": [],
+        "web": [],
+    }
+
+    twitter_data = get_social_section(social, "twitter")
+    tweets = [t for t in twitter_data.get("tweets", []) if isinstance(t, dict) and clean_external_url(t.get("url"))]
+    tweets_follow = [t for t in tweets if not t.get("is_trending")]
+    tweets_hot = [t for t in tweets if t.get("is_trending")]
+    tweets_follow_sorted = sorted(
+        tweets_follow,
+        key=lambda t: (tweet_engagement(t), str(t.get("created_at", ""))),
+        reverse=True,
+    )
+    tweets_hot_sorted = sorted(
+        tweets_hot,
+        key=lambda t: (tweet_engagement(t), str(t.get("created_at", ""))),
+        reverse=True,
+    )
+    tweets_sorted = tweets_follow_sorted + tweets_hot_sorted
+    pools["twitter"] = [
+        (
+            f"{str(t.get('created_at', ''))[:16]} @{t.get('username', 'unknown')}",
+            clean_external_url(t.get("url")),
+        )
+        for t in tweets_sorted
+    ]
+
+    wechat_data = get_social_section(social, "wechat")
+    articles = [a for a in wechat_data.get("articles", []) if isinstance(a, dict) and clean_external_url(a.get("url"))]
+    articles_follow = [a for a in articles if not a.get("is_hot")]
+    articles_hot = [a for a in articles if a.get("is_hot")]
+    articles_follow_sorted = sorted(
+        articles_follow,
+        key=lambda a: (wechat_article_score(a), str(a.get("publish_time", ""))),
+        reverse=True,
+    )
+    articles_hot_sorted = sorted(
+        articles_hot,
+        key=lambda a: (wechat_article_score(a), str(a.get("publish_time", ""))),
+        reverse=True,
+    )
+    articles_sorted = articles_follow_sorted + articles_hot_sorted
+    pools["wechat"] = [
+        (
+            f"{str(a.get('publish_time', ''))[:16]} 【{a.get('account_name', '未知公众号')}】{_short(a.get('title', ''), 72)}",
+            clean_external_url(a.get("url")),
+        )
+        for a in articles_sorted
+    ]
+
+    news_with_url = [n for n in news if isinstance(n, dict) and clean_external_url(n.get("url"))]
+    pools["news"] = [
+        (
+            f"{n.get('platform', 'unknown')} #{n.get('rank', '-')} | {_short(n.get('title', ''), 72)}",
+            clean_external_url(n.get("url")),
+        )
+        for n in news_with_url
+    ]
+
+    github_trending = (market.get("data", {}).get("github", {}) or {}).get("trending", []) or []
+    github_with_url = [r for r in github_trending if isinstance(r, dict) and clean_external_url(r.get("url"))]
+    pools["github"] = [
+        (
+            f"{(r.get('full_name') or r.get('name') or 'unknown')} | ⭐ {r.get('stars', 0)}",
+            clean_external_url(r.get("url")),
+        )
+        for r in github_with_url
+    ]
+
+    # 市场数据来源尽量给出可点击外链，确保 Notion 中也可点击
+    market_data = market.get("data", {}) if isinstance(market, dict) else {}
+    market_sources: list[tuple[str, str]] = []
+    if isinstance(market_data, dict):
+        if market_data.get("crypto"):
+            market_sources.append(("CoinGecko API 文档", "https://www.coingecko.com/en/api/documentation"))
+        if market_data.get("precious_metal") or (
+            isinstance(market_data.get("futures"), dict) and market_data.get("futures", {}).get("international")
+        ):
+            market_sources.append(("Yahoo Finance 行情", "https://finance.yahoo.com"))
+        if market_data.get("stock_cn") or market_data.get("futures"):
+            market_sources.append(("AkShare 数据接口文档", "https://akshare.akfamily.xyz"))
+    if not market_sources:
+        market_sources.append(("AkShare 数据接口文档", "https://akshare.akfamily.xyz"))
+    pools["market"] = market_sources
+
+    web_items = []
+    if isinstance(web_context, dict):
+        web_items = [
+            item for item in web_context.get("items", [])
+            if isinstance(item, dict) and clean_external_url(item.get("link"))
+        ]
+    pools["web"] = [
+        (
+            f"{(item.get('published_at') or '-')[:16]} {item.get('source', 'Web')} | {_short(item.get('title', ''), 72)}",
+            clean_external_url(item.get("link")),
+        )
+        for item in web_items
+    ]
+
+    return pools
+
+
+def normalize_source_label_to_key(label: str) -> str | None:
+    """将来源标签映射到统一 key。"""
+    text = str(label or "").strip().lower()
+    if not text:
+        return None
+    if "twitter" in text or "推特" in text:
+        return "twitter"
+    if "微信" in text:
+        return "wechat"
+    if "热榜" in text or "news" in text or "newsnow" in text:
+        return "news"
+    if "github" in text:
+        return "github"
+    if "联网" in text or "搜索" in text or "web" in text:
+        return "web"
+    if "市场" in text:
+        return "market"
+    return None
+
+
+def convert_ai_source_tags_to_clickable_refs(
+    ai_text: str,
+    market: dict,
+    social: dict,
+    news: list,
+    web_context: dict | None = None,
+) -> tuple[str, str]:
+    """
+    将 AI 输出中的 [来源: xxx] 转成可点击角标链接，如 [¹](url)。
+    并返回“引用脚注”区块。
+    """
+    if not ai_text:
+        return ai_text, ""
+
+    source_tag_pattern = re.compile(r"\[来源:\s*([^\]]+)\]")
+    pools = build_ai_citation_link_pools(market, social, news, web_context=web_context)
+    pointers = {k: 0 for k in pools.keys()}
+
+    ref_records: list[tuple[int, str, str, str]] = []  # idx, source_key, title, url
+    url_to_idx: dict[str, int] = {}
+
+    def alloc_ref(source_key: str) -> tuple[int, str, str] | None:
+        candidates = pools.get(source_key, [])
+        if not candidates:
+            return None
+
+        ptr = pointers.get(source_key, 0)
+        if ptr >= len(candidates):
+            ptr = len(candidates) - 1  # 用最后一条兜底
+        title, url = candidates[ptr]
+        pointers[source_key] = min(ptr + 1, len(candidates))
+
+        if not url:
+            return None
+        if url in url_to_idx:
+            idx = url_to_idx[url]
+            return idx, title, url
+
+        idx = len(ref_records) + 1
+        url_to_idx[url] = idx
+        ref_records.append((idx, source_key, title, url))
+        return idx, title, url
+
+    def repl(match: re.Match) -> str:
+        raw = match.group(1)
+        parts = [p.strip() for p in re.split(r"[，,、/]+", raw) if p.strip()]
+        tokens: list[str] = []
+        for part in parts:
+            key = normalize_source_label_to_key(part)
+            if not key:
+                continue
+            ref = alloc_ref(key)
+            if not ref:
+                continue
+            idx, _, url = ref
+            sup = to_superscript(idx)
+            tokens.append(f"[{sup}]({url})")
+        if not tokens:
+            return match.group(0)
+        return "".join(tokens)
+
+    converted = source_tag_pattern.sub(repl, ai_text)
+    if not ref_records:
+        return converted, ""
+
+    lines = ["\n### 📎 引用脚注\n"]
+    source_label = {
+        "twitter": "Twitter",
+        "wechat": "微信公众号",
+        "news": "NewsNow热榜",
+        "github": "GitHub",
+        "market": "市场原始数据",
+        "web": "联网检索",
+    }
+    for idx, source_key, title, url in ref_records:
+        lines.append(f"{idx}. [{title}]({url})（{source_label.get(source_key, source_key)}）")
+
+    return converted, "\n".join(lines) + "\n"
+
+
 def get_deepseek_parallelism() -> int:
     """获取 DeepSeek 并发路数，默认 20 路。"""
     raw = os.environ.get("DEEPSEEK_PARALLELISM", "20")
@@ -549,6 +1175,129 @@ def split_evenly(items: list, parts: int) -> list[list]:
     for idx, item in enumerate(items):
         buckets[idx % parts].append(item)
     return [bucket for bucket in buckets if bucket]
+
+
+NEWS_FINANCE_KEYWORDS = (
+    "a股", "港股", "美股", "股市", "股票", "指数", "期货", "债", "债券", "收益率",
+    "人民币", "美元", "汇率", "利率", "cpi", "pmi", "非农", "通胀", "降息", "加息",
+    "黄金", "白银", "原油", "天然气", "铜", "煤", "比特币", "btc", "eth", "sol",
+    "ai", "算力", "芯片", "科技", "再融资", "证监", "交易所", "财联社", "wind"
+)
+NEWS_PLATFORM_BONUS = ("财联社", "华尔街", "wind", "证券", "财经")
+NEWS_RISK_TERMS = (
+    "爱泼斯坦", "epstein", "强奸", "性侵", "猥亵", "恋童", "血", "死亡", "谋杀", "自杀", "恐怖"
+)
+
+
+def news_rank_value(raw_rank) -> int:
+    """将热榜排名转为整数，失败时给较低优先级。"""
+    try:
+        return int(raw_rank)
+    except Exception:
+        return 99
+
+
+def sanitize_news_title_for_ai(title: str) -> str:
+    """对少量高风险词做脱敏，降低模型风控触发概率。"""
+    text = normalize_plain_text(title)
+    for term in NEWS_RISK_TERMS:
+        text = re.sub(re.escape(term), "敏感事件", text, flags=re.IGNORECASE)
+    return text
+
+
+def news_item_score(item: dict) -> float:
+    """热榜条目评分：金融/科技相关优先、高排名优先。"""
+    title = normalize_plain_text(item.get("title", "")).lower()
+    platform = normalize_plain_text(item.get("platform", "")).lower()
+    rank = news_rank_value(item.get("rank"))
+    score = max(0, 31 - rank) * 3
+    if any(k in title for k in NEWS_FINANCE_KEYWORDS):
+        score += 100
+    if any(p in platform for p in NEWS_PLATFORM_BONUS):
+        score += 30
+    return score
+
+
+def build_news_chunks(news: list, parts: int) -> list[list]:
+    """按相关度切分热榜，供并行分析。"""
+    items = [n for n in news if isinstance(n, dict)]
+    if not items:
+        return []
+    items_sorted = sorted(
+        items,
+        key=lambda x: (news_item_score(x), -news_rank_value(x.get("rank"))),
+        reverse=True,
+    )
+    chunk_size = max(8, int(os.environ.get("NEWS_AI_CHUNK_SIZE", "18")))
+    chunk_count = max(1, (len(items_sorted) + chunk_size - 1) // chunk_size)
+    chunk_count = max(1, min(parts, chunk_count))
+    return split_evenly(items_sorted, chunk_count)
+
+
+def format_news_chunk_for_ai(chunk: list, idx: int, total: int) -> str:
+    """格式化热榜分片文本。"""
+    lines = [f"热榜分片 {idx}/{total}，共 {len(chunk)} 条："]
+    for n in chunk:
+        platform = n.get("platform", "unknown")
+        rank = n.get("rank", "-")
+        title = sanitize_news_title_for_ai(str(n.get("title", "")))
+        lines.append(f"  [{platform}] #{rank} {title}")
+    return "\n".join(lines)
+
+
+def format_news_chunk_for_ai_compact(chunk: list, idx: int, total: int) -> str:
+    """格式化热榜精简分片文本（分片重试用）。"""
+    selected = sorted(chunk, key=news_item_score, reverse=True)[:10]
+    lines = [f"热榜精简分片 {idx}/{total}，共 {len(selected)} 条："]
+    for n in selected:
+        platform = n.get("platform", "unknown")
+        rank = n.get("rank", "-")
+        title = sanitize_news_title_for_ai(str(n.get("title", "")))
+        if len(title) > 80:
+            title = title[:80] + "..."
+        lines.append(f"  [{platform}] #{rank} {title}")
+    return "\n".join(lines)
+
+
+def generate_news_rule_based_summary(news: list) -> str:
+    """热榜 AI 全部失败时的规则化降级摘要。"""
+    items = [n for n in news if isinstance(n, dict)]
+    if not items:
+        return "暂无热榜数据"
+
+    items_sorted = sorted(items, key=news_item_score, reverse=True)
+    top_common = items_sorted[:8]
+    finance_items = [n for n in items_sorted if any(k in normalize_plain_text(n.get("title", "")).lower() for k in NEWS_FINANCE_KEYWORDS)][:8]
+    ai_items = [n for n in items_sorted if any(k in normalize_plain_text(n.get("title", "")).lower() for k in ("ai", "人工智能", "算力", "芯片", "科技"))][:6]
+
+    def _fmt(item: dict) -> str:
+        return f"- [{item.get('platform', 'unknown')} #{item.get('rank', '-')}] {normalize_plain_text(item.get('title', ''))}"
+
+    lines = [
+        "⚠️ 热榜 AI 分析触发风控，已自动回退为规则化摘要（基于原始热榜排序与关键词提取）。",
+        "",
+        "#### 跨平台高频热点（Top 8）",
+    ]
+    lines.extend(_fmt(x) for x in top_common)
+
+    lines.append("")
+    lines.append("#### 金融市场相关")
+    if finance_items:
+        lines.extend(_fmt(x) for x in finance_items[:6])
+    else:
+        lines.append("- 未识别到明显金融关键词（数据不足/未提供）。")
+
+    lines.append("")
+    lines.append("#### 科技/AI 相关")
+    if ai_items:
+        lines.extend(_fmt(x) for x in ai_items[:6])
+    else:
+        lines.append("- 未识别到明显 AI 关键词（数据不足/未提供）。")
+
+    lines.append("")
+    lines.append("#### 社会舆论焦点")
+    lines.extend(_fmt(x) for x in top_common[:5])
+    return "\n".join(lines)
 
 
 def tweet_engagement(tweet: dict) -> int:
@@ -808,7 +1557,10 @@ def call_deepseek(system_prompt: str, user_prompt: str, api_key: str,
 
 def run_ai_analysis(market: dict, social: dict, news: list,
                     api_key: str, api_base: str, model: str,
-                    date_str: str, iso_date: str, report_label: str, time_range: str) -> str:
+                    date_str: str, iso_date: str, report_label: str,
+                    time_range: str, report_type: str,
+                    web_context: dict | None = None,
+                    previous_context: str = "") -> str:
     """
     分批调用 DeepSeek，每个数据源独立分析，最后综合汇总。
     
@@ -817,26 +1569,40 @@ def run_ai_analysis(market: dict, social: dict, news: list,
       2. Twitter 分片并行(默认20路) → 分片摘要 → 汇总
       3. 微信分片并行(默认20路) → 分片摘要 → 汇总
       4. 热榜全量      → 热榜分析
-      5. 汇总以上4份分析 → 最终综合报告
+      5. 注入联网检索+上期上下文 → 综合结构化报告
     """
     date_context = f"{iso_date} {report_label}（覆盖时段: {time_range}）"
     section_summaries = {}
     parallelism = get_deepseek_parallelism()
+    grounding_rules = (
+        "严格约束：\n"
+        "1) 只能使用输入文本中的事实，禁止引入外部新闻、历史记忆、常识补全或虚构数字/事件；\n"
+        "2) 输入里没有的信息必须明确写“数据不足/未提供”；\n"
+        "3) 禁止把猜测写成事实，禁止杜撰“交叉验证”；\n"
+        "4) 结论必须可追溯到输入内容。"
+    )
+    is_morning_report = report_type == "morning"
+    a_share_rule = (
+        "早报特殊规则：不要分析 A 股盘面数据（指数、板块、北向资金），仅可分析非 A 股市场。"
+        if is_morning_report else
+        "可正常分析 A 股与其他市场。"
+    )
     logger.info(f"⚙️ DeepSeek 分片并发: {parallelism} 路")
     
     # ─── 第1步: 市场数据分析 ────────────────────────
     logger.info("🔍 [1/5] 分析市场数据...")
-    market_text = format_market_for_ai(market)
+    market_text = format_market_for_ai(market, include_a_share=not is_morning_report)
     if market_text != "暂无市场数据":
         summary = call_deepseek(
             system_prompt=(
                 "你是资深金融市场分析师。请对以下市场数据进行专业分析，包括：\n"
-                "1. 主要指数走势判断\n"
-                "2. 板块轮动分析：哪些板块在领涨/领跌，反映什么资金偏好\n"
+                "1. 主要市场走势判断\n"
+                "2. 关键资产轮动分析：哪些方向在领涨/领跌，反映什么资金偏好\n"
                 "3. 加密货币和商品期货的关键变化\n"
-                "4. 北向资金流向暗示\n"
                 "5. 涨跌驱动链条：请明确“事件/政策/情绪 -> 资金行为 -> 价格表现”的因果路径，并标注证据强弱\n\n"
-                "用中文，Markdown格式，重要数据**加粗**，600-900字。"
+                "用中文，Markdown格式，重要数据**加粗**，600-900字。\n\n"
+                f"{grounding_rules}\n"
+                f"5) {a_share_rule}"
             ),
             user_prompt=f"以下是 {date_context} 的金融市场数据：\n\n{market_text}",
             api_key=api_key,
@@ -858,7 +1624,8 @@ def run_ai_analysis(market: dict, social: dict, news: list,
                 "1. 分片内最重要的3-5条事件\n"
                 "2. 分片情绪（乐观/中性/谨慎）\n"
                 "3. 可执行关注点（交易信号/政策信号/行业动向）\n"
-                "输出中文 Markdown，180-350字，避免重复。"
+                "输出中文 Markdown，180-350字，避免重复。\n\n"
+                f"{grounding_rules}"
             ),
             user_prompt_builder=lambda chunk, idx, total: (
                 f"以下是 {date_context} 的 Twitter 分片数据，请只总结当前分片：\n\n"
@@ -872,7 +1639,8 @@ def run_ai_analysis(market: dict, social: dict, news: list,
             fallback_system_prompt=(
                 "你是资深金融科技分析师。请基于精简推文分片，提炼：\n"
                 "1) 分片关键事件 2) 情绪判断 3) 可执行关注点。\n"
-                "中文 Markdown，150-280字。"
+                "中文 Markdown，150-280字。\n\n"
+                f"{grounding_rules}"
             ),
             fallback_user_prompt_builder=lambda chunk, idx, total: (
                 f"以下是 {date_context} 的 Twitter 精简分片，请只总结当前分片：\n\n"
@@ -892,7 +1660,8 @@ def run_ai_analysis(market: dict, social: dict, news: list,
                     "2. 市场情绪判断（恐慌/乐观/中性）\n"
                     "3. 值得关注的交易信号或行业动向\n"
                     "4. 地缘政治相关推文要点\n\n"
-                    "按重要性排序，去重，中文 Markdown，500-800字。"
+                    "按重要性排序，去重，中文 Markdown，500-800字。\n\n"
+                    f"{grounding_rules}"
                 ),
                 user_prompt=merged_prompt,
                 api_key=api_key,
@@ -922,7 +1691,8 @@ def run_ai_analysis(market: dict, social: dict, news: list,
                 "1. 挑出最值得读的2-4篇（标题+公众号+理由）\n"
                 "2. 提炼核心观点与潜在市场影响\n"
                 "3. 标记风险提示或噪音信息\n"
-                "输出中文 Markdown，220-420字，尽量保留具体信息。"
+                "输出中文 Markdown，220-420字，尽量保留具体信息。\n\n"
+                f"{grounding_rules}"
             ),
             user_prompt_builder=lambda chunk, idx, total: (
                 f"以下是 {date_context} 的微信公众号分片数据，请只总结当前分片：\n\n"
@@ -936,7 +1706,8 @@ def run_ai_analysis(market: dict, social: dict, news: list,
             fallback_system_prompt=(
                 "你是资深财经媒体分析师。请基于公众号精简分片（标题+摘要+互动）输出：\n"
                 "1) 值得读的文章 2) 核心观点 3) 风险提示。\n"
-                "中文 Markdown，180-320字。"
+                "中文 Markdown，180-320字。\n\n"
+                f"{grounding_rules}"
             ),
             fallback_user_prompt_builder=lambda chunk, idx, total: (
                 f"以下是 {date_context} 的微信公众号精简分片，请只总结当前分片：\n\n"
@@ -955,7 +1726,8 @@ def run_ai_analysis(market: dict, social: dict, news: list,
                     "第一部分：最值得读的5-8篇文章（标题+公众号+推荐理由）\n"
                     "第二部分：核心观点与市场影响\n"
                     "第三部分：政策监管动向与风险提示\n\n"
-                    "中文 Markdown，800-1200字，按重要性排序。"
+                    "中文 Markdown，800-1200字，按重要性排序。\n\n"
+                    f"{grounding_rules}"
                 ),
                 user_prompt=merged_prompt,
                 api_key=api_key,
@@ -974,35 +1746,93 @@ def run_ai_analysis(market: dict, social: dict, news: list,
         section_summaries["wechat"] = summary
     
     # ─── 第4步: 热榜分析 ────────────────────────
-    logger.info("🔍 [4/5] 分析热榜新闻...")
-    news_text = format_news_for_ai(news)
-    if news_text != "暂无热榜数据":
-        summary = call_deepseek(
+    logger.info("🔍 [4/5] 分析热榜新闻（分片并行）...")
+    news_chunks = build_news_chunks(news, min(parallelism, 8))
+    if news_chunks:
+        news_chunk_summaries = parallel_chunk_analysis(
+            section_name="NewsNow",
+            chunks=news_chunks,
             system_prompt=(
-                "你是资深新闻分析师。请对以下各平台热榜进行分析，提取：\n"
-                "1. 跨平台共同关注的3-5个热点事件\n"
-                "2. 与金融市场相关的重要新闻\n"
-                "3. 科技/AI 相关热点\n"
+                "你是资深新闻分析师。请只分析当前热榜分片，输出：\n"
+                "1. 分片内最重要的3-5个事件\n"
+                "2. 与金融市场相关的新闻线索\n"
+                "3. 科技/AI 相关线索\n"
                 "4. 社会舆论焦点\n\n"
-                "用中文，Markdown格式，300-500字。"
+                "中文 Markdown，180-320字，禁止编造。\n\n"
+                f"{grounding_rules}"
             ),
-            user_prompt=f"以下是 {date_context} 各平台热榜新闻：\n\n{news_text}",
+            user_prompt_builder=lambda chunk, idx, total: (
+                f"以下是 {date_context} 的 NewsNow 热榜分片，请只总结当前分片：\n\n"
+                f"{format_news_chunk_for_ai(chunk, idx, total)}"
+            ),
             api_key=api_key,
             api_base=api_base,
             model=model,
-            max_tokens=1500
+            max_tokens=900,
+            temperature=0.4,
+            fallback_system_prompt=(
+                "你是资深新闻分析师。请基于精简热榜分片，提炼：\n"
+                "1) 关键事件 2) 金融相关线索 3) 科技/AI 线索。\n"
+                "中文 Markdown，120-220字。\n\n"
+                f"{grounding_rules}"
+            ),
+            fallback_user_prompt_builder=lambda chunk, idx, total: (
+                f"以下是 {date_context} 的 NewsNow 精简分片，请只总结当前分片：\n\n"
+                f"{format_news_chunk_for_ai_compact(chunk, idx, total)}"
+            )
         )
+        valid_summaries = [s for s in news_chunk_summaries if not is_ai_failure(s)]
+        failed_count = len(news_chunk_summaries) - len(valid_summaries)
+
+        if valid_summaries:
+            merged_prompt = "以下是 NewsNow 各分片摘要，请去重并输出最终热榜分析：\n\n"
+            for idx, text in enumerate(valid_summaries, start=1):
+                merged_prompt += f"### 分片{idx}\n{text}\n\n"
+            summary = call_deepseek(
+                system_prompt=(
+                    "你是资深新闻分析师。请融合多个热榜分片摘要，输出：\n"
+                    "1. 跨平台共同关注的3-5个热点事件\n"
+                    "2. 与金融市场相关的重要新闻\n"
+                    "3. 科技/AI 相关热点\n"
+                    "4. 社会舆论焦点\n\n"
+                    "中文 Markdown，300-500字。\n\n"
+                    f"{grounding_rules}"
+                ),
+                user_prompt=merged_prompt,
+                api_key=api_key,
+                api_base=api_base,
+                model=model,
+                max_tokens=1500,
+                temperature=0.4
+            )
+            if is_ai_failure(summary):
+                logger.warning("⚠️ 热榜分片汇总失败，回退到分片摘要拼接")
+                summary = "⚠️ 热榜汇总失败，以下为可用分片摘要：\n\n" + "\n\n".join(valid_summaries[:8])
+            elif failed_count > 0:
+                summary = f"⚠️ 热榜分片有 {failed_count}/{len(news_chunk_summaries)} 路失败，以下为可用分片汇总。\n\n{summary}"
+        else:
+            logger.warning("⚠️ 热榜分片全部失败，回退规则化摘要。")
+            summary = generate_news_rule_based_summary(news)
+
+        if is_ai_failure(summary):
+            logger.warning("⚠️ 热榜分析最终失败，回退规则化摘要。")
+            summary = generate_news_rule_based_summary(news)
+
         section_summaries["news"] = summary
     
     # ─── 第5步: 综合汇总 ────────────────────────
-    logger.info("🔍 [5/5] 生成综合分析报告...")
-    
+    logger.info("🔍 [5/5] 生成综合分析报告（含上下文增强）...")
+
     # 检查是否为周末
     is_weekend_flag, _ = is_weekend(date_str)
     weekend_note = "【注意：今日为周末，A股休市，部分市场数据可能缺失】" if is_weekend_flag else ""
-    
+    web_context_text = format_web_context_for_ai(web_context or {})
+
     synthesis_input = f"以下是 {date_context} 各数据源的分析结果，请进行最终综合汇总：{weekend_note}\n\n"
-    
+
+    if previous_context:
+        synthesis_input += f"## 上一期报告上下文\n{previous_context}\n\n"
+
     if "market" in section_summaries:
         synthesis_input += f"## 市场数据分析\n{section_summaries['market']}\n\n"
     if "twitter" in section_summaries:
@@ -1011,32 +1841,71 @@ def run_ai_analysis(market: dict, social: dict, news: list,
         synthesis_input += f"## 微信公众号分析\n{section_summaries['wechat']}\n\n"
     if "news" in section_summaries:
         synthesis_input += f"## 热榜新闻分析\n{section_summaries['news']}\n\n"
+    if web_context_text != "暂无联网检索补充":
+        synthesis_input += f"## 联网检索补充\n{web_context_text}\n\n"
+    else:
+        synthesis_input += "## 联网检索补充\n暂无联网检索补充\n\n"
+
+    if not section_summaries:
+        logger.warning("⚠️ 各数据源均无可用原始数据，跳过综合 AI 生成。")
+        return (
+            "## 🧭 Summary\n"
+            "- 社会：暂无可用数据。\n"
+            "- 经济：暂无可用数据。\n"
+            "- 市场：暂无可用数据。\n"
+            "- 科技：暂无可用数据。\n\n"
+            "## 📌 今日核心结论\n"
+            "本次报告覆盖时段内未读取到有效原始数据（市场/社交/热榜均为空），已停止 AI 综合生成，避免输出推测内容。\n\n"
+            "## 🔭 明日观察清单\n"
+            "1. 检查定时任务触发时间。\n"
+            "2. 检查抓取服务状态（Nitter / 微信服务 / NewsNow）。\n"
+            "3. 补齐数据后重新生成报告。"
+        )
     
     final_summary = call_deepseek(
         system_prompt=(
             "你是资深金融市场首席分析师，正在编写今日市场综合研报。\n"
             "用户会提供来自市场数据、Twitter、微信公众号、新闻热榜的分析结果。\n"
             "请将它们融合为一份结构清晰的综合报告，包括：\n\n"
-            "## 📊 市场总览\n"
-            "综合A股（含板块轮动）、加密货币、贵金属、期货的走势判断\n\n"
-            "## 🔥 热点事件\n"
-            "当天最重要的3-5个事件，结合多个信息源交叉验证\n\n"
-            "## 🧠 涨跌驱动（为什么）\n"
-            "明确解释主要市场与板块为什么涨/跌，给出驱动链条与证据强弱（高/中/低）\n\n"
-            "## 🤖 科技动态\n"
-            "AI、科技行业重要进展\n\n"
-            "## 🌍 地缘政治\n"
-            "影响市场的国际事件\n\n"
-            "## 📚 重要微信文章\n"
-            "从微信公众号分析中提取最重要、最值得关注的3-5篇文章，包括原文标题、公众号、简要分析（100字内）和推荐理由\n\n"
-            "## 💡 投资启示\n"
-            "基于以上信息的前瞻性投资建议\n\n"
+            "请严格按以下固定结构输出，不允许改一级标题名称：\n\n"
+            "## 🧭 Summary\n"
+            "- 社会：...\n"
+            "- 经济：...\n"
+            "- 市场：...\n"
+            "- 科技：...\n\n"
+            "## 📌 今日核心结论\n"
+            "3-5条，强调最重要变化。\n\n"
+            "## 📈 市场与资产拆解\n"
+            "### 发生了什么\n"
+            + (
+                "仅可分析加密货币、贵金属、期货等非 A 股市场（早报禁分析 A 股盘面）。\n"
+                if is_morning_report else
+                "可分析 A 股、加密货币、贵金属、期货。\n"
+            ) +
+            "### 为什么会这样\n"
+            "给出“事件/政策/情绪 -> 资金行为 -> 价格表现”的链条，并标注证据强弱（高/中/低）。\n"
+            "### 分歧点\n"
+            "指出当前叙事中最容易误判的1-2处。\n\n"
+            "## 📰 社会与宏观事件上下文\n"
+            "### 事件脉络\n"
+            "要把今天与上一期（如果有）串起来，说明延续与变化。\n"
+            "### 对市场影响\n"
+            "区分短期与中期影响。\n\n"
+            "## 🤖 科技与产业动态\n"
+            "### 关键进展\n"
+            "### 机会与风险\n\n"
+            "## 🔭 明日观察清单\n"
+            "1. ...\n2. ...\n3. ...\n\n"
             "要求：\n"
             "- 用中文，语言精炼专业\n"
             "- Markdown 格式，每个版块用 ## 标题\n"
             "- 重要数据用 **加粗**，关键判断要明确\n"
-            "- 去除重复信息，交叉引用不同来源\n"
-            "- 总字数 1500-3000 字"
+            "- 去除重复信息，交叉引用不同来源，优先回答“为什么会这样”\n"
+            "- 在关键结论句末标注来源标签，如 [来源: 市场数据] / [来源: Twitter] / [来源: 微信] / [来源: 热榜] / [来源: 联网搜索]\n"
+            "- 单节避免空话，尽量给出可验证事实；输入缺失时明确写“数据不足”\n"
+            "- 总字数 1800-3200 字\n\n"
+            f"{grounding_rules}\n"
+            f"5) {a_share_rule}"
         ),
         user_prompt=synthesis_input,
         api_key=api_key,
@@ -1048,12 +1917,17 @@ def run_ai_analysis(market: dict, social: dict, news: list,
     if is_ai_failure(final_summary):
         logger.warning("⚠️ 综合分析失败，使用降级模板输出。")
         final_summary = (
-            "## 📊 市场总览\n"
-            "综合分析调用失败，已保留下方各板块详细分析与原始数据。\n\n"
-            "## 🔥 热点事件\n"
-            "请优先阅读下方 Twitter / 微信 / 热榜详细分析中的高优先级条目。\n\n"
-            "## 💡 投资启示\n"
-            "结合市场与社媒信息，重点关注高景气板块与政策敏感事件，控制仓位与节奏。"
+            "## 🧭 Summary\n"
+            "- 社会：综合分析调用失败，请参考下方分板块内容。\n"
+            "- 经济：当前自动汇总不可用。\n"
+            "- 市场：请优先看下方市场和热榜分析。\n"
+            "- 科技：请优先看下方 Twitter/微信科技条目。\n\n"
+            "## 📌 今日核心结论\n"
+            "本次综合模型不可用，已保留各板块详细分析与原始数据供人工研判。\n\n"
+            "## 🔭 明日观察清单\n"
+            "1. 核查数据抓取任务是否完整。\n"
+            "2. 对照联网检索补充核验关键事件。\n"
+            "3. 重新生成报告并比对结论差异。"
         )
     
     # 组装完整 AI 分析输出
@@ -1071,7 +1945,9 @@ def run_ai_analysis(market: dict, social: dict, news: list,
         result_parts.append(f"### 📱 微信公众号详细分析\n\n{section_summaries['wechat']}\n")
     if "news" in section_summaries:
         result_parts.append(f"### 📰 热榜详细分析\n\n{section_summaries['news']}\n")
-    
+    if isinstance(web_context, dict) and web_context.get("items"):
+        result_parts.append(f"### 🌐 联网检索摘要\n\n{format_web_context_for_ai(web_context)}\n")
+
     result_parts.append("</details>\n")
     
     return "\n".join(result_parts)
@@ -1185,7 +2061,12 @@ def generate_raw_market_section(market: dict) -> str:
         lines.append("### 💻 GitHub 趋势\n")
         for repo in github["trending"][:5]:
             if isinstance(repo, dict):
-                lines.append(f"- ⭐ **{repo.get('name','')}** ({repo.get('stars',0)} stars)")
+                repo_name = repo.get("name", "")
+                repo_url = str(repo.get("url", "") or "").strip()
+                if repo_url.startswith("http://") or repo_url.startswith("https://"):
+                    lines.append(f"- ⭐ [**{repo_name}**]({repo_url}) ({repo.get('stars',0)} stars)")
+                else:
+                    lines.append(f"- ⭐ **{repo_name}** ({repo.get('stars',0)} stars)")
                 desc = repo.get("description", "")[:80]
                 if desc:
                     lines.append(f"  - {desc}")
@@ -1328,6 +2209,266 @@ def generate_raw_news_section(news: list) -> str:
     return "\n".join(lines)
 
 
+def generate_ai_reference_section(
+    market: dict,
+    social: dict,
+    news: list,
+    report_type: str,
+    web_context: dict | None = None,
+) -> str:
+    """生成 AI 分析区引用来源（可点击链接）。"""
+    max_twitter = int(os.environ.get("AI_REF_MAX_TWITTER", "20"))
+    max_wechat = int(os.environ.get("AI_REF_MAX_WECHAT", "20"))
+    max_news = int(os.environ.get("AI_REF_MAX_NEWS", "30"))
+    max_github = int(os.environ.get("AI_REF_MAX_GITHUB", "10"))
+    max_web = int(os.environ.get("AI_REF_MAX_WEB", "24"))
+
+    def clean_url(value) -> str:
+        url = str(value or "").strip()
+        if url.startswith("http://") or url.startswith("https://"):
+            return url
+        return ""
+
+    def short_text(value: str, max_len: int = 90) -> str:
+        text = normalize_plain_text(value)
+        if len(text) <= max_len:
+            return text
+        return text[:max_len] + "..."
+
+    lines = ["## 🔗 AI 分析引用来源\n", "> 以下为本次 AI 摘要直接使用的原始材料链接（节选）。\n"]
+    has_any_link = False
+
+    twitter_data = get_social_section(social, "twitter")
+    tweets = [t for t in twitter_data.get("tweets", []) if isinstance(t, dict) and clean_url(t.get("url"))]
+    tweets_sorted = sorted(
+        tweets,
+        key=lambda t: (tweet_engagement(t), str(t.get("created_at", ""))),
+        reverse=True,
+    )
+    selected_tweets = tweets_sorted[:max_twitter]
+    lines.append(f"### 🐦 Twitter ({len(selected_tweets)}/{len(tweets)} 条)\n")
+    if selected_tweets:
+        has_any_link = True
+        for t in selected_tweets:
+            lines.append(
+                f"- [{str(t.get('created_at', ''))[:16]} @{t.get('username', 'unknown')} | "
+                f"{short_text(t.get('text', ''))}]({clean_url(t.get('url'))})"
+            )
+    else:
+        lines.append("- 暂无可用链接")
+    lines.append("")
+
+    wechat_data = get_social_section(social, "wechat")
+    articles = [a for a in wechat_data.get("articles", []) if isinstance(a, dict) and clean_url(a.get("url"))]
+    articles_sorted = sorted(
+        articles,
+        key=lambda a: (wechat_article_score(a), str(a.get("publish_time", ""))),
+        reverse=True,
+    )
+    selected_articles = articles_sorted[:max_wechat]
+    lines.append(f"### 📱 微信公众号 ({len(selected_articles)}/{len(articles)} 条)\n")
+    if selected_articles:
+        has_any_link = True
+        for a in selected_articles:
+            lines.append(
+                f"- [{str(a.get('publish_time', ''))[:16]} 【{a.get('account_name', '未知公众号')}】"
+                f"{short_text(a.get('title', ''), 100)}]({clean_url(a.get('url'))})"
+            )
+    else:
+        lines.append("- 暂无可用链接")
+    lines.append("")
+
+    news_with_url = [n for n in news if isinstance(n, dict) and clean_url(n.get("url"))]
+    selected_news = news_with_url[:max_news]
+    lines.append(f"### 🔥 NewsNow ({len(selected_news)}/{len(news_with_url)} 条)\n")
+    if selected_news:
+        has_any_link = True
+        for n in selected_news:
+            lines.append(
+                f"- [{n.get('platform', 'unknown')} #{n.get('rank', '-')} | "
+                f"{short_text(n.get('title', ''), 100)}]({clean_url(n.get('url'))})"
+            )
+    else:
+        lines.append("- 暂无可用链接")
+    lines.append("")
+
+    github_trending = (market.get("data", {}).get("github", {}) or {}).get("trending", []) or []
+    github_with_url = [r for r in github_trending if isinstance(r, dict) and clean_url(r.get("url"))]
+    selected_github = github_with_url[:max_github]
+    lines.append(f"### 💻 GitHub ({len(selected_github)}/{len(github_with_url)} 条)\n")
+    if selected_github:
+        has_any_link = True
+        for repo in selected_github:
+            name = repo.get("full_name") or repo.get("name") or "unknown"
+            stars = repo.get("stars", 0)
+            lines.append(f"- [{name} | ⭐ {stars}]({clean_url(repo.get('url'))})")
+    else:
+        lines.append("- 暂无可用链接")
+    lines.append("")
+
+    web_items = []
+    if isinstance(web_context, dict):
+        web_items = [
+            item for item in web_context.get("items", [])
+            if isinstance(item, dict) and clean_url(item.get("link"))
+        ]
+    selected_web = web_items[:max_web]
+    lines.append(f"### 🌐 联网检索 ({len(selected_web)}/{len(web_items)} 条)\n")
+    if selected_web:
+        has_any_link = True
+        for item in selected_web:
+            published = (item.get("published_at") or "-")[:16]
+            source = item.get("source", "Web")
+            title = short_text(item.get("title", ""), 100)
+            lines.append(f"- [{published} {source} | {title}]({clean_url(item.get('link'))})")
+    else:
+        lines.append("- 暂无可用链接")
+    lines.append("")
+
+    if report_type == "morning":
+        lines.append("> 注：早报 AI 已按规则跳过 A 股盘面数据分析。\n")
+
+    if not has_any_link:
+        lines.append("> 当前未提取到可用引用来源链接。\n")
+
+    return "\n".join(lines)
+
+
+def generate_source_link_index_section(
+    market: dict,
+    social: dict,
+    news: list,
+    web_context: dict | None = None,
+) -> str:
+    """生成统一原始链接索引，便于跳转查阅。"""
+    max_twitter = int(os.environ.get("LINK_INDEX_MAX_TWITTER", "80"))
+    max_wechat = int(os.environ.get("LINK_INDEX_MAX_WECHAT", "80"))
+    max_news = int(os.environ.get("LINK_INDEX_MAX_NEWS", "120"))
+    max_github = int(os.environ.get("LINK_INDEX_MAX_GITHUB", "20"))
+    max_web = int(os.environ.get("LINK_INDEX_MAX_WEB", "120"))
+
+    def clean_url(value) -> str:
+        url = str(value or "").strip()
+        if url.startswith("http://") or url.startswith("https://"):
+            return url
+        return ""
+
+    def short_text(value: str, max_len: int = 80) -> str:
+        text = normalize_plain_text(value)
+        if len(text) <= max_len:
+            return text
+        return text[:max_len] + "..."
+
+    lines = ["## 🔗 原始链接索引\n"]
+    has_any_link = False
+
+    # Twitter links
+    twitter_data = get_social_section(social, "twitter")
+    tweets = [t for t in twitter_data.get("tweets", []) if isinstance(t, dict)]
+    tweets_with_url = [t for t in tweets if clean_url(t.get("url"))]
+    tweets_sorted = sorted(
+        tweets_with_url,
+        key=lambda t: (tweet_engagement(t), str(t.get("created_at", ""))),
+        reverse=True,
+    )
+    selected_tweets = tweets_sorted[:max_twitter]
+    lines.append(f"### 🐦 Twitter 原文 ({len(selected_tweets)}/{len(tweets_with_url)} 条)\n")
+    if selected_tweets:
+        has_any_link = True
+        for t in selected_tweets:
+            url = clean_url(t.get("url"))
+            username = t.get("username", "unknown")
+            created = str(t.get("created_at", ""))[:16]
+            text = short_text(t.get("text", ""), 90) or "(无正文)"
+            tag = "热门" if t.get("is_trending") else "关注"
+            lines.append(f"- [{created} @{username} [{tag}] | {text}]({url})")
+    else:
+        lines.append("- 暂无可用链接")
+    lines.append("")
+
+    # WeChat links
+    wechat_data = get_social_section(social, "wechat")
+    articles = [a for a in wechat_data.get("articles", []) if isinstance(a, dict)]
+    articles_with_url = [a for a in articles if clean_url(a.get("url"))]
+    articles_sorted = sorted(
+        articles_with_url,
+        key=lambda a: (wechat_article_score(a), str(a.get("publish_time", ""))),
+        reverse=True,
+    )
+    selected_articles = articles_sorted[:max_wechat]
+    lines.append(f"### 📱 微信公众号原文 ({len(selected_articles)}/{len(articles_with_url)} 条)\n")
+    if selected_articles:
+        has_any_link = True
+        for a in selected_articles:
+            url = clean_url(a.get("url"))
+            account = a.get("account_name", "未知公众号")
+            title = short_text(a.get("title", ""), 100) or "(无标题)"
+            pub_time = str(a.get("publish_time", ""))[:16]
+            lines.append(f"- [{pub_time} 【{account}】{title}]({url})")
+    else:
+        lines.append("- 暂无可用链接")
+    lines.append("")
+
+    # NewsNow links
+    news_with_url = [n for n in news if isinstance(n, dict) and clean_url(n.get("url"))]
+    selected_news = news_with_url[:max_news]
+    lines.append(f"### 🔥 NewsNow 原文 ({len(selected_news)}/{len(news_with_url)} 条)\n")
+    if selected_news:
+        has_any_link = True
+        for n in selected_news:
+            url = clean_url(n.get("url"))
+            platform = n.get("platform", "unknown")
+            rank = n.get("rank", "-")
+            title = short_text(n.get("title", ""), 100) or "(无标题)"
+            lines.append(f"- [{platform} #{rank} | {title}]({url})")
+    else:
+        lines.append("- 暂无可用链接")
+    lines.append("")
+
+    # GitHub links
+    github_trending = (market.get("data", {}).get("github", {}) or {}).get("trending", []) or []
+    github_with_url = [r for r in github_trending if isinstance(r, dict) and clean_url(r.get("url"))]
+    selected_github = github_with_url[:max_github]
+    lines.append(f"### 💻 GitHub 原文 ({len(selected_github)}/{len(github_with_url)} 条)\n")
+    if selected_github:
+        has_any_link = True
+        for repo in selected_github:
+            url = clean_url(repo.get("url"))
+            name = repo.get("full_name") or repo.get("name") or "unknown"
+            desc = short_text(repo.get("description", ""), 90)
+            stars = repo.get("stars", 0)
+            if desc:
+                lines.append(f"- [{name} | ⭐ {stars} | {desc}]({url})")
+            else:
+                lines.append(f"- [{name} | ⭐ {stars}]({url})")
+    else:
+        lines.append("- 暂无可用链接")
+    lines.append("")
+
+    # Web links
+    web_items = []
+    if isinstance(web_context, dict):
+        web_items = [item for item in web_context.get("items", []) if isinstance(item, dict) and clean_url(item.get("link"))]
+    selected_web = web_items[:max_web]
+    lines.append(f"### 🌐 联网检索原文 ({len(selected_web)}/{len(web_items)} 条)\n")
+    if selected_web:
+        has_any_link = True
+        for item in selected_web:
+            url = clean_url(item.get("link"))
+            source = short_text(item.get("source", "Web"), 30)
+            title = short_text(item.get("title", ""), 100) or "(无标题)"
+            published = str(item.get("published_at", ""))[:16] or "-"
+            lines.append(f"- [{published} {source} | {title}]({url})")
+    else:
+        lines.append("- 暂无可用链接")
+    lines.append("")
+
+    if not has_any_link:
+        lines.append("> 当前报告未提取到可用原始链接。\n")
+
+    return "\n".join(lines)
+
+
 # ══════════════════════════════════════════════════════
 #  5. 主流程
 # ══════════════════════════════════════════════════════
@@ -1343,6 +2484,10 @@ def main():
                         help="DeepSeek API Key (也可通过环境变量 DEEPSEEK_API_KEY)")
     parser.add_argument("--no-ai", action="store_true",
                         help="跳过 AI 分析，只汇总原始数据")
+    parser.add_argument("--keywords", default="",
+                        help="联网检索关键词（逗号分隔，留空则自动提取）")
+    parser.add_argument("--no-web-context", action="store_true",
+                        help="禁用联网检索补充")
     parser.add_argument("--output", default=None,
                         help="输出文件路径 (默认 output/report/daily_YYYYMMDD.md)")
     args = parser.parse_args()
@@ -1355,6 +2500,9 @@ def main():
     api_key = deepseek_runtime["api_key"]
     api_base = deepseek_runtime["api_base"]
     model = deepseek_runtime["model"]
+    runtime_config = deepseek_runtime.get("config", {}) if isinstance(deepseek_runtime, dict) else {}
+    report_cfg = runtime_config.get("report", {}) if isinstance(runtime_config, dict) else {}
+    web_cfg = report_cfg.get("web_context", {}) if isinstance(report_cfg, dict) else {}
     
     # ── 判断早报/晚报 ──────────────────────────────
     if args.type == "auto":
@@ -1391,7 +2539,49 @@ def main():
         loaded_type = social.get("report_type")
         if loaded_type and loaded_type != report_type:
             logger.warning(f"⚠️ 社交数据类型不匹配: 期望 {report_type}，实际读取到 {loaded_type}")
-    
+
+    # ── 上下文增强（上期 + 联网检索）────────────────────
+    previous_context = load_previous_report_context(date_str, report_type)
+    if previous_context:
+        logger.info("🧩 已加载上一期报告上下文")
+    else:
+        logger.info("🧩 未找到上一期报告，跳过上下文衔接")
+
+    config_keywords = web_cfg.get("keywords", []) if isinstance(web_cfg, dict) else []
+    if not isinstance(config_keywords, list):
+        config_keywords = []
+    raw_keywords = (
+        args.keywords
+        or os.environ.get("REPORT_WEB_KEYWORDS", "")
+        or ",".join(config_keywords)
+    )
+    custom_keywords = parse_keywords_arg(raw_keywords)
+
+    web_context_enabled = not args.no_web_context
+    if "enabled" in web_cfg:
+        web_context_enabled = bool(web_cfg.get("enabled")) and web_context_enabled
+    env_web_flag = os.environ.get("WEB_CONTEXT_ENABLED")
+    if env_web_flag is not None:
+        web_context_enabled = parse_bool(env_web_flag, web_context_enabled)
+
+    web_context = {"queries": [], "items": [], "errors": []}
+    if web_context_enabled:
+        logger.info("🌐 开始联网检索补充上下文...")
+        web_context = run_web_context_search(
+            iso_date=iso_date,
+            report_type=report_type,
+            market=market,
+            news=news,
+            keywords=custom_keywords,
+        )
+        logger.info(
+            "🌐 联网检索完成: %s 条，关键词 %s 个",
+            len(web_context.get("items", []) or []),
+            len(web_context.get("queries", []) or []),
+        )
+    else:
+        logger.info("🌐 已禁用联网检索补充")
+
     # ── AI 分析 ──────────────────────────────────
     ai_summary = ""
     if not args.no_ai:
@@ -1409,10 +2599,20 @@ def main():
                 date_str=date_str,
                 iso_date=iso_date,
                 report_label=report_label,
-                time_range=time_range
+                time_range=time_range,
+                report_type=report_type,
+                web_context=web_context,
+                previous_context=previous_context,
             )
     else:
         ai_summary = "> ℹ️ 本次使用 `--no-ai` 参数，已跳过 DeepSeek 分析。\n"
+    ai_summary, ai_footnote_section = convert_ai_source_tags_to_clickable_refs(
+        ai_summary,
+        market=market,
+        social=social,
+        news=news,
+        web_context=web_context,
+    )
     
     # ── 生成完整 Markdown ──────────────────────
     report_parts = []
@@ -1433,14 +2633,20 @@ def main():
     # AI 分析摘要
     report_parts.append("# 🤖 AI 分析摘要\n")
     report_parts.append(ai_summary)
+    if ai_footnote_section:
+        report_parts.append(ai_footnote_section)
+    report_parts.append(generate_web_context_section(web_context))
+    report_parts.append(generate_ai_reference_section(market, social, news, report_type, web_context=web_context))
     report_parts.append("\n---\n")
     
     # 原始数据
     report_parts.append("# 📋 原始数据\n")
+    report_parts.append("<a id=\"raw-market-data\"></a>")
     report_parts.append(generate_raw_market_section(market))
     report_parts.append(generate_raw_twitter_section(social))
     report_parts.append(generate_raw_wechat_section(social))
     report_parts.append(generate_raw_news_section(news))
+    report_parts.append(generate_source_link_index_section(market, social, news, web_context=web_context))
     
     # 页脚
     report_parts.append("---\n")
