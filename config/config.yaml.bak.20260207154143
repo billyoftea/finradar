@@ -121,7 +121,7 @@ twitter:
 
   # Nitter 实例配置
   nitter_instance: "http://172.31.42.175:8080"  # 自建 Nitter 实例地址
-                                            # 留空则使用公共实例（不稳定）
+                                            # 必须填写自建实例地址
 
   # 关注账号列表（已验证可用）
   # 分类: macro（宏观/央行）, finance（金融/投行）, crypto（加密货币）,

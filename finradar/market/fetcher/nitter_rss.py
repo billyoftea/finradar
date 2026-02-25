@@ -3,9 +3,8 @@ Nitter RSS 推文抓取器
 
 Nitter 是一个开源的 Twitter 前端替代品，提供 RSS 订阅功能
 
-推荐使用方式:
-    1. 自建 Nitter 实例 (最稳定，需要 Twitter 账号 tokens)
-    2. 公共 Nitter 实例 (可能不可用)
+使用方式:
+    仅使用自建 Nitter 实例（需要 Twitter 账号 tokens）
 
 自建实例部署:
     参考 finradar/nitter/README.md
@@ -30,13 +29,16 @@ Nitter 是一个开源的 Twitter 前端替代品，提供 RSS 订阅功能
 import asyncio
 import aiohttp
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional, List
 import logging
 import re
 import html
 import os
+import json
 from email.utils import parsedate_to_datetime
+from urllib.parse import urljoin
+from pathlib import Path
 
 from . import BaseFetcher
 
@@ -54,18 +56,7 @@ class NitterRSSFetcher(BaseFetcher):
     # 自建实例地址 (优先使用，最稳定)
     # 可通过环境变量 NITTER_INSTANCE 或 config 参数配置
     LOCAL_INSTANCE = os.environ.get("NITTER_INSTANCE", "")
-    
-    # 公共 Nitter 实例备用列表 (2024年后大部分已失效)
-    # 注意: 公共实例可能随时下线，强烈建议自建实例
-    # 自建部署文档: finradar/nitter/README.md
-    NITTER_INSTANCES = [
-        # 这些公共实例可能已经失效，仅作为后备
-        "https://nitter.privacydev.net",
-        "https://nitter.poast.org",
-        "https://nitter.lucabased.xyz",
-        "https://nitter.perennialte.ch",
-        "https://nitter.net",
-    ]
+    # 仅使用自建实例
     
     # 推荐关注的账号
     RECOMMENDED_ACCOUNTS = {
@@ -92,6 +83,7 @@ class NitterRSSFetcher(BaseFetcher):
     
     def __init__(self, config: Optional[Dict] = None):
         super().__init__(config)
+        self.project_root = Path(__file__).resolve().parents[3]
         
         # 尝试从全局配置文件读取配置
         self._load_from_global_config()
@@ -105,10 +97,14 @@ class NitterRSSFetcher(BaseFetcher):
             # 最后使用默认 crypto 账号
             self.accounts = self.RECOMMENDED_ACCOUNTS.get("crypto", [])[:5]
         
-        # 每个账号获取的推文数量
-        self.max_tweets_per_user = self.config.get("max_tweets_per_user", 10)
+        # 每个账号获取的推文数量（0=不限制）
+        raw_max_tweets_per_user = self.config.get("max_tweets_per_user", 10)
+        try:
+            self.max_tweets_per_user = int(raw_max_tweets_per_user)
+        except (TypeError, ValueError):
+            self.max_tweets_per_user = 10
         
-        # 确定 Nitter 实例 (优先级: config > 全局配置 > 环境变量 > 默认公共实例)
+        # 确定 Nitter 实例 (优先级: config > 全局配置 > 环境变量 > 默认本地实例)
         self.current_instance = self._determine_instance()
         
         # 是否使用自建实例
@@ -117,11 +113,27 @@ class NitterRSSFetcher(BaseFetcher):
         # 请求超时时间
         self.timeout = self.config.get("timeout", 15)
         self.trending_engagement_threshold = int(self.config.get("trending_engagement_threshold", 10) or 10)
+        self.trending_mode = str(self.config.get("trending_mode", "keyword") or "keyword").strip().lower()
+        if self.trending_mode not in {"keyword", "global", "hybrid"}:
+            self.trending_mode = "keyword"
+        self.trending_min_retweets = int(self.config.get("trending_min_retweets", 0) or 0)
+        self.trending_pages_per_query = max(1, int(self.config.get("trending_pages_per_query", 3) or 3))
+        self.trending_realtime_sampling = bool(self.config.get("trending_realtime_sampling", False))
+        self.trending_queries_per_run = max(0, int(self.config.get("trending_queries_per_run", 0) or 0))
+        self.trending_cache_hours = max(1, int(self.config.get("trending_cache_hours", 24) or 24))
+        self.trending_cache_max_items = max(100, int(self.config.get("trending_cache_max_items", 2000) or 2000))
+        self.trending_cache_file = str(self.config.get("trending_cache_file", "output/twitter/trending_cache.json") or "output/twitter/trending_cache.json")
+        self.trending_state_file = str(self.config.get("trending_state_file", "output/twitter/trending_state.json") or "output/twitter/trending_state.json")
+        self.keyword_trending_min_results = max(0, int(self.config.get("keyword_trending_min_results", 0) or 0))
+        self.trending_global_queries = [
+            str(q).strip() for q in (self.config.get("trending_global_queries", []) or [])
+            if str(q).strip()
+        ]
         
         # 是否启用
         self.enabled = self.config.get("enabled", True)
         
-        instance_type = "自建" if self.using_local_instance else "公共"
+        instance_type = "本地/自建" if self.using_local_instance else "自定义远程"
         logger.info(f"NitterRSSFetcher initialized with {len(self.accounts)} accounts, using {instance_type} instance: {self.current_instance}")
     
     def _load_from_global_config(self):
@@ -140,7 +152,35 @@ class NitterRSSFetcher(BaseFetcher):
                     self.config["timeout"] = global_config.twitter.timeout
                 if "enabled" not in self.config:
                     self.config["enabled"] = global_config.twitter.enabled
-                    
+                if "trending_mode" not in self.config:
+                    self.config["trending_mode"] = global_config.twitter.trending_mode
+                if "trending_global_queries" not in self.config:
+                    self.config["trending_global_queries"] = global_config.twitter.trending_global_queries
+                if "trending_realtime_sampling" not in self.config:
+                    self.config["trending_realtime_sampling"] = global_config.twitter.trending_realtime_sampling
+                if "trending_queries_per_run" not in self.config:
+                    self.config["trending_queries_per_run"] = global_config.twitter.trending_queries_per_run
+                if "trending_min_retweets" not in self.config:
+                    self.config["trending_min_retweets"] = global_config.twitter.trending_min_retweets
+                if "trending_pages_per_query" not in self.config:
+                    self.config["trending_pages_per_query"] = global_config.twitter.trending_pages_per_query
+                if "search_delay" not in self.config:
+                    self.config["search_delay"] = global_config.twitter.search_delay
+                if "search_page_delay" not in self.config:
+                    self.config["search_page_delay"] = global_config.twitter.search_page_delay
+                if "trending_cache_hours" not in self.config:
+                    self.config["trending_cache_hours"] = global_config.twitter.trending_cache_hours
+                if "trending_cache_max_items" not in self.config:
+                    self.config["trending_cache_max_items"] = global_config.twitter.trending_cache_max_items
+                if "trending_cache_file" not in self.config:
+                    self.config["trending_cache_file"] = global_config.twitter.trending_cache_file
+                if "trending_state_file" not in self.config:
+                    self.config["trending_state_file"] = global_config.twitter.trending_state_file
+                if "trending_engagement_threshold" not in self.config:
+                    self.config["trending_engagement_threshold"] = global_config.twitter.trending_engagement_threshold
+                if "keyword_trending_min_results" not in self.config:
+                    self.config["keyword_trending_min_results"] = global_config.twitter.keyword_trending_min_results
+
                 # 存储全局账号配置
                 self._global_accounts = global_config.twitter.accounts
             else:
@@ -160,21 +200,20 @@ class NitterRSSFetcher(BaseFetcher):
     def _determine_instance(self) -> str:
         """
         确定要使用的 Nitter 实例
-        优先级: config 参数 > 全局配置 > 环境变量 > 默认公共实例
+        优先级: config 参数 > 环境变量 > 默认本地实例
         """
-        # 1. 首先检查 config 参数
-        config_instance = self.config.get("nitter_instance", "")
+        config_instance = str(self.config.get("nitter_instance", "") or "").strip()
         if config_instance:
             return config_instance.rstrip("/")
-        
-        # 2. 检查环境变量
-        env_instance = os.environ.get("NITTER_INSTANCE", "")
+
+        env_instance = str(os.environ.get("NITTER_INSTANCE", "") or "").strip()
         if env_instance:
             return env_instance.rstrip("/")
-        
-        # 3. 使用默认公共实例
-        return self.NITTER_INSTANCES[0] if self.NITTER_INSTANCES else ""
-    
+
+        default_instance = "http://localhost:8080"
+        logger.warning("NITTER_INSTANCE 未配置，使用默认自建实例: %s", default_instance)
+        return default_instance
+
     def _is_local_instance(self, url: str) -> bool:
         """检查是否为本地/自建实例"""
         # 包含所有私有 IP 地址段: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
@@ -192,22 +231,19 @@ class NitterRSSFetcher(BaseFetcher):
         errors = []
         
         # 请求间隔（秒），避免触发速率限制
-        # 本地实例无需限速，公共实例需要较长间隔
-        if self.using_local_instance:
-            request_delay = self.config.get("request_delay", 0.1)
-            concurrency = self.config.get("concurrency", 5)
-        else:
-            request_delay = self.config.get("request_delay", 1.0)
-            concurrency = 1  # 公共实例不并发
-        
+        request_delay = float(self.config.get("request_delay", 0.1) or 0.1)
+        try:
+            concurrency = max(1, int(self.config.get("concurrency", 5) or 5))
+        except (TypeError, ValueError):
+            concurrency = 5
+
         async with aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=self.timeout),
             headers={"User-Agent": "Mozilla/5.0 (compatible; finradar/1.0)"}
         ) as session:
-            if self.using_local_instance and concurrency > 1:
-                # 本地实例: 使用信号量控制并发
+            if concurrency > 1:
                 sem = asyncio.Semaphore(concurrency)
-                
+
                 async def _fetch_one(username):
                     async with sem:
                         try:
@@ -217,10 +253,10 @@ class NitterRSSFetcher(BaseFetcher):
                         except Exception as e:
                             return ("err", username, str(e))
                         return ("ok", username, [])
-                
+
                 tasks = [_fetch_one(u) for u in self.accounts]
                 results = await asyncio.gather(*tasks, return_exceptions=True)
-                
+
                 for r in results:
                     if isinstance(r, Exception):
                         errors.append(str(r))
@@ -230,7 +266,6 @@ class NitterRSSFetcher(BaseFetcher):
                         errors.append(f"@{r[1]}: {r[2]}")
                         logger.warning(f"Failed to fetch @{r[1]}: {r[2]}")
             else:
-                # 公共实例: 串行获取，避免并发请求触发 429 限流
                 for i, username in enumerate(self.accounts):
                     try:
                         result = await self._fetch_user_rss(session, username)
@@ -239,8 +274,7 @@ class NitterRSSFetcher(BaseFetcher):
                     except Exception as e:
                         errors.append(f"@{username}: {str(e)}")
                         logger.warning(f"Failed to fetch @{username}: {e}")
-                    
-                    # 添加请求间隔（最后一个不需要等待）
+
                     if i < len(self.accounts) - 1:
                         await asyncio.sleep(request_delay)
         
@@ -265,27 +299,78 @@ class NitterRSSFetcher(BaseFetcher):
         Returns:
             包含热门推文列表的字典
         """
-        # 默认热门关键词（金融、加密、AI、科技相关）
+        # 默认关键词模式（金融、加密、AI、科技相关）
         default_keywords = [
             "bitcoin", "crypto", "AI", "AI artificial intelligence",
             "stock market", "nasdaq", "SPY"
         ]
-        
-        if keywords is None:
-            keywords = default_keywords
-        
+        # 默认全网模式（按语言采样全局热议）
+        default_global_queries = [
+            "lang:en",
+            "lang:es",
+            "lang:ja",
+            "lang:zh",
+            "lang:fr",
+            "lang:de",
+            "lang:pt",
+            "lang:ar",
+            "lang:hi",
+            "lang:ko",
+        ]
+
+        keyword_queries = [str(q).strip() for q in (keywords or []) if str(q).strip()]
+        if not keyword_queries:
+            keyword_queries = list(default_keywords)
+        global_queries = self.trending_global_queries or default_global_queries
+
+        if self.trending_mode == "global":
+            all_queries = list(global_queries)
+        elif self.trending_mode == "hybrid":
+            all_queries = keyword_queries + list(global_queries)
+        else:
+            all_queries = keyword_queries
+
+        # 去重并保序
+        seen_queries = set()
+        dedup_queries = []
+        for q in all_queries:
+            key = q.lower()
+            if key in seen_queries:
+                continue
+            seen_queries.add(key)
+            dedup_queries.append(q)
+        all_queries = dedup_queries
+
+        sampled = False
+        cursor_before = 0
+        cursor_after = 0
+        if self.trending_realtime_sampling and self.trending_queries_per_run > 0 and len(all_queries) > self.trending_queries_per_run:
+            sampled = True
+            queries, cursor_before, cursor_after = self._select_queries_for_run(all_queries)
+        else:
+            queries = list(all_queries)
+
         all_trending_tweets = []
         errors = []
-        search_delay = self.config.get("request_delay", 2.0)  # 搜索请求间隔更长
+        if self.using_local_instance:
+            search_delay = float(self.config.get("search_delay", 0.2) or 0.2)
+        else:
+            search_delay = float(self.config.get("search_delay", 2.0) or 2.0)
+        min_retweets = max(0, int(self.trending_min_retweets or 0))
         
         async with aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=self.timeout),
             headers={"User-Agent": "Mozilla/5.0 (compatible; finradar/1.0)"}
         ) as session:
             # 对每个关键词进行搜索
-            for i, keyword in enumerate(keywords):
+            for i, keyword in enumerate(queries):
                 try:
-                    tweets = await self._search_tweets(session, keyword)
+                    tweets = await self._search_tweets(
+                        session,
+                        keyword,
+                        min_retweets=min_retweets,
+                        max_pages=self.trending_pages_per_query,
+                    )
                     if tweets:
                         all_trending_tweets.extend(tweets)
                         logger.info(f"Found {len(tweets)} tweets for keyword '{keyword}'")
@@ -294,67 +379,372 @@ class NitterRSSFetcher(BaseFetcher):
                     logger.warning(f"Failed to search for '{keyword}': {e}")
                 
                 # 搜索请求间隔
-                if i < len(keywords) - 1:
+                if i < len(queries) - 1:
                     await asyncio.sleep(search_delay)
-        
+
         # 按互动数据排序（点赞+转推数）
         all_trending_tweets.sort(
             key=lambda x: (x.get("likes", 0) + x.get("retweets", 0)),
             reverse=True
         )
-        
+
         # 去重（根据推文ID）
         seen_ids = set()
         unique_tweets = []
         for tweet in all_trending_tweets:
-            tweet_id = tweet.get("id", "")
-            if tweet_id and tweet_id not in seen_ids:
-                seen_ids.add(tweet_id)
-                unique_tweets.append(tweet)
-        
+            dedup_key = self._tweet_dedup_key(tweet)
+            if dedup_key in seen_ids:
+                continue
+            seen_ids.add(dedup_key)
+            unique_tweets.append(tweet)
+
+        rolled_tweets = unique_tweets
+        cache_stats = {"cache_size": len(unique_tweets), "rolled_count": len(unique_tweets)}
+        if sampled:
+            rolled_tweets, cache_stats = self._merge_trending_cache(unique_tweets)
+
+        selected_tweets, keyword_available, keyword_selected = self._apply_keyword_mix_quota(
+            rolled_tweets,
+            max_results=max_results,
+        )
+
         return {
-            "trending_tweets": unique_tweets[:max_results],
+            "trending_tweets": selected_tweets,
             "total_found": len(all_trending_tweets),
             "unique_count": len(unique_tweets),
+            "rolled_count": len(rolled_tweets),
+            "keyword_query_available_count": keyword_available,
+            "keyword_query_selected_count": keyword_selected,
+            "query_mode": self.trending_mode,
+            "queries_used": queries,
+            "queries_all": all_queries,
+            "sampling_enabled": sampled,
+            "query_cursor_before": cursor_before,
+            "query_cursor_after": cursor_after,
+            "cache_size": cache_stats.get("cache_size", len(rolled_tweets)),
+            "cache_window_hours": self.trending_cache_hours,
             "errors": errors,
             "instance_used": self.current_instance,
             "timestamp": datetime.now()
         }
+
+    def _resolve_data_path(self, path_text: str) -> Path:
+        """解析配置路径，支持相对仓库根目录。"""
+        p = Path(str(path_text or "").strip())
+        if not p.is_absolute():
+            p = self.project_root / p
+        return p
+
+    def _load_json_dict(self, path: Path) -> Dict[str, Any]:
+        """读取 JSON 对象，失败时返回空字典。"""
+        try:
+            if not path.exists():
+                return {}
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return data if isinstance(data, dict) else {}
+        except Exception as e:
+            logger.debug(f"Failed to load json {path}: {e}")
+            return {}
+
+    def _save_json_dict(self, path: Path, data: Dict[str, Any]):
+        """写入 JSON 对象。"""
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.warning(f"Failed to save json {path}: {e}")
+
+    def _select_queries_for_run(self, all_queries: List[str]) -> tuple[List[str], int, int]:
+        """
+        轮询选择本轮查询（小批量），并持久化 cursor。
+        """
+        total = len(all_queries)
+        if total <= 0:
+            return [], 0, 0
+
+        state_path = self._resolve_data_path(self.trending_state_file)
+        state = self._load_json_dict(state_path)
+        try:
+            cursor = int(state.get("cursor", 0) or 0)
+        except Exception:
+            cursor = 0
+        cursor = cursor % total
+
+        batch_size = max(1, min(total, self.trending_queries_per_run))
+        selected = [all_queries[(cursor + i) % total] for i in range(batch_size)]
+        next_cursor = (cursor + batch_size) % total
+
+        self._save_json_dict(
+            state_path,
+            {
+                "cursor": next_cursor,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "batch_size": batch_size,
+                "total_queries": total,
+            },
+        )
+
+        return selected, cursor, next_cursor
+
+    def _parse_datetime_utc(self, value: Any) -> Optional[datetime]:
+        """解析时间字符串为 UTC aware datetime。"""
+        if not value:
+            return None
+        text = str(value).strip()
+        if not text:
+            return None
+        text = text.replace("Z", "+00:00")
+        try:
+            dt = datetime.fromisoformat(text)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.astimezone(timezone.utc)
+        except Exception:
+            return None
+
+    def _tweet_dedup_key(self, tweet: Dict[str, Any]) -> str:
+        """生成推文去重键。"""
+        tweet_id = str(tweet.get("id", "") or "").strip()
+        if tweet_id:
+            return f"id:{tweet_id}"
+        url = str(tweet.get("url", "") or tweet.get("nitter_url", "") or "").strip()
+        if url:
+            return f"url:{url}"
+        username = str(tweet.get("username", "") or "").strip().lower()
+        text = str(tweet.get("text", "") or "").strip()[:160]
+        return f"txt:{username}:{text}"
+
+    def _tweet_score(self, tweet: Dict[str, Any]) -> int:
+        """互动评分，用于缓存合并时择优。"""
+        try:
+            likes = int(tweet.get("likes", 0) or 0)
+            retweets = int(tweet.get("retweets", 0) or 0)
+            replies = int(tweet.get("replies", 0) or 0)
+        except Exception:
+            return 0
+        return likes + retweets + replies
+
     
-    async def _search_tweets(self, session: aiohttp.ClientSession, keyword: str) -> List[Dict]:
+    def _is_global_query_text(self, query: str) -> bool:
+        q = str(query or "").strip().lower()
+        return bool(q) and q.startswith("lang:")
+
+    def _is_keyword_query_tweet(self, tweet: Dict[str, Any]) -> bool:
+        query = str((tweet or {}).get("keyword", "") or "").strip()
+        if not query:
+            return False
+        return not self._is_global_query_text(query)
+
+    def _apply_keyword_mix_quota(self, tweets: List[Dict[str, Any]], max_results: int) -> tuple[List[Dict[str, Any]], int, int]:
+        ranked = list(tweets or [])
+        keyword_ranked = [t for t in ranked if self._is_keyword_query_tweet(t)]
+        keyword_available = len(keyword_ranked)
+
+        # max_results<=0 视为不限制（全量返回）
+        if max_results <= 0:
+            return ranked, keyword_available, keyword_available
+
+        keyword_target = min(max_results, max(0, int(self.keyword_trending_min_results or 0)))
+        if keyword_target <= 0 or not keyword_ranked:
+            keyword_selected = sum(1 for t in ranked[:max_results] if self._is_keyword_query_tweet(t))
+            return ranked[:max_results], keyword_available, keyword_selected
+
+        selected: List[Dict[str, Any]] = []
+        selected_keys = set()
+
+        def _key(item: Dict[str, Any]) -> str:
+            return self._tweet_dedup_key(item)
+
+        for tweet in keyword_ranked:
+            if len(selected) >= keyword_target or len(selected) >= max_results:
+                break
+            key = _key(tweet)
+            if key in selected_keys:
+                continue
+            selected.append(tweet)
+            selected_keys.add(key)
+
+        for tweet in ranked:
+            if len(selected) >= max_results:
+                break
+            key = _key(tweet)
+            if key in selected_keys:
+                continue
+            selected.append(tweet)
+            selected_keys.add(key)
+
+        keyword_selected = sum(1 for t in selected if self._is_keyword_query_tweet(t))
+        return selected, keyword_available, keyword_selected
+
+    def _merge_trending_cache(self, fresh_tweets: List[Dict[str, Any]]) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
         """
-        搜索热门推文
-        
-        Args:
-            session: aiohttp 会话
-            keyword: 搜索关键词
-            
-        Returns:
-            推文列表
+        将本轮热门推文合并到滚动缓存，返回窗口期内聚合结果。
         """
-        # 构建搜索URL（Nitter支持f=tweets参数）
-        search_url = f"{self.current_instance}/search"
+        now_utc = datetime.now(timezone.utc)
+        cutoff = now_utc - timedelta(hours=self.trending_cache_hours)
+        cache_path = self._resolve_data_path(self.trending_cache_file)
+        raw_cache = self._load_json_dict(cache_path)
+        cached_items = raw_cache.get("tweets", []) if isinstance(raw_cache.get("tweets"), list) else []
+
+        merged: Dict[str, Dict[str, Any]] = {}
+        merged_meta: Dict[str, datetime] = {}
+
+        def _upsert(item: Dict[str, Any], default_fetched_at: datetime):
+            if not isinstance(item, dict):
+                return
+            key = self._tweet_dedup_key(item)
+            if not key:
+                return
+
+            fetched_at = self._parse_datetime_utc(item.get("fetched_at")) or default_fetched_at
+            if fetched_at < cutoff:
+                return
+
+            normalized = dict(item)
+            normalized["fetched_at"] = fetched_at.isoformat()
+
+            current = merged.get(key)
+            if current is None:
+                merged[key] = normalized
+                merged_meta[key] = fetched_at
+                return
+
+            # 优先保留互动更高的推文；相同互动时保留最近抓到的版本
+            current_score = self._tweet_score(current)
+            next_score = self._tweet_score(normalized)
+            current_fetched = merged_meta.get(key) or default_fetched_at
+            should_replace = (next_score > current_score) or (
+                next_score == current_score and fetched_at > current_fetched
+            )
+            if should_replace:
+                merged[key] = normalized
+                merged_meta[key] = fetched_at
+
+        for item in cached_items:
+            _upsert(item, now_utc)
+
+        for item in fresh_tweets:
+            normalized = dict(item) if isinstance(item, dict) else {}
+            normalized["fetched_at"] = now_utc.isoformat()
+            _upsert(normalized, now_utc)
+
+        merged_list = list(merged.values())
+        merged_list.sort(
+            key=lambda x: (
+                self._tweet_score(x),
+                self._parse_datetime_utc(x.get("fetched_at")) or now_utc,
+            ),
+            reverse=True,
+        )
+        if len(merged_list) > self.trending_cache_max_items:
+            merged_list = merged_list[:self.trending_cache_max_items]
+
+        self._save_json_dict(
+            cache_path,
+            {
+                "updated_at": now_utc.isoformat(),
+                "cache_hours": self.trending_cache_hours,
+                "tweets": merged_list,
+            },
+        )
+
+        return merged_list, {"cache_size": len(merged_list), "rolled_count": len(merged_list)}
+    
+    async def _search_tweets(
+        self,
+        session: aiohttp.ClientSession,
+        keyword: str,
+        min_retweets: int = 0,
+        max_pages: int = 1,
+    ) -> List[Dict]:
+        """
+        搜索热门推文（仅使用当前自建实例）
+        """
         params = {
             "q": keyword,
             "f": "tweets",
-            "include": "nativeretweets"  # 包含原生转发
+            "include": "nativeretweets",
         }
-        
+        if min_retweets > 0:
+            params["min_retweets"] = str(min_retweets)
+
+        max_pages = max(1, int(max_pages or 1))
+        page_delay = float(
+            self.config.get(
+                "search_page_delay",
+                0.3 if self.using_local_instance else 1.0,
+            ) or (0.3 if self.using_local_instance else 1.0)
+        )
+
+        instance = self.current_instance
+        search_url = f"{instance}/search"
+        all_tweets: List[Dict[str, Any]] = []
+        seen_ids = set()
+        next_page_url = ""
+
+        for page_idx in range(max_pages):
+            request_url = search_url if page_idx == 0 else next_page_url
+            request_params = params if page_idx == 0 else None
+            if not request_url:
+                break
+
+            try:
+                async with session.get(
+                    request_url,
+                    params=request_params,
+                    timeout=aiohttp.ClientTimeout(total=self.timeout),
+                ) as response:
+                    if response.status != 200:
+                        logger.warning(
+                            f"Search failed on {instance} for '{keyword}' page {page_idx + 1}: HTTP {response.status}"
+                        )
+                        break
+
+                    html_doc = await response.text()
+                    page_tweets = self._parse_search_results(html_doc, keyword)
+                    for tweet in page_tweets:
+                        dedup_key = (
+                            tweet.get("id")
+                            or tweet.get("url")
+                            or f"{tweet.get('username', '')}::{tweet.get('text', '')[:120]}"
+                        )
+                        if dedup_key in seen_ids:
+                            continue
+                        seen_ids.add(dedup_key)
+                        all_tweets.append(tweet)
+
+                    next_href = self._extract_next_page_href(html_doc)
+                    if next_href:
+                        next_page_url = urljoin(f"{instance}/search", next_href)
+                    else:
+                        next_page_url = ""
+
+            except asyncio.TimeoutError:
+                logger.warning(f"Search timeout on {instance} for '{keyword}' page {page_idx + 1}")
+                break
+            except Exception as e:
+                logger.error(f"Error searching tweets on {instance} for '{keyword}' page {page_idx + 1}: {e}")
+                break
+
+            if page_idx < max_pages - 1 and next_page_url:
+                await asyncio.sleep(page_delay)
+
+        return all_tweets
+
+    def _extract_next_page_href(self, html_doc: str) -> str:
+        """从搜索结果页面提取下一页链接（cursor）。"""
         try:
-            async with session.get(search_url, params=params, timeout=aiohttp.ClientTimeout(total=self.timeout)) as response:
-                if response.status != 200:
-                    logger.warning(f"Search failed for '{keyword}': HTTP {response.status}")
-                    return []
-                
-                html = await response.text()
-                return self._parse_search_results(html, keyword)
-                
-        except asyncio.TimeoutError:
-            logger.warning(f"Search timeout for '{keyword}'")
-            return []
-        except Exception as e:
-            logger.error(f"Error searching tweets for '{keyword}': {e}")
-            return []
+            from bs4 import BeautifulSoup
+
+            soup = BeautifulSoup(html_doc, "html.parser")
+            link = soup.select_one("div.show-more a[href]")
+            if link and link.get("href"):
+                return str(link.get("href")).strip()
+            return ""
+        except Exception:
+            return ""
     
     def _parse_search_results(self, html: str, keyword: str) -> List[Dict]:
         """
@@ -389,7 +779,7 @@ class NitterRSSFetcher(BaseFetcher):
                     if not tweet_content:
                         continue
                     
-                    text = tweet_content.get_text(strip=True)
+                    text = tweet_content.get_text(" ", strip=True)
                     if not text:
                         continue
                     
@@ -404,6 +794,22 @@ class NitterRSSFetcher(BaseFetcher):
                         if match:
                             tweet_id = match.group(1)
                     
+                    # 提取时间（Nitter 页面显示 UTC 时间）
+                    created_at = datetime.now(timezone.utc).isoformat()
+                    date_link = item.select_one("span.tweet-date a[title]")
+                    if date_link:
+                        raw_time = str(date_link.get("title", "")).strip()
+                        if raw_time:
+                            parsed_time = None
+                            for fmt in ("%b %d, %Y · %I:%M %p UTC", "%b %d, %Y · %H:%M UTC"):
+                                try:
+                                    parsed_time = datetime.strptime(raw_time, fmt).replace(tzinfo=timezone.utc)
+                                    break
+                                except Exception:
+                                    continue
+                            if parsed_time:
+                                created_at = parsed_time.isoformat()
+
                     # 提取互动数据（点赞、转推等）
                     stats_item = item.find("div", class_="tweet-stats")
                     likes = 0
@@ -460,7 +866,7 @@ class NitterRSSFetcher(BaseFetcher):
                         "text": text,
                         "username": username,
                         "user_name": username,  # Nitter搜索结果不提供显示名称
-                        "created_at": datetime.now().isoformat(),  # Nitter搜索结果不提供时间
+                        "created_at": created_at,
                         "likes": likes,
                         "retweets": retweets,
                         "replies": replies,
@@ -486,83 +892,42 @@ class NitterRSSFetcher(BaseFetcher):
     
     async def _fetch_user_rss(self, session: aiohttp.ClientSession, username: str) -> List[Dict]:
         """
-        获取单个用户的 RSS 订阅
-        
-        Args:
-            session: aiohttp 会话
-            username: Twitter 用户名
-        
-        Returns:
-            推文列表
+        获取单个用户的 RSS 订阅（仅使用当前自建实例）
         """
-        # 构建实例列表: 自建实例优先，公共实例作为后备
-        instances_to_try = [self.current_instance]
-        
-        # 本地实例失败时可回退到公共实例（用于缓解本地 token 失效/限流）
-        allow_public_fallback = bool(self.config.get("fallback_public_on_local_failure", True))
-        if (not self.using_local_instance) or allow_public_fallback:
-            for inst in self.NITTER_INSTANCES:
-                if inst != self.current_instance and inst not in instances_to_try:
-                    instances_to_try.append(inst)
-        
-        last_error = None
-        for instance in instances_to_try:
-            rss_url = f"{instance}/{username}/rss"
-            
-            try:
-                async with session.get(rss_url) as response:
-                    if response.status == 200:
-                        content = await response.text()
-                        
-                        # 检查是否是有效的 RSS 内容
-                        if not content.strip().startswith("<"):
-                            logger.warning(f"Invalid RSS response from {instance}: not XML")
-                            continue
-                        
-                        tweets = self._parse_rss(content, username)
-                        
-                        # 更新当前可用实例
-                        if instance != self.current_instance:
-                            logger.info(f"Switched to working instance: {instance}")
-                            self.current_instance = instance
-                        
-                        return tweets[:self.max_tweets_per_user]
-                    
-                    elif response.status == 404:
-                        logger.warning(f"User @{username} not found on {instance}")
-                        return []
-                    
-                    elif response.status == 403:
-                        logger.warning(f"Access denied (403) from {instance}, may need authentication tokens")
-                        last_error = f"403 Forbidden - instance may require tokens"
-                        continue
+        instance = self.current_instance
+        rss_url = f"{instance}/{username}/rss"
 
-                    elif response.status == 429:
-                        logger.warning(f"Rate limited (429) from {instance}")
-                        last_error = "HTTP 429"
-                        continue
-                    
-                    else:
-                        logger.warning(f"HTTP {response.status} from {instance}")
-                        last_error = f"HTTP {response.status}"
-                        continue
-                    
-            except asyncio.TimeoutError:
-                logger.warning(f"Timeout fetching {rss_url}")
-                last_error = "Timeout"
-                continue
-            except Exception as e:
-                logger.warning(f"Error fetching {rss_url}: {e}")
-                last_error = str(e)
-                continue
-        
-        error_msg = f"All Nitter instances failed for @{username}"
-        if last_error:
-            error_msg += f" (last error: {last_error})"
-        if self.using_local_instance:
-            error_msg += ". Make sure your local Nitter instance is running with valid tokens."
-        raise Exception(error_msg)
-    
+        try:
+            async with session.get(rss_url) as response:
+                if response.status == 200:
+                    content = await response.text()
+
+                    if not content.strip().startswith("<"):
+                        logger.warning(f"Invalid RSS response from {instance}: not XML")
+                        return []
+
+                    tweets = self._parse_rss(content, username)
+                    if self.max_tweets_per_user > 0:
+                        return tweets[:self.max_tweets_per_user]
+                    return tweets
+
+                if response.status == 404:
+                    logger.warning(f"User @{username} not found on {instance}")
+                    return []
+
+                if response.status == 403:
+                    raise Exception(f"403 Forbidden from {instance} - instance may require tokens")
+
+                if response.status == 429:
+                    raise Exception(f"429 Too Many Requests from {instance}")
+
+                raise Exception(f"HTTP {response.status} from {instance}")
+
+        except asyncio.TimeoutError:
+            raise Exception(f"Timeout fetching {rss_url}")
+        except Exception as e:
+            raise Exception(f"Failed fetching {rss_url}: {e}")
+
     def _parse_rss(self, rss_content: str, username: str) -> List[Dict]:
         """
         解析 RSS XML 内容
@@ -732,53 +1097,32 @@ class NitterRSSFetcher(BaseFetcher):
     
     async def check_instance_health(self) -> Dict[str, Any]:
         """
-        检查所有 Nitter 实例的健康状态
-        
-        Returns:
-            包含各实例状态的字典
+        检查当前自建 Nitter 实例健康状态
         """
         results = {
             "local_instance": None,
-            "public_instances": {}
         }
-        
+
         async with aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=5)
         ) as session:
-            # 检查自建实例
-            if self.using_local_instance:
-                try:
-                    async with session.get(f"{self.current_instance}/VitalikButerin/rss") as response:
-                        results["local_instance"] = {
-                            "url": self.current_instance,
-                            "status": response.status,
-                            "healthy": response.status == 200
-                        }
-                except Exception as e:
+            try:
+                async with session.get(f"{self.current_instance}/VitalikButerin/rss") as response:
                     results["local_instance"] = {
                         "url": self.current_instance,
-                        "status": "error",
-                        "healthy": False,
-                        "error": str(e)
+                        "status": response.status,
+                        "healthy": response.status == 200,
                     }
-            
-            # 检查公共实例
-            for instance in self.NITTER_INSTANCES:
-                try:
-                    async with session.get(f"{instance}/VitalikButerin/rss") as response:
-                        results["public_instances"][instance] = {
-                            "status": response.status,
-                            "healthy": response.status == 200
-                        }
-                except Exception as e:
-                    results["public_instances"][instance] = {
-                        "status": "error",
-                        "healthy": False,
-                        "error": str(e)
-                    }
-        
+            except Exception as e:
+                results["local_instance"] = {
+                    "url": self.current_instance,
+                    "status": "error",
+                    "healthy": False,
+                    "error": str(e),
+                }
+
         return results
-    
+
     def get_instance_info(self) -> Dict[str, Any]:
         """
         获取当前实例配置信息
