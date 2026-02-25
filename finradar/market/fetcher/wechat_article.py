@@ -89,6 +89,9 @@ class WechatArticleFetcher:
         if not self.auth_key:
             self.auth_key = self._load_auth_key_from_cookie_dir()
         self._session: Optional[aiohttp.ClientSession] = None
+        self.auth_invalid: bool = False
+        self.auth_error_message: str = ""
+        self.last_error_message: str = ""
 
     def _load_auth_key_from_cookie_dir(self) -> str:
         """从 cookie 目录读取最新 auth_key（文件名即 key）。"""
@@ -103,6 +106,72 @@ class WechatArticleFetcher:
             return newest.name.strip()
         except Exception:
             return ""
+
+    def get_auth_key_health(self) -> Dict[str, Any]:
+        """返回 cookie 目录中登录 key 的时效信息。"""
+        try:
+            cookie_dir = Path(__file__).resolve().parents[3] / "output" / "wechat" / ".data" / "kv" / "cookie"
+            if not cookie_dir.exists():
+                return {"available": False, "updated_at": "", "age_days": None}
+            files = [p for p in cookie_dir.iterdir() if p.is_file()]
+            if not files:
+                return {"available": False, "updated_at": "", "age_days": None}
+            newest = sorted(files, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+            updated_at_dt = datetime.fromtimestamp(newest.stat().st_mtime)
+            age_days = max(0.0, (datetime.now() - updated_at_dt).total_seconds() / 86400.0)
+            return {
+                "available": True,
+                "key_name": newest.name,
+                "updated_at": updated_at_dt.isoformat(timespec="seconds"),
+                "age_days": age_days,
+            }
+        except Exception:
+            return {"available": False, "updated_at": "", "age_days": None}
+
+    def _record_error(self, message: str) -> None:
+        self.last_error_message = str(message or "").strip()
+
+    def _mark_auth_invalid(self, message: str) -> None:
+        self.auth_invalid = True
+        self.auth_error_message = str(message or "认证信息无效").strip()
+        self._record_error(self.auth_error_message)
+
+    @staticmethod
+    def _is_auth_error_message(message: str) -> bool:
+        text = str(message or "").strip()
+        if not text:
+            return False
+        return any(token in text for token in ("认证信息无效", "登录态", "登录失效", "登录过期", "auth"))
+
+    def _candidate_service_urls(self) -> List[str]:
+        """生成微信服务探活候选地址，兼容不同端口映射。"""
+        candidates: List[str] = []
+        for raw_url in [
+            self.base_url,
+            self._global_service_url,
+            "http://localhost:3001",
+            "http://127.0.0.1:3001",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:80",
+            "http://127.0.0.1:80",
+            "http://localhost",
+            "http://127.0.0.1",
+        ]:
+            url = str(raw_url or "").strip().rstrip("/")
+            if not url or url in candidates:
+                continue
+            candidates.append(url)
+        return candidates
+
+    async def _probe_service_url(self, url: str) -> bool:
+        """探测单个服务地址是否可用。"""
+        try:
+            session = await self._get_session()
+            async with session.get(f"{url}/") as resp:
+                return resp.status == 200
+        except Exception:
+            return False
     
     def get_accounts_by_category(self, category: str) -> List[str]:
         """按分类获取公众号"""
@@ -166,12 +235,16 @@ class WechatArticleFetcher:
         Returns:
             bool: 服务是否可用
         """
-        try:
-            session = await self._get_session()
-            async with session.get(f"{self.base_url}/") as resp:
-                return resp.status == 200
-        except Exception:
-            return False
+        for candidate in self._candidate_service_urls():
+            if not await self._probe_service_url(candidate):
+                continue
+            if candidate != self.base_url:
+                logger.info("微信服务地址自动切换: %s -> %s", self.base_url, candidate)
+                self.base_url = candidate
+            return True
+
+        logger.warning("微信服务探活失败，尝试地址: %s", ", ".join(self._candidate_service_urls()))
+        return False
             
     def _get_headers(self) -> dict:
         """获取请求头，包含认证信息"""
@@ -194,6 +267,7 @@ class WechatArticleFetcher:
             List[WechatAccount]: 公众号列表
         """
         session = await self._get_session()
+        self.last_error_message = ""
         
         try:
             # 使用公开 API v1 接口
@@ -205,20 +279,27 @@ class WechatArticleFetcher:
             
             async with session.get(url, params=params, headers=self._get_headers()) as resp:
                 if resp.status != 200:
-                    print(f"搜索公众号失败: HTTP {resp.status}")
+                    msg = f"搜索公众号失败: HTTP {resp.status}"
+                    self._record_error(msg)
+                    if resp.status in (401, 403):
+                        self._mark_auth_invalid(msg)
+                    print(msg)
                     return []
                     
                 data = await resp.json()
                 
                 # 检查 API 返回状态
                 if data.get("base_resp", {}).get("ret") != 0:
+                    err_msg = str(data.get("base_resp", {}).get("err_msg", "未知错误") or "未知错误")
+                    self._record_error(err_msg)
                     # key 可能已过期，尝试自动刷新一次
-                    if data.get("base_resp", {}).get("err_msg") == "认证信息无效":
+                    if self._is_auth_error_message(err_msg):
                         latest_key = self._load_auth_key_from_cookie_dir()
                         if latest_key and latest_key != self.auth_key:
                             self.auth_key = latest_key
                             return await self.search_accounts(keyword, limit)
-                    print(f"搜索公众号失败: {data.get('base_resp', {}).get('err_msg', '未知错误')}")
+                        self._mark_auth_invalid(err_msg)
+                    print(f"搜索公众号失败: {err_msg}")
                     return []
                 
                 accounts = []
@@ -235,7 +316,9 @@ class WechatArticleFetcher:
                 return accounts
                 
         except Exception as e:
-            print(f"搜索公众号异常: {e}")
+            msg = f"搜索公众号异常: {e}"
+            self._record_error(msg)
+            print(msg)
             return []
             
     async def get_articles(self,
@@ -256,6 +339,7 @@ class WechatArticleFetcher:
             List[WechatArticle]: 文章列表
         """
         session = await self._get_session()
+        self.last_error_message = ""
         
         try:
             # 使用公开 API v1 接口
@@ -268,19 +352,26 @@ class WechatArticleFetcher:
             
             async with session.get(url, params=params, headers=self._get_headers()) as resp:
                 if resp.status != 200:
-                    print(f"获取文章列表失败: HTTP {resp.status}")
+                    msg = f"获取文章列表失败: HTTP {resp.status}"
+                    self._record_error(msg)
+                    if resp.status in (401, 403):
+                        self._mark_auth_invalid(msg)
+                    print(msg)
                     return []
                     
                 data = await resp.json()
                 
                 # 检查 API 返回状态
                 if data.get("base_resp", {}).get("ret") != 0:
-                    if data.get("base_resp", {}).get("err_msg") == "认证信息无效":
+                    err_msg = str(data.get("base_resp", {}).get("err_msg", "未知错误") or "未知错误")
+                    self._record_error(err_msg)
+                    if self._is_auth_error_message(err_msg):
                         latest_key = self._load_auth_key_from_cookie_dir()
                         if latest_key and latest_key != self.auth_key:
                             self.auth_key = latest_key
                             return await self.get_articles(fakeid, offset, count, account_name)
-                    print(f"获取文章列表失败: {data.get('base_resp', {}).get('err_msg', '未知错误')}")
+                        self._mark_auth_invalid(err_msg)
+                    print(f"获取文章列表失败: {err_msg}")
                     return []
                 
                 articles = []
@@ -307,7 +398,9 @@ class WechatArticleFetcher:
                 return articles
                 
         except Exception as e:
-            print(f"获取文章列表异常: {e}")
+            msg = f"获取文章列表异常: {e}"
+            self._record_error(msg)
+            print(msg)
             return []
     
     async def get_article_content(self, article_url: str) -> str:
@@ -480,7 +573,7 @@ class WechatArticleFetcher:
         session = await self._get_session()
         
         # 串行抓取，避免并发触发限流
-        for i, (category, account_name) in enumerate(accounts_by_category[:20]):  # 限制最多查看20个公众号
+        for i, (category, account_name) in enumerate(accounts_by_category):
             try:
                 # 搜索公众号
                 accounts = await self.search_accounts(account_name)
@@ -490,17 +583,44 @@ class WechatArticleFetcher:
                 
                 fakeid = accounts[0].fakeid
                 
-                # 获取文章列表
-                articles = await self.get_articles(fakeid, offset=0, count=10, account_name=account_name)
-                
+                # 分页拉取文章列表：不做固定篇数截断，直到超出时间窗口或无更多数据
+                articles = []
+                offset = 0
+                page_size = 20  # API 单次上限
+                while True:
+                    page_articles = await self.get_articles(
+                        fakeid,
+                        offset=offset,
+                        count=page_size,
+                        account_name=account_name,
+                    )
+                    if not page_articles:
+                        break
+
+                    articles.extend(page_articles)
+
+                    # 若已触达时间窗口下界，停止翻页
+                    oldest_time = min(
+                        (art.publish_time for art in page_articles if art.publish_time),
+                        default=None,
+                    )
+                    if oldest_time and oldest_time < time_threshold:
+                        break
+
+                    # 无更多分页
+                    if len(page_articles) < page_size:
+                        break
+
+                    offset += len(page_articles)
+
                 # 过滤时间范围内的文章
                 recent_articles = [
-                    art for art in articles 
+                    art for art in articles
                     if art.publish_time and art.publish_time >= time_threshold
                 ]
                 
-                # 为每篇文章获取统计数据（如果配置了auth_key）
-                for art in recent_articles[:5]:  # 每个公众号只获取前5篇的统计
+                # 为每篇近期文章获取统计数据（如果配置了auth_key）
+                for art in recent_articles:
                     try:
                         stats = await self.get_article_stats(art.url)
                         art.read_count = stats.get("read_count", 0)

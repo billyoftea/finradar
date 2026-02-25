@@ -132,7 +132,7 @@ twitter:
       - "mjmauboussin"
       - "modestproposal1"
       - "John_Hempton"
-      - "NeckarValue"
+      - "MebFaber"
       - "LibertyRPF"
       - "matthewherper"
       - "MassDevice"
@@ -142,28 +142,28 @@ twitter:
       - "lexsokolin"
       - "TheStalwart"
       - "Sino_Market"
-      - "HAIGAO1"
+      - "HAIGAO"
       - "Rory_Johnston"
       - "hkuppy"
       - "BrynneKKelly"
       - "chigrl"
       - "NatGasWeather"
-      - "Bradstng"
+      - "TaviCosta"
       - "GavinSBaker"
       - "WallStCynic"
       - "TurnerNovak"
-      - "RetailDogma"
+      - "LizAnnSonders"
       - "Hedgeye"
       - "TruthGundlach"
       - "HowardMarksBook"
       - "LynAldenContact"
       - "LukeGromen"
     quant_trading:
-      - "MarcosLopezdePrado"
+      - "lopezdeprado"
       - "epchan"
       - "QuantConnect"
-      - "AQR"
-      - "AlessioUrban"
+      - "SpotGamma"
+      - "JamCroissant"
       - "unusual_whales"
       - "SqueezeMetrics"
       - "Qullamaggie"
@@ -171,7 +171,7 @@ twitter:
       - "pyquantnews"
     web3_prediction:
       - "Polymarket"
-      - "ShayneCoplan"
+      - "shayne_coplan"
       - "justinsuntron"
       - "VitalikButerin"
       - "NateSilver538"
@@ -188,8 +188,8 @@ twitter:
       - "KobeissiLetter"
       - "charliebilello"
       - "RaoulGMI"
-      - "NassimTaleb"
-      - "TradeTheNews"
+      - "nntaleb"
+      - "Trade_The_News"
       - "zerohedge"
     frontier_ai:
       - "ClaudeAI"
@@ -208,9 +208,9 @@ twitter:
       - "demishassabis"
       - "rowancheung"
       - "simonw"
-      - "AlexWang_"
-      - "gwern"
-      - "emad_mostaque"
+      - "alexandr_wang"
+      - "rasbt"
+      - "EMostaque"
       - "bindureddy"
     institutions_thinkers:
       - "a16z"
@@ -410,7 +410,30 @@ wechat:
 
 
 # ===============================================================
-# 6. 报告模式
+# 6. GitHub 项目趋势
+#
+# 用于市场模块中的 GitHub 趋势抓取（python -m finradar --mode market）
+# 目标：扩大候选池并做多样性采样，减少“同一批项目反复出现”。
+# ===============================================================
+github:
+  enabled: true                         # 是否启用 GitHub 趋势抓取
+  token: "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"                             # GitHub PAT（建议配置；无 token 将自动降载）
+  fetch_count: 24                       # 每个主题最终保留数量（trending/ai/fintech/quant/web3/interesting）
+  search_candidates_multiplier: 4       # 候选池放大倍数（越大覆盖越广）
+  max_candidates_per_query: 80          # 单条查询最大候选数上限
+  max_language_boost_queries: 4         # 语言补充查询条数（无 token 时自动降到 1）
+  max_per_owner: 1                      # 同一 owner 在单主题最大入选数
+  max_per_language: 6                   # 同一语言在单主题最大入选数
+  languages:                            # 用于语言补充查询，提升覆盖面
+    - "python"
+    - "typescript"
+    - "rust"
+    - "go"
+    - "javascript"
+
+
+# ===============================================================
+# 7. 报告模式
 #
 # 🔸 daily（当日汇总模式）
 #    • 推送时机：按时推送(默认每小时推送一次)

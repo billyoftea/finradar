@@ -14,6 +14,7 @@
 
 执行后会安装依赖并写入本地 `crontab`：
 - 每 30 分钟：`market + news`
+- 每 6 小时：`清理 Twitter 关注缓存（仅保留最近 48 小时）`
 - 每天 08:00：`social + 早报`
 - 每天 20:00：`social + 晚报`
 
@@ -72,9 +73,21 @@
 ./scripts/local.sh notion-push evening 20260209
 ```
 
+同一天早晚报合并成一页（时间线阅读，默认开启）：
+```bash
+./scripts/local.sh notion-push evening 20260209
+```
+临时关闭合并：
+```bash
+./scripts/local.sh notion-push evening 20260209 --no-merge-daily
+```
+
 说明：
 - 配置保存在项目根目录 `.notion.env`（已加入 `.gitignore`）
 - `cron-install` 后会在每天 08:00 / 20:00 自动执行 Notion 子页面写入
+- `cron-install` 会启用 Twitter 关注缓存的 48h 滚动清理（每 6 小时执行）
+- 默认会把同一天早晚报合并到同一 Notion 页面（标题：`finradar YYYY-MM-DD 日报`）
+- 可通过 `NOTION_MERGE_DAILY=0` 或命令参数 `--no-merge-daily` 关闭合并
 
 ## 6. Docker 可选用法
 

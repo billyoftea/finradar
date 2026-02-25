@@ -15,9 +15,11 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 import requests
+from requests.utils import requote_uri
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_REPORT = PROJECT_ROOT / "output" / "report"
@@ -25,7 +27,7 @@ NOTION_API_BASE = "https://api.notion.com/v1"
 NOTION_VERSION = "2022-06-28"
 BEIJING_TZ = ZoneInfo("Asia/Shanghai")
 INLINE_MD_PATTERN = re.compile(
-    r"\[([^\]]+)\]\((https?://[^)\s]+)\)|\*\*([^*]+)\*\*|__([^_]+)__|`([^`]+)`|\*([^*]+)\*|_([^_]+)_|~~([^~]+)~~"
+    r"\[([^\]]+)\]\((https?://[^)\s]+)\)|\*\*([^*]+)\*\*|__([^_]+)__|`([^`]+)`|\*([^*]+)\*|_([^_]+)_|~~([^~]+)~~|(https?://[^\s<]+)"
 )
 
 
@@ -42,6 +44,17 @@ def resolve_report_type(raw_type: str) -> str:
     if 14 <= hour < 24:
         return "evening"
     return "morning"
+
+
+def parse_bool(value: str | None, default: bool = False) -> bool:
+    if value is None:
+        return default
+    text = str(value).strip().lower()
+    if text in {"1", "true", "yes", "on", "y"}:
+        return True
+    if text in {"0", "false", "no", "off", "n"}:
+        return False
+    return default
 
 
 def extract_page_id(raw: str) -> str:
@@ -69,9 +82,27 @@ def split_text_chunks(text: str, max_len: int = 1900) -> list[str]:
 def text_object(content: str, bold: bool = False, italic: bool = False,
                 code: bool = False, strikethrough: bool = False,
                 href: str | None = None) -> dict:
+    def normalize_notion_url(raw_url: str | None) -> str | None:
+        url = str(raw_url or "").strip()
+        if not url:
+            return None
+        try:
+            url = requote_uri(url)
+        except Exception:
+            return None
+        try:
+            parsed = urlsplit(url)
+        except Exception:
+            return None
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
+            return None
+        return url
+
     text_payload = {"content": content}
     if href:
-        text_payload["link"] = {"url": href}
+        safe_url = normalize_notion_url(href)
+        if safe_url:
+            text_payload["link"] = {"url": safe_url}
     return {
         "type": "text",
         "text": text_payload,
@@ -116,6 +147,13 @@ def parse_inline_markdown(text: str) -> list[dict]:
     if not text:
         return [text_object("\u200b")]
 
+    def split_url_trailing_punct(url: str) -> tuple[str, str]:
+        trailing = ""
+        while url and url[-1] in ".,;:!?)]}":
+            trailing = url[-1] + trailing
+            url = url[:-1]
+        return url, trailing
+
     result: list[dict] = []
     pos = 0
     for m in INLINE_MD_PATTERN.finditer(text):
@@ -132,6 +170,12 @@ def parse_inline_markdown(text: str) -> list[dict]:
             result.append(text_object(m.group(6) or m.group(7), italic=True))
         elif m.group(8) is not None:  # ~~strike~~
             result.append(text_object(m.group(8), strikethrough=True))
+        elif m.group(9) is not None:  # bare URL
+            clean_url, trailing = split_url_trailing_punct(m.group(9))
+            if clean_url:
+                result.append(text_object(clean_url, href=clean_url))
+            if trailing:
+                result.append(text_object(trailing))
 
         pos = m.end()
 
@@ -284,10 +328,12 @@ def notion_request(method: str, path: str, token: str,
     raise RuntimeError("Notion API 重试后仍失败")
 
 
-def build_page_title(date_str: str, report_type: str, custom_title: str | None) -> str:
+def build_page_title(date_str: str, report_type: str, custom_title: str | None, merge_daily: bool = False) -> str:
     if custom_title:
         return custom_title
     iso_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
+    if merge_daily:
+        return f"finradar {iso_date} 日报"
     label = "早报" if report_type == "morning" else "晚报"
     return f"finradar {iso_date} {label}"
 
@@ -296,6 +342,58 @@ def resolve_report_path(date_str: str, report_type: str, file_arg: str | None) -
     if file_arg:
         return Path(file_arg).expanduser().resolve()
     return (OUTPUT_REPORT / f"daily_{date_str}_{report_type}.md").resolve()
+
+
+def load_markdown_content(
+    date_str: str,
+    report_type: str,
+    file_arg: str | None,
+    merge_daily: bool,
+) -> tuple[str, str]:
+    """读取要推送的 Markdown 文本，支持同日早晚合并。"""
+    if file_arg:
+        report_path = resolve_report_path(date_str, report_type, file_arg)
+        if not report_path.exists():
+            raise SystemExit(f"❌ 报告文件不存在: {report_path}")
+        return report_path.read_text(encoding="utf-8"), str(report_path)
+
+    if not merge_daily:
+        report_path = resolve_report_path(date_str, report_type, None)
+        if not report_path.exists():
+            raise SystemExit(f"❌ 报告文件不存在: {report_path}")
+        return report_path.read_text(encoding="utf-8"), str(report_path)
+
+    morning_path = OUTPUT_REPORT / f"daily_{date_str}_morning.md"
+    evening_path = OUTPUT_REPORT / f"daily_{date_str}_evening.md"
+    morning_text = morning_path.read_text(encoding="utf-8") if morning_path.exists() else ""
+    evening_text = evening_path.read_text(encoding="utf-8") if evening_path.exists() else ""
+
+    if not morning_text and not evening_text:
+        raise SystemExit(f"❌ 日报合并失败：未找到 {date_str} 的早/晚报文件")
+
+    iso_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
+    parts = [f"# 🧾 finradar {iso_date} 日报（时间线合并）\n"]
+    parts.append(
+        "> 说明：此页面按时间线合并同一天早报与晚报，便于连续阅读；原始链接索引仍保留在各分段内。\n"
+    )
+    parts.append("---\n")
+
+    parts.append("## 🌅 早报\n")
+    if morning_text:
+        parts.append(morning_text.strip())
+    else:
+        parts.append("> 当日早报尚未生成。")
+    parts.append("\n---\n")
+
+    parts.append("## 🌇 晚报\n")
+    if evening_text:
+        parts.append(evening_text.strip())
+    else:
+        parts.append("> 当日晚报尚未生成。")
+    parts.append("")
+
+    source = f"merged:{morning_path if morning_path.exists() else 'missing'} + {evening_path if evening_path.exists() else 'missing'}"
+    return "\n".join(parts), source
 
 
 def append_blocks_to_page(token: str, page_id: str, blocks: list[dict]) -> None:
@@ -374,6 +472,8 @@ def main() -> int:
     parser.add_argument("--type", choices=["morning", "evening", "auto"], default="auto", help="报告类型")
     parser.add_argument("--file", default=None, help="Markdown 文件路径（默认按日期+类型推导）")
     parser.add_argument("--title", default=None, help="Notion 子页面标题（可选）")
+    parser.add_argument("--merge-daily", action="store_true", help="同一天早晚报合并后推送同一页面")
+    parser.add_argument("--no-merge-daily", action="store_true", help="禁用同日早晚报合并")
     parser.add_argument("--token", default=None, help="Notion API Token（可选，默认读环境变量）")
     parser.add_argument("--parent", default=None, help="Notion 父页面 ID 或 URL（可选，默认读环境变量）")
     args = parser.parse_args()
@@ -401,14 +501,21 @@ def main() -> int:
         raise SystemExit("❌ 未提供 NOTION_PARENT_PAGE_ID/URL")
 
     parent_page_id = extract_page_id(parent_raw)
-    report_path = resolve_report_path(date_str, report_type, args.file)
-    if not report_path.exists():
-        raise SystemExit(f"❌ 报告文件不存在: {report_path}")
+    merge_daily = parse_bool(os.environ.get("NOTION_MERGE_DAILY"), True)
+    if args.merge_daily:
+        merge_daily = True
+    if args.no_merge_daily:
+        merge_daily = False
 
     notion_request("GET", f"/pages/{parent_page_id}", token)
-    markdown_text = report_path.read_text(encoding="utf-8")
+    markdown_text, source_label = load_markdown_content(
+        date_str=date_str,
+        report_type=report_type,
+        file_arg=args.file,
+        merge_daily=merge_daily,
+    )
     blocks = markdown_to_notion_blocks(markdown_text)
-    title = build_page_title(date_str, report_type, args.title)
+    title = build_page_title(date_str, report_type, args.title, merge_daily=merge_daily)
     page_id, page_url, mode = create_or_replace_subpage(token, parent_page_id, title, blocks)
 
     print("✅ Notion 写入成功")
@@ -418,7 +525,7 @@ def main() -> int:
     if page_url:
         print(f"   url: {page_url}")
     print(f"   blocks: {len(blocks)}")
-    print(f"   source: {report_path}")
+    print(f"   source: {source_label}")
     return 0
 
 

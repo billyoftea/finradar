@@ -1,0 +1,1982 @@
+{
+  "timestamp": "2026-02-13T23:30:49.543051+08:00",
+  "mode": "market",
+  "report_type": "latest",
+  "data": {
+    "stock_cn": {
+      "indices": [
+        {
+          "name": "上证指数",
+          "code": "000001",
+          "price": 4082.073,
+          "change": -51.945000000000164,
+          "change_pct": -1.26,
+          "volume": 50079947200.0,
+          "open": 4115.924,
+          "high": 4123.844,
+          "low": 4079.77
+        },
+        {
+          "name": "深证成指",
+          "code": "399001",
+          "price": 14100.189,
+          "change": -182.8089999999993,
+          "change_pct": -1.28,
+          "volume": 64063961614.0,
+          "open": 14188.347,
+          "high": 14258.826,
+          "low": 14092.84
+        },
+        {
+          "name": "沪深300",
+          "code": "000300",
+          "price": 4660.406,
+          "change": -59.17200000000048,
+          "change_pct": -1.25,
+          "volume": 18916775600.0,
+          "open": 4693.411,
+          "high": 4703.633,
+          "low": 4658.404
+        },
+        {
+          "name": "创业板指",
+          "code": "399006",
+          "price": 3275.958,
+          "change": -52.10500000000002,
+          "change_pct": -1.57,
+          "volume": 20624958923.0,
+          "open": 3309.429,
+          "high": 3323.369,
+          "low": 3275.289
+        },
+        {
+          "name": "科创50",
+          "code": "000688",
+          "price": 1470.333,
+          "change": -10.661999999999807,
+          "change_pct": -0.72,
+          "volume": 989661600.0,
+          "open": 1470.259,
+          "high": 1492.086,
+          "low": 1466.707
+        },
+        {
+          "name": "中证500",
+          "code": "000905",
+          "price": 8299.585,
+          "change": -123.98500000000058,
+          "change_pct": -1.47,
+          "volume": 20278572500.0,
+          "open": 8366.333,
+          "high": 8419.762,
+          "low": 8290.839
+        }
+      ],
+      "north_flow": {
+        "net_flow": 0.0,
+        "date": "2026-02-13",
+        "hu_net_flow": 0.0,
+        "shen_net_flow": 0.0
+      },
+      "sectors": [
+        {
+          "name": "船舶制造",
+          "change_pct": 3.66,
+          "turnover": 5.84,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "亚星锚链",
+          "category": "other"
+        },
+        {
+          "name": "航天航空",
+          "change_pct": 2.21,
+          "turnover": 3.31,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "安达维尔",
+          "category": "other"
+        },
+        {
+          "name": "综合行业",
+          "change_pct": 0.63,
+          "turnover": 2.38,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "国安股份",
+          "category": "other"
+        },
+        {
+          "name": "电机",
+          "change_pct": 0.44,
+          "turnover": 2.98,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "方正电机",
+          "category": "other"
+        },
+        {
+          "name": "计算机设备",
+          "change_pct": 0.42,
+          "turnover": 2.38,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "汉邦高科",
+          "category": "other"
+        },
+        {
+          "name": "造纸印刷",
+          "change_pct": 0.39,
+          "turnover": 2.42,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "五洲特纸",
+          "category": "other"
+        },
+        {
+          "name": "汽车零部件",
+          "change_pct": 0.29,
+          "turnover": 2.72,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "浙江世宝",
+          "category": "other"
+        },
+        {
+          "name": "旅游酒店",
+          "change_pct": 0.22,
+          "turnover": 2.05,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "金陵饭店",
+          "category": "other"
+        },
+        {
+          "name": "仪器仪表",
+          "change_pct": 0.19,
+          "turnover": 2.67,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "精测电子",
+          "category": "other"
+        },
+        {
+          "name": "半导体",
+          "change_pct": 0.14,
+          "turnover": 2.97,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "微导纳米",
+          "category": "other"
+        },
+        {
+          "name": "消费电子",
+          "change_pct": 0.1,
+          "turnover": 2.15,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "泰嘉股份",
+          "category": "other"
+        },
+        {
+          "name": "电子化学品",
+          "change_pct": 0.04,
+          "turnover": 3.73,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "中巨芯-U",
+          "category": "other"
+        },
+        {
+          "name": "工程咨询服务",
+          "change_pct": 0.03,
+          "turnover": 2.43,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "华建集团",
+          "category": "other"
+        },
+        {
+          "name": "汽车服务",
+          "change_pct": -0.07,
+          "turnover": 1.15,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "ST东时",
+          "category": "other"
+        },
+        {
+          "name": "塑料制品",
+          "change_pct": -0.1,
+          "turnover": 3.39,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "国风新材",
+          "category": "other"
+        },
+        {
+          "name": "农牧饲渔",
+          "change_pct": -0.1,
+          "turnover": 1.87,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "中水渔业",
+          "category": "other"
+        },
+        {
+          "name": "装修装饰",
+          "change_pct": -0.16,
+          "turnover": 1.9,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "罗曼股份",
+          "category": "other"
+        },
+        {
+          "name": "专用设备",
+          "change_pct": -0.24,
+          "turnover": 2.47,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "天奇股份",
+          "category": "other"
+        },
+        {
+          "name": "通用设备",
+          "change_pct": -0.31,
+          "turnover": 2.88,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "百达精工",
+          "category": "other"
+        },
+        {
+          "name": "软件开发",
+          "change_pct": -0.31,
+          "turnover": 3.54,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "绿盟科技",
+          "category": "other"
+        },
+        {
+          "name": "汽车整车",
+          "change_pct": -0.31,
+          "turnover": 0.91,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "千里科技",
+          "category": "other"
+        },
+        {
+          "name": "铁路公路",
+          "change_pct": -0.31,
+          "turnover": 0.45,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "富临运业",
+          "category": "other"
+        },
+        {
+          "name": "工程建设",
+          "change_pct": -0.34,
+          "turnover": 1.12,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "圣晖集成",
+          "category": "other"
+        },
+        {
+          "name": "中药",
+          "change_pct": -0.35,
+          "turnover": 1.11,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "维康药业",
+          "category": "other"
+        },
+        {
+          "name": "房地产开发",
+          "change_pct": -0.37,
+          "turnover": 1.4,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "京能置业",
+          "category": "other"
+        },
+        {
+          "name": "光学光电子",
+          "change_pct": -0.37,
+          "turnover": 1.91,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "永新光学",
+          "category": "other"
+        },
+        {
+          "name": "交运设备",
+          "change_pct": -0.41,
+          "turnover": 0.73,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "长青科技",
+          "category": "other"
+        },
+        {
+          "name": "橡胶制品",
+          "change_pct": -0.42,
+          "turnover": 1.82,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "天铁科技",
+          "category": "other"
+        },
+        {
+          "name": "环保行业",
+          "change_pct": -0.43,
+          "turnover": 2.08,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "惠城环保",
+          "category": "other"
+        },
+        {
+          "name": "医疗器械",
+          "change_pct": -0.43,
+          "turnover": 1.38,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "博拓生物",
+          "category": "other"
+        },
+        {
+          "name": "家电行业",
+          "change_pct": -0.45,
+          "turnover": 1.63,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "宏昌科技",
+          "category": "other"
+        },
+        {
+          "name": "电子元件",
+          "change_pct": -0.47,
+          "turnover": 2.58,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "华丰科技",
+          "category": "other"
+        },
+        {
+          "name": "电池",
+          "change_pct": -0.52,
+          "turnover": 2.06,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "恩捷股份",
+          "category": "other"
+        },
+        {
+          "name": "酿酒行业",
+          "change_pct": -0.58,
+          "turnover": 0.88,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "ST西发",
+          "category": "other"
+        },
+        {
+          "name": "专业服务",
+          "change_pct": -0.6,
+          "turnover": 2.48,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "谱尼测试",
+          "category": "other"
+        },
+        {
+          "name": "包装材料",
+          "change_pct": -0.62,
+          "turnover": 2.86,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "中锐股份",
+          "category": "other"
+        },
+        {
+          "name": "生物制品",
+          "change_pct": -0.64,
+          "turnover": 1.05,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "欧林生物",
+          "category": "other"
+        },
+        {
+          "name": "通信服务",
+          "change_pct": -0.65,
+          "turnover": 0.96,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "二六三",
+          "category": "other"
+        },
+        {
+          "name": "纺织服装",
+          "change_pct": -0.67,
+          "turnover": 1.72,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "*ST步森",
+          "category": "other"
+        },
+        {
+          "name": "家用轻工",
+          "change_pct": -0.7,
+          "turnover": 2.16,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "太力科技",
+          "category": "other"
+        },
+        {
+          "name": "银行",
+          "change_pct": -0.7,
+          "turnover": 0.23,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "华夏银行",
+          "category": "finance"
+        },
+        {
+          "name": "医药商业",
+          "change_pct": -0.71,
+          "turnover": 1.19,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "国发股份",
+          "category": "other"
+        },
+        {
+          "name": "化学制品",
+          "change_pct": -0.72,
+          "turnover": 2.74,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "惠柏新材",
+          "category": "other"
+        },
+        {
+          "name": "教育",
+          "change_pct": -0.72,
+          "turnover": 3.19,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "中国高科",
+          "category": "other"
+        },
+        {
+          "name": "物流行业",
+          "change_pct": -0.74,
+          "turnover": 0.79,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "胜通能源",
+          "category": "other"
+        },
+        {
+          "name": "房地产服务",
+          "change_pct": -0.74,
+          "turnover": 2.58,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "全新好",
+          "category": "other"
+        },
+        {
+          "name": "美容护理",
+          "change_pct": -0.75,
+          "turnover": 2.12,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "青松股份",
+          "category": "other"
+        },
+        {
+          "name": "食品饮料",
+          "change_pct": -0.78,
+          "turnover": 1.5,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "国联水产",
+          "category": "consumption"
+        },
+        {
+          "name": "商业百货",
+          "change_pct": -0.78,
+          "turnover": 1.38,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "丽人丽妆",
+          "category": "other"
+        },
+        {
+          "name": "公用事业",
+          "change_pct": -0.8,
+          "turnover": 0.92,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "金房能源",
+          "category": "other"
+        },
+        {
+          "name": "工程机械",
+          "change_pct": -0.8,
+          "turnover": 1.59,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "建设机械",
+          "category": "other"
+        },
+        {
+          "name": "化学制药",
+          "change_pct": -0.83,
+          "turnover": 1.31,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "仟源医药",
+          "category": "other"
+        },
+        {
+          "name": "文化传媒",
+          "change_pct": -0.85,
+          "turnover": 5.86,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "掌阅科技",
+          "category": "other"
+        },
+        {
+          "name": "农药兽药",
+          "change_pct": -0.86,
+          "turnover": 1.84,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "美邦股份",
+          "category": "other"
+        },
+        {
+          "name": "多元金融",
+          "change_pct": -0.91,
+          "turnover": 0.93,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "永安期货",
+          "category": "other"
+        },
+        {
+          "name": "贸易行业",
+          "change_pct": -0.92,
+          "turnover": 1.62,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "苏豪弘业",
+          "category": "other"
+        },
+        {
+          "name": "互联网服务",
+          "change_pct": -0.98,
+          "turnover": 6.59,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "华胜天成",
+          "category": "other"
+        },
+        {
+          "name": "证券",
+          "change_pct": -1.04,
+          "turnover": 0.75,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "第一创业",
+          "category": "other"
+        },
+        {
+          "name": "珠宝首饰",
+          "change_pct": -1.04,
+          "turnover": 1.41,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "菜百股份",
+          "category": "other"
+        },
+        {
+          "name": "水泥建材",
+          "change_pct": -1.07,
+          "turnover": 1.49,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "上峰水泥",
+          "category": "other"
+        },
+        {
+          "name": "燃气",
+          "change_pct": -1.08,
+          "turnover": 1.35,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "佛燃能源",
+          "category": "other"
+        },
+        {
+          "name": "航空机场",
+          "change_pct": -1.1,
+          "turnover": 0.76,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "海南机场",
+          "category": "other"
+        },
+        {
+          "name": "装修建材",
+          "change_pct": -1.13,
+          "turnover": 2.35,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "ST纳川",
+          "category": "other"
+        },
+        {
+          "name": "电源设备",
+          "change_pct": -1.16,
+          "turnover": 1.89,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "金时科技",
+          "category": "other"
+        },
+        {
+          "name": "医疗服务",
+          "change_pct": -1.18,
+          "turnover": 2.1,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "三博脑科",
+          "category": "other"
+        },
+        {
+          "name": "风电设备",
+          "change_pct": -1.27,
+          "turnover": 2.38,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "道生天合",
+          "category": "other"
+        },
+        {
+          "name": "保险",
+          "change_pct": -1.4,
+          "turnover": 0.25,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "新华保险",
+          "category": "other"
+        },
+        {
+          "name": "化学原料",
+          "change_pct": -1.55,
+          "turnover": 1.69,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "侨源股份",
+          "category": "other"
+        },
+        {
+          "name": "煤炭行业",
+          "change_pct": -1.57,
+          "turnover": 1.21,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "云维股份",
+          "category": "other"
+        },
+        {
+          "name": "通信设备",
+          "change_pct": -1.61,
+          "turnover": 4.4,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "银河电子",
+          "category": "other"
+        },
+        {
+          "name": "电网设备",
+          "change_pct": -1.61,
+          "turnover": 3.67,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "汉缆股份",
+          "category": "other"
+        },
+        {
+          "name": "非金属材料",
+          "change_pct": -1.61,
+          "turnover": 3.29,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "珂玛科技",
+          "category": "other"
+        },
+        {
+          "name": "游戏",
+          "change_pct": -1.63,
+          "turnover": 3.46,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "电魂网络",
+          "category": "other"
+        },
+        {
+          "name": "石油行业",
+          "change_pct": -1.67,
+          "turnover": 0.41,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "*ST新潮",
+          "category": "other"
+        },
+        {
+          "name": "电力行业",
+          "change_pct": -1.7,
+          "turnover": 1.13,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "豫能控股",
+          "category": "other"
+        },
+        {
+          "name": "化肥行业",
+          "change_pct": -1.79,
+          "turnover": 1.95,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "农大科技",
+          "category": "other"
+        },
+        {
+          "name": "化纤行业",
+          "change_pct": -1.93,
+          "turnover": 1.29,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "南京化纤",
+          "category": "other"
+        },
+        {
+          "name": "能源金属",
+          "change_pct": -1.94,
+          "turnover": 3.78,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "盛新锂能",
+          "category": "other"
+        },
+        {
+          "name": "有色金属",
+          "change_pct": -1.95,
+          "turnover": 2.42,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "豪美新材",
+          "category": "cyclical"
+        },
+        {
+          "name": "贵金属",
+          "change_pct": -2.0,
+          "turnover": 3.45,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "晓程科技",
+          "category": "other"
+        },
+        {
+          "name": "采掘行业",
+          "change_pct": -2.1,
+          "turnover": 1.98,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "仁智股份",
+          "category": "other"
+        },
+        {
+          "name": "钢铁行业",
+          "change_pct": -2.36,
+          "turnover": 1.66,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "大中矿业",
+          "category": "other"
+        },
+        {
+          "name": "航运港口",
+          "change_pct": -2.55,
+          "turnover": 1.03,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "海峡股份",
+          "category": "other"
+        },
+        {
+          "name": "玻璃玻纤",
+          "change_pct": -2.62,
+          "turnover": 5.03,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "海南发展",
+          "category": "other"
+        },
+        {
+          "name": "小金属",
+          "change_pct": -2.97,
+          "turnover": 3.08,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "天工股份",
+          "category": "other"
+        },
+        {
+          "name": "光伏设备",
+          "change_pct": -3.06,
+          "turnover": 4.72,
+          "volume": 0,
+          "amount": 0,
+          "leading_stock": "*ST天龙",
+          "category": "other"
+        }
+      ],
+      "market_stats": {
+        "limit_up_count": 32,
+        "limit_down_count": 12
+      },
+      "market_closed": false,
+      "market_status": "正常交易",
+      "timestamp": "2026-02-13 15:30:03.769809"
+    },
+    "yahoo_stock": {
+      "markets": [
+        {
+          "symbol": "^GSPC",
+          "name": "标普500",
+          "region": "美股",
+          "market": "index",
+          "currency": "USD",
+          "price": 6848.9,
+          "change": 16.14,
+          "change_pct": 0.24,
+          "prev_close": 6832.76,
+          "open": 6834.27,
+          "high": 6851.65,
+          "low": 6794.55,
+          "volume": 761541772,
+          "url": "https://finance.yahoo.com/quote/%5EGSPC"
+        },
+        {
+          "symbol": "^IXIC",
+          "name": "纳斯达克综合",
+          "region": "美股",
+          "market": "index",
+          "currency": "USD",
+          "price": 22634.21,
+          "change": 37.06,
+          "change_pct": 0.16,
+          "prev_close": 22597.15,
+          "open": 22561.46,
+          "high": 22647.99,
+          "low": 22402.38,
+          "volume": 1889794000,
+          "url": "https://finance.yahoo.com/quote/%5EIXIC"
+        },
+        {
+          "symbol": "^DJI",
+          "name": "道琼斯工业指数",
+          "region": "美股",
+          "market": "index",
+          "currency": "USD",
+          "price": 49508.44,
+          "change": 56.46,
+          "change_pct": 0.11,
+          "prev_close": 49451.98,
+          "open": 49439.58,
+          "high": 49536.23,
+          "low": 49084.35,
+          "volume": 152607516,
+          "url": "https://finance.yahoo.com/quote/%5EDJI"
+        },
+        {
+          "symbol": "^RUT",
+          "name": "罗素2000",
+          "region": "美股",
+          "market": "index",
+          "currency": "USD",
+          "price": 2639.62,
+          "change": 23.79,
+          "change_pct": 0.91,
+          "prev_close": 2615.83,
+          "open": 2620.14,
+          "high": 2642.29,
+          "low": 2610.34,
+          "volume": 0,
+          "url": "https://finance.yahoo.com/quote/%5ERUT"
+        },
+        {
+          "symbol": "^VIX",
+          "name": "VIX波动率指数",
+          "region": "美股",
+          "market": "index",
+          "currency": "USD",
+          "price": 21.38,
+          "change": 0.56,
+          "change_pct": 2.69,
+          "prev_close": 20.82,
+          "open": 21.48,
+          "high": 22.4,
+          "low": 20.47,
+          "volume": 0,
+          "url": "https://finance.yahoo.com/quote/%5EVIX"
+        },
+        {
+          "symbol": "^HSI",
+          "name": "恒生指数",
+          "region": "港股",
+          "market": "index",
+          "currency": "HKD",
+          "price": 26567.12,
+          "change": -465.42,
+          "change_pct": -1.72,
+          "prev_close": 27032.54,
+          "open": 26640.16,
+          "high": 26774.44,
+          "low": 26444.46,
+          "volume": 0,
+          "url": "https://finance.yahoo.com/quote/%5EHSI"
+        },
+        {
+          "symbol": "^N225",
+          "name": "日经225",
+          "region": "日股",
+          "market": "index",
+          "currency": "JPY",
+          "price": 56941.97,
+          "change": -697.87,
+          "change_pct": -1.21,
+          "prev_close": 57639.84,
+          "open": 57197.33,
+          "high": 57407.25,
+          "low": 56652.48,
+          "volume": 0,
+          "url": "https://finance.yahoo.com/quote/%5EN225"
+        },
+        {
+          "symbol": "^KS11",
+          "name": "韩国综合指数",
+          "region": "韩股",
+          "market": "index",
+          "currency": "KRW",
+          "price": 5507.01,
+          "change": -15.26,
+          "change_pct": -0.28,
+          "prev_close": 5522.27,
+          "open": 5513.71,
+          "high": 5583.74,
+          "low": 5480.92,
+          "volume": 1290659,
+          "url": "https://finance.yahoo.com/quote/%5EKS11"
+        },
+        {
+          "symbol": "^FTSE",
+          "name": "英国富时100",
+          "region": "欧股",
+          "market": "index",
+          "currency": "GBP",
+          "price": 10423.39,
+          "change": 20.99,
+          "change_pct": 0.2,
+          "prev_close": 10402.4,
+          "open": 10402.48,
+          "high": 10447.08,
+          "low": 10380.87,
+          "volume": 0,
+          "url": "https://finance.yahoo.com/quote/%5EFTSE"
+        },
+        {
+          "symbol": "^GDAXI",
+          "name": "德国DAX",
+          "region": "欧股",
+          "market": "index",
+          "currency": "EUR",
+          "price": 24887.93,
+          "change": 35.24,
+          "change_pct": 0.14,
+          "prev_close": 24852.69,
+          "open": 24822.3,
+          "high": 24942.6,
+          "low": 24750.47,
+          "volume": 0,
+          "url": "https://finance.yahoo.com/quote/%5EGDAXI"
+        },
+        {
+          "symbol": "^FCHI",
+          "name": "法国CAC40",
+          "region": "欧股",
+          "market": "index",
+          "currency": "EUR",
+          "price": 8307.44,
+          "change": -33.12,
+          "change_pct": -0.4,
+          "prev_close": 8340.56,
+          "open": 8315.5,
+          "high": 8331.96,
+          "low": 8275.04,
+          "volume": 0,
+          "url": "https://finance.yahoo.com/quote/%5EFCHI"
+        },
+        {
+          "symbol": "000001.SS",
+          "name": "上证综指",
+          "region": "A股",
+          "market": "index",
+          "currency": "CNY",
+          "price": 4082.07,
+          "change": -51.95,
+          "change_pct": -1.26,
+          "prev_close": 4134.02,
+          "open": 4115.92,
+          "high": 4123.84,
+          "low": 4079.77,
+          "volume": 2835306944,
+          "url": "https://finance.yahoo.com/quote/000001.SS"
+        },
+        {
+          "symbol": "399001.SZ",
+          "name": "深证成指",
+          "region": "A股",
+          "market": "index",
+          "currency": "CNY",
+          "price": 14100.19,
+          "change": -182.81,
+          "change_pct": -1.28,
+          "prev_close": 14283.0,
+          "open": 14188.35,
+          "high": 14258.83,
+          "low": 14092.84,
+          "volume": 1737524688,
+          "url": "https://finance.yahoo.com/quote/399001.SZ"
+        }
+      ],
+      "overview": {
+        "total": 13,
+        "up": 7,
+        "down": 6,
+        "flat": 0,
+        "by_region": [
+          {
+            "region": "A股",
+            "count": 2,
+            "avg_change_pct": -1.27,
+            "up": 0,
+            "down": 2
+          },
+          {
+            "region": "日股",
+            "count": 1,
+            "avg_change_pct": -1.21,
+            "up": 0,
+            "down": 1
+          },
+          {
+            "region": "欧股",
+            "count": 3,
+            "avg_change_pct": -0.02,
+            "up": 2,
+            "down": 1
+          },
+          {
+            "region": "港股",
+            "count": 1,
+            "avg_change_pct": -1.72,
+            "up": 0,
+            "down": 1
+          },
+          {
+            "region": "美股",
+            "count": 5,
+            "avg_change_pct": 0.82,
+            "up": 5,
+            "down": 0
+          },
+          {
+            "region": "韩股",
+            "count": 1,
+            "avg_change_pct": -0.28,
+            "up": 0,
+            "down": 1
+          }
+        ],
+        "top_movers": [
+          {
+            "symbol": "^VIX",
+            "name": "VIX波动率指数",
+            "region": "美股",
+            "market": "index",
+            "currency": "USD",
+            "price": 21.38,
+            "change": 0.56,
+            "change_pct": 2.69,
+            "prev_close": 20.82,
+            "open": 21.48,
+            "high": 22.4,
+            "low": 20.47,
+            "volume": 0,
+            "url": "https://finance.yahoo.com/quote/%5EVIX"
+          },
+          {
+            "symbol": "^HSI",
+            "name": "恒生指数",
+            "region": "港股",
+            "market": "index",
+            "currency": "HKD",
+            "price": 26567.12,
+            "change": -465.42,
+            "change_pct": -1.72,
+            "prev_close": 27032.54,
+            "open": 26640.16,
+            "high": 26774.44,
+            "low": 26444.46,
+            "volume": 0,
+            "url": "https://finance.yahoo.com/quote/%5EHSI"
+          },
+          {
+            "symbol": "399001.SZ",
+            "name": "深证成指",
+            "region": "A股",
+            "market": "index",
+            "currency": "CNY",
+            "price": 14100.19,
+            "change": -182.81,
+            "change_pct": -1.28,
+            "prev_close": 14283.0,
+            "open": 14188.35,
+            "high": 14258.83,
+            "low": 14092.84,
+            "volume": 1737524688,
+            "url": "https://finance.yahoo.com/quote/399001.SZ"
+          },
+          {
+            "symbol": "000001.SS",
+            "name": "上证综指",
+            "region": "A股",
+            "market": "index",
+            "currency": "CNY",
+            "price": 4082.07,
+            "change": -51.95,
+            "change_pct": -1.26,
+            "prev_close": 4134.02,
+            "open": 4115.92,
+            "high": 4123.84,
+            "low": 4079.77,
+            "volume": 2835306944,
+            "url": "https://finance.yahoo.com/quote/000001.SS"
+          },
+          {
+            "symbol": "^N225",
+            "name": "日经225",
+            "region": "日股",
+            "market": "index",
+            "currency": "JPY",
+            "price": 56941.97,
+            "change": -697.87,
+            "change_pct": -1.21,
+            "prev_close": 57639.84,
+            "open": 57197.33,
+            "high": 57407.25,
+            "low": 56652.48,
+            "volume": 0,
+            "url": "https://finance.yahoo.com/quote/%5EN225"
+          }
+        ]
+      },
+      "timestamp": "2026-02-13T15:30:04.915116",
+      "source": "yahoo_finance"
+    },
+    "precious_metal": {
+      "metals": {
+        "gold": {
+          "symbol": "GC=F",
+          "name": "黄金",
+          "name_en": "Gold",
+          "price": 5019.8,
+          "change": 96.1,
+          "change_pct": 1.95,
+          "open": 4950.0,
+          "high": 5036.7,
+          "low": 4907.1,
+          "volume": 78390,
+          "unit": "美元/盎司",
+          "prev_close": 4923.7
+        },
+        "silver": {
+          "symbol": "SI=F",
+          "name": "白银",
+          "name_en": "Silver",
+          "price": 77.54,
+          "change": 1.99,
+          "change_pct": 2.63,
+          "open": 75.18,
+          "high": 79.26,
+          "low": 73.75,
+          "volume": 40424,
+          "unit": "美元/盎司",
+          "prev_close": 75.55
+        }
+      },
+      "timestamp": "2026-02-13 15:30:04.943752"
+    },
+    "crypto": {
+      "coins": [
+        {
+          "id": "bitcoin",
+          "symbol": "BTC",
+          "name": "Bitcoin",
+          "price": 68736,
+          "market_cap": 1363534351327,
+          "market_cap_rank": 1,
+          "volume_24h": 49223913420,
+          "change_24h": 1.34897,
+          "change_7d": 2.2106506133764965,
+          "high_24h": 68373,
+          "low_24h": 65243,
+          "ath": 126080,
+          "ath_change_pct": -45.48228,
+          "is_meme": false,
+          "category": "mainstream",
+          "image": "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png?1696501400"
+        },
+        {
+          "id": "ethereum",
+          "symbol": "ETH",
+          "name": "Ethereum",
+          "price": 2035.81,
+          "market_cap": 243655362799,
+          "market_cap_rank": 2,
+          "volume_24h": 18312318703,
+          "change_24h": 3.1709,
+          "change_7d": 4.514084508816225,
+          "high_24h": 2020.58,
+          "low_24h": 1902.17,
+          "ath": 4946.05,
+          "ath_change_pct": -58.83966,
+          "is_meme": false,
+          "category": "mainstream",
+          "image": "https://coin-images.coingecko.com/coins/images/279/large/ethereum.png?1696501628"
+        },
+        {
+          "id": "solana",
+          "symbol": "SOL",
+          "name": "Solana",
+          "price": 82.9,
+          "market_cap": 46772642692,
+          "market_cap_rank": 7,
+          "volume_24h": 4270818148,
+          "change_24h": 2.19598,
+          "change_7d": -0.4842046515781926,
+          "high_24h": 82.28,
+          "low_24h": 76.81,
+          "ath": 293.31,
+          "ath_change_pct": -71.73666,
+          "is_meme": false,
+          "category": "mainstream",
+          "image": "https://coin-images.coingecko.com/coins/images/4128/large/solana.png?1718769756"
+        }
+      ],
+      "timestamp": "2026-02-13 15:30:06.729002"
+    },
+    "futures": {
+      "commodity": [],
+      "index_futures": [
+        {
+          "code": "IF",
+          "name": "沪深300期货",
+          "underlying": "沪深300",
+          "price": 4627.0,
+          "change": -90.4,
+          "change_pct": -1.92,
+          "type": "index"
+        },
+        {
+          "code": "IC",
+          "name": "中证500期货",
+          "underlying": "中证500",
+          "price": 8274.8,
+          "change": -171.0,
+          "change_pct": -2.02,
+          "type": "index"
+        },
+        {
+          "code": "IH",
+          "name": "上证50期货",
+          "underlying": "上证50",
+          "price": 3020.0,
+          "change": -63.6,
+          "change_pct": -2.06,
+          "type": "index"
+        },
+        {
+          "code": "IM",
+          "name": "中证1000期货",
+          "underlying": "中证1000",
+          "price": 8189.0,
+          "change": -145.6,
+          "change_pct": -1.75,
+          "type": "index"
+        }
+      ],
+      "international": [
+        {
+          "code": "CL=F",
+          "name": "WTI原油",
+          "price": 62.7,
+          "change": -0.14,
+          "change_pct": -0.22,
+          "unit": "美元/桶",
+          "type": "international"
+        },
+        {
+          "code": "BZ=F",
+          "name": "布伦特原油",
+          "price": 67.52,
+          "change": 0.0,
+          "change_pct": 0.0,
+          "unit": "美元/桶",
+          "type": "international"
+        },
+        {
+          "code": "NG=F",
+          "name": "天然气",
+          "price": 3.18,
+          "change": -0.04,
+          "change_pct": -1.24,
+          "unit": "美元/MMBtu",
+          "type": "international"
+        },
+        {
+          "code": "HG=F",
+          "name": "COMEX铜",
+          "price": 5.75,
+          "change": -0.02,
+          "change_pct": -0.3,
+          "unit": "美元/磅",
+          "type": "international"
+        }
+      ],
+      "timestamp": "2026-02-13 15:30:49.542530"
+    },
+    "github": {
+      "trending": [
+        {
+          "name": "awesome-openclaw-usecases",
+          "full_name": "hesamsheikh/awesome-openclaw-usecases",
+          "description": "A community collection of OpenClaw use cases for making life easier.",
+          "url": "https://github.com/hesamsheikh/awesome-openclaw-usecases",
+          "stars": 1933,
+          "forks": 129,
+          "language": "Unknown",
+          "topics": [
+            "awesome-list",
+            "clawdbot",
+            "moltbot",
+            "openclaw",
+            "openclaw-plugin",
+            "openclaw-setup",
+            "openclaw-skills",
+            "usecase"
+          ],
+          "created_at": "2026-02-08T22:08:17+00:00",
+          "updated_at": "2026-02-13T15:29:14+00:00",
+          "owner": "hesamsheikh",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/41022652?v=4"
+        },
+        {
+          "name": "companion",
+          "full_name": "The-Vibe-Company/companion",
+          "description": "Web & Mobile UI for Claude Code & Codex . Launch sessions, stream responses, approve tools.  All from your browser / mobile",
+          "url": "https://github.com/The-Vibe-Company/companion",
+          "stars": 1798,
+          "forks": 221,
+          "language": "TypeScript",
+          "topics": [],
+          "created_at": "2026-02-07T06:45:00+00:00",
+          "updated_at": "2026-02-13T15:19:38+00:00",
+          "owner": "The-Vibe-Company",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/252322352?v=4"
+        },
+        {
+          "name": "peon-ping",
+          "full_name": "PeonPing/peon-ping",
+          "description": "Warcraft III Peon voice notifications (+ more!) for Claude Code, Codex, and other IDEs. Stop babysitting your terminal.",
+          "url": "https://github.com/PeonPing/peon-ping",
+          "stars": 1738,
+          "forks": 119,
+          "language": "Shell",
+          "topics": [
+            "ai",
+            "ai-engineering",
+            "antigravity",
+            "claude-code",
+            "codex",
+            "cursor",
+            "opencode",
+            "terminal"
+          ],
+          "created_at": "2026-02-09T23:12:48+00:00",
+          "updated_at": "2026-02-13T15:28:40+00:00",
+          "owner": "PeonPing",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/261260381?v=4"
+        },
+        {
+          "name": "secure-openclaw",
+          "full_name": "ComposioHQ/secure-openclaw",
+          "description": "A personal 24x7 AI assistant like OpenClaw that runs on your messaging platforms. Send a message on WhatsApp, Telegram, Signal, or iMessage and get responses from Claude with full tool access, persistent memory, scheduled reminders, and integrations with 500+ apps.",
+          "url": "https://github.com/ComposioHQ/secure-openclaw",
+          "stars": 1482,
+          "forks": 220,
+          "language": "JavaScript",
+          "topics": [
+            "clawdbot",
+            "clawdbot-security",
+            "moltbot",
+            "moltbot-skills",
+            "openclaw",
+            "openclaw-plugin",
+            "openclaw-security",
+            "openclaw-skills",
+            "openclawd"
+          ],
+          "created_at": "2026-02-08T07:55:07+00:00",
+          "updated_at": "2026-02-13T15:13:39+00:00",
+          "owner": "ComposioHQ",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/128464815?v=4"
+        },
+        {
+          "name": "k-id-age-verifier",
+          "full_name": "xyzeva/k-id-age-verifier",
+          "description": "automatically verify your age on discord, twitch, kick, quora and more (k-id)",
+          "url": "https://github.com/xyzeva/k-id-age-verifier",
+          "stars": 1276,
+          "forks": 44,
+          "language": "TypeScript",
+          "topics": [],
+          "created_at": "2026-02-11T18:29:34+00:00",
+          "updated_at": "2026-02-13T15:26:44+00:00",
+          "owner": "xyzeva",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/133499694?v=4"
+        },
+        {
+          "name": "clawra",
+          "full_name": "SumeLabs/clawra",
+          "description": "Clawra - Openclaw as your girlfriend",
+          "url": "https://github.com/SumeLabs/clawra",
+          "stars": 1270,
+          "forks": 230,
+          "language": "TypeScript",
+          "topics": [],
+          "created_at": "2026-02-08T06:19:44+00:00",
+          "updated_at": "2026-02-13T14:56:51+00:00",
+          "owner": "SumeLabs",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/237042746?v=4"
+        },
+        {
+          "name": "textream",
+          "full_name": "f/textream",
+          "description": "Textream is a free macOS teleprompter app for streamers, interviewers, and presenters. It highlights your script in real-time as you speak, displayed in a beautiful Dynamic Island overlay.",
+          "url": "https://github.com/f/textream",
+          "stars": 1173,
+          "forks": 72,
+          "language": "Swift",
+          "topics": [
+            "macos",
+            "macos-app",
+            "streaming"
+          ],
+          "created_at": "2026-02-08T09:20:05+00:00",
+          "updated_at": "2026-02-13T15:23:28+00:00",
+          "owner": "f",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/196477?v=4"
+        },
+        {
+          "name": "tinyclaw",
+          "full_name": "jlia0/tinyclaw",
+          "description": "TinyClaw is a team of personal agents that collaborate with each other",
+          "url": "https://github.com/jlia0/tinyclaw",
+          "stars": 1086,
+          "forks": 136,
+          "language": "TypeScript",
+          "topics": [],
+          "created_at": "2026-02-09T00:34:11+00:00",
+          "updated_at": "2026-02-13T15:24:01+00:00",
+          "owner": "jlia0",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/24471281?v=4"
+        },
+        {
+          "name": "discord-id-bypass-tool",
+          "full_name": "promptpirate-x/discord-id-bypass-tool",
+          "description": "A verified tool that works on any potato computer that will let you bypass discord verification",
+          "url": "https://github.com/promptpirate-x/discord-id-bypass-tool",
+          "stars": 988,
+          "forks": 55,
+          "language": "HTML",
+          "topics": [],
+          "created_at": "2026-02-10T15:49:55+00:00",
+          "updated_at": "2026-02-13T15:16:26+00:00",
+          "owner": "promptpirate-x",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/214351522?v=4"
+        },
+        {
+          "name": "Kaku",
+          "full_name": "tw93/Kaku",
+          "description": "🎃 A fast, out-of-the-box terminal built for AI coding.",
+          "url": "https://github.com/tw93/Kaku",
+          "stars": 970,
+          "forks": 38,
+          "language": "Rust",
+          "topics": [],
+          "created_at": "2026-02-07T13:00:49+00:00",
+          "updated_at": "2026-02-13T15:28:29+00:00",
+          "owner": "tw93",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/8736212?v=4"
+        }
+      ],
+      "ai_trending": [
+        {
+          "name": "marketingskills",
+          "full_name": "coreyhaines31/marketingskills",
+          "description": "Marketing skills for Claude Code and AI agents. CRO, copywriting, SEO, analytics, and growth engineering.",
+          "url": "https://github.com/coreyhaines31/marketingskills",
+          "stars": 7525,
+          "forks": 885,
+          "language": "Unknown",
+          "topics": [
+            "claude",
+            "codex",
+            "marketing"
+          ],
+          "created_at": "2026-01-15T19:45:23+00:00",
+          "updated_at": "2026-02-13T15:25:32+00:00",
+          "owner": "coreyhaines31",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/34802794?v=4"
+        },
+        {
+          "name": "awesome-ai-research-writing",
+          "full_name": "Leey21/awesome-ai-research-writing",
+          "description": "Elevate your AI research writing, no more tedious polishing ✨ ",
+          "url": "https://github.com/Leey21/awesome-ai-research-writing",
+          "stars": 5697,
+          "forks": 437,
+          "language": "Unknown",
+          "topics": [],
+          "created_at": "2026-01-30T07:59:30+00:00",
+          "updated_at": "2026-02-13T15:26:01+00:00",
+          "owner": "Leey21",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/112166430?v=4"
+        },
+        {
+          "name": "humanizer",
+          "full_name": "blader/humanizer",
+          "description": "Claude Code skill that removes signs of AI-generated writing from text",
+          "url": "https://github.com/blader/humanizer",
+          "stars": 4751,
+          "forks": 381,
+          "language": "Unknown",
+          "topics": [],
+          "created_at": "2026-01-18T05:30:15+00:00",
+          "updated_at": "2026-02-13T15:26:49+00:00",
+          "owner": "blader",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/1672?v=4"
+        },
+        {
+          "name": "PaperBanana",
+          "full_name": "dwzhu-pku/PaperBanana",
+          "description": "PaperBanana: Automating Academic Illustration For AI Scientists",
+          "url": "https://github.com/dwzhu-pku/PaperBanana",
+          "stars": 3458,
+          "forks": 164,
+          "language": "JavaScript",
+          "topics": [],
+          "created_at": "2026-01-30T06:55:48+00:00",
+          "updated_at": "2026-02-13T15:00:24+00:00",
+          "owner": "dwzhu-pku",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/52273452?v=4"
+        },
+        {
+          "name": "Humanizer-zh",
+          "full_name": "op7418/Humanizer-zh",
+          "description": "Humanizer 的汉化版本，Claude Code Skills，旨在消除文本中 AI 生成的痕迹。",
+          "url": "https://github.com/op7418/Humanizer-zh",
+          "stars": 2932,
+          "forks": 276,
+          "language": "Unknown",
+          "topics": [],
+          "created_at": "2026-01-19T04:23:44+00:00",
+          "updated_at": "2026-02-13T15:06:11+00:00",
+          "owner": "op7418",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/13505770?v=4"
+        },
+        {
+          "name": "ClawRouter",
+          "full_name": "BlockRunAI/ClawRouter",
+          "description": "Smart LLM router — save 78% on inference costs. 30+ models, one wallet, x402 micropayments.",
+          "url": "https://github.com/BlockRunAI/ClawRouter",
+          "stars": 2337,
+          "forks": 238,
+          "language": "TypeScript",
+          "topics": [
+            "ai",
+            "ai-agents",
+            "anthropic",
+            "cost-optimization",
+            "crypto",
+            "deepseek",
+            "gemini",
+            "llm",
+            "llm-router",
+            "micropayments",
+            "openai",
+            "openclaw",
+            "smart-routing",
+            "usdc",
+            "x402"
+          ],
+          "created_at": "2026-02-03T17:32:00+00:00",
+          "updated_at": "2026-02-13T15:06:48+00:00",
+          "owner": "BlockRunAI",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/250889376?v=4"
+        },
+        {
+          "name": "Trellis",
+          "full_name": "mindfold-ai/Trellis",
+          "description": "All-in-one AI framework & toolkit for Claude Code & Cursor",
+          "url": "https://github.com/mindfold-ai/Trellis",
+          "stars": 2187,
+          "forks": 108,
+          "language": "Python",
+          "topics": [
+            "ai-agent",
+            "ai-coding",
+            "claude-code",
+            "cli",
+            "cursor",
+            "developer-tools",
+            "typescript",
+            "workflow"
+          ],
+          "created_at": "2026-01-26T11:49:10+00:00",
+          "updated_at": "2026-02-13T13:30:41+00:00",
+          "owner": "mindfold-ai",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/219217320?v=4"
+        },
+        {
+          "name": "agentation",
+          "full_name": "benjitaylor/agentation",
+          "description": "The visual feedback tool for agents.",
+          "url": "https://github.com/benjitaylor/agentation",
+          "stars": 2141,
+          "forks": 152,
+          "language": "TypeScript",
+          "topics": [
+            "ai",
+            "design",
+            "tools",
+            "ui"
+          ],
+          "created_at": "2026-01-18T02:01:24+00:00",
+          "updated_at": "2026-02-13T14:46:20+00:00",
+          "owner": "benjitaylor",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/30378142?v=4"
+        },
+        {
+          "name": "CodePilot",
+          "full_name": "op7418/CodePilot",
+          "description": "A native desktop GUI for Claude Code — chat, code, and manage projects visually. Built with Electron + Next.js.",
+          "url": "https://github.com/op7418/CodePilot",
+          "stars": 1815,
+          "forks": 192,
+          "language": "TypeScript",
+          "topics": [
+            "ai",
+            "anthropic",
+            "claude",
+            "claude-code",
+            "desktop-app",
+            "electron",
+            "gui",
+            "nextjs"
+          ],
+          "created_at": "2026-02-06T12:38:55+00:00",
+          "updated_at": "2026-02-13T15:08:42+00:00",
+          "owner": "op7418",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/13505770?v=4"
+        },
+        {
+          "name": "peon-ping",
+          "full_name": "PeonPing/peon-ping",
+          "description": "Warcraft III Peon voice notifications (+ more!) for Claude Code, Codex, and other IDEs. Stop babysitting your terminal.",
+          "url": "https://github.com/PeonPing/peon-ping",
+          "stars": 1738,
+          "forks": 119,
+          "language": "Shell",
+          "topics": [
+            "ai",
+            "ai-engineering",
+            "antigravity",
+            "claude-code",
+            "codex",
+            "cursor",
+            "opencode",
+            "terminal"
+          ],
+          "created_at": "2026-02-09T23:12:48+00:00",
+          "updated_at": "2026-02-13T15:28:40+00:00",
+          "owner": "PeonPing",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/261260381?v=4"
+        }
+      ],
+      "timestamp": "2026-02-13 15:30:06.705769"
+    },
+    "stock_overview": {
+      "summary": {
+        "tracked": 19,
+        "up": 7,
+        "down": 12,
+        "flat": 0,
+        "up_ratio_pct": 36.84,
+        "sources": {
+          "stock_cn": 6,
+          "yahoo_finance": 13
+        }
+      },
+      "by_region": [
+        {
+          "region": "美股",
+          "count": 5,
+          "up": 5,
+          "down": 0,
+          "avg_change_pct": 0.82
+        },
+        {
+          "region": "欧股",
+          "count": 3,
+          "up": 2,
+          "down": 1,
+          "avg_change_pct": -0.02
+        },
+        {
+          "region": "韩股",
+          "count": 1,
+          "up": 0,
+          "down": 1,
+          "avg_change_pct": -0.28
+        },
+        {
+          "region": "日股",
+          "count": 1,
+          "up": 0,
+          "down": 1,
+          "avg_change_pct": -1.21
+        },
+        {
+          "region": "A股",
+          "count": 8,
+          "up": 0,
+          "down": 8,
+          "avg_change_pct": -1.26
+        },
+        {
+          "region": "港股",
+          "count": 1,
+          "up": 0,
+          "down": 1,
+          "avg_change_pct": -1.72
+        }
+      ],
+      "key_indices": [
+        {
+          "source": "yahoo_finance",
+          "region": "港股",
+          "name": "恒生指数",
+          "symbol": "^HSI",
+          "price": 26567.12,
+          "change_pct": -1.72,
+          "currency": "HKD"
+        },
+        {
+          "source": "stock_cn",
+          "region": "A股",
+          "name": "创业板指",
+          "symbol": "399006",
+          "price": 3275.96,
+          "change_pct": -1.57,
+          "currency": "CNY"
+        },
+        {
+          "source": "stock_cn",
+          "region": "A股",
+          "name": "深证成指",
+          "symbol": "399001",
+          "price": 14100.19,
+          "change_pct": -1.28,
+          "currency": "CNY"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "A股",
+          "name": "深证成指",
+          "symbol": "399001.SZ",
+          "price": 14100.19,
+          "change_pct": -1.28,
+          "currency": "CNY"
+        },
+        {
+          "source": "stock_cn",
+          "region": "A股",
+          "name": "上证指数",
+          "symbol": "000001",
+          "price": 4082.07,
+          "change_pct": -1.26,
+          "currency": "CNY"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "A股",
+          "name": "上证综指",
+          "symbol": "000001.SS",
+          "price": 4082.07,
+          "change_pct": -1.26,
+          "currency": "CNY"
+        },
+        {
+          "source": "stock_cn",
+          "region": "A股",
+          "name": "沪深300",
+          "symbol": "000300",
+          "price": 4660.41,
+          "change_pct": -1.25,
+          "currency": "CNY"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "日股",
+          "name": "日经225",
+          "symbol": "^N225",
+          "price": 56941.97,
+          "change_pct": -1.21,
+          "currency": "JPY"
+        }
+      ],
+      "top_gainers": [
+        {
+          "source": "yahoo_finance",
+          "region": "美股",
+          "name": "VIX波动率指数",
+          "symbol": "^VIX",
+          "price": 21.38,
+          "change_pct": 2.69,
+          "currency": "USD"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "美股",
+          "name": "罗素2000",
+          "symbol": "^RUT",
+          "price": 2639.62,
+          "change_pct": 0.91,
+          "currency": "USD"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "美股",
+          "name": "标普500",
+          "symbol": "^GSPC",
+          "price": 6848.9,
+          "change_pct": 0.24,
+          "currency": "USD"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "欧股",
+          "name": "英国富时100",
+          "symbol": "^FTSE",
+          "price": 10423.39,
+          "change_pct": 0.2,
+          "currency": "GBP"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "美股",
+          "name": "纳斯达克综合",
+          "symbol": "^IXIC",
+          "price": 22634.21,
+          "change_pct": 0.16,
+          "currency": "USD"
+        }
+      ],
+      "top_losers": [
+        {
+          "source": "yahoo_finance",
+          "region": "港股",
+          "name": "恒生指数",
+          "symbol": "^HSI",
+          "price": 26567.12,
+          "change_pct": -1.72,
+          "currency": "HKD"
+        },
+        {
+          "source": "stock_cn",
+          "region": "A股",
+          "name": "创业板指",
+          "symbol": "399006",
+          "price": 3275.96,
+          "change_pct": -1.57,
+          "currency": "CNY"
+        },
+        {
+          "source": "stock_cn",
+          "region": "A股",
+          "name": "中证500",
+          "symbol": "000905",
+          "price": 8299.58,
+          "change_pct": -1.47,
+          "currency": "CNY"
+        },
+        {
+          "source": "stock_cn",
+          "region": "A股",
+          "name": "深证成指",
+          "symbol": "399001",
+          "price": 14100.19,
+          "change_pct": -1.28,
+          "currency": "CNY"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "A股",
+          "name": "深证成指",
+          "symbol": "399001.SZ",
+          "price": 14100.19,
+          "change_pct": -1.28,
+          "currency": "CNY"
+        }
+      ],
+      "timestamp": "2026-02-13T23:30:49.542798+08:00"
+    }
+  },
+  "errors": []
+}

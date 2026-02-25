@@ -21,20 +21,69 @@ class TwitterConfig:
     max_tweets_per_user: int = 10
     max_age_hours: int = 12  # 最大推文年龄（小时），配合12小时抓取周期，0=不限制
     timeout: int = 15
+    follow_concurrency: int = 1
+    follow_request_delay: float = 1.0
+    
+    # 关注账号滚动缓存（用于实时低频抓取 + 12h 汇总）
+    follow_cache_enabled: bool = True
+    follow_cache_file: str = "output/twitter/follow_cache.json"
+    follow_cache_retention_hours: int = 48
+    follow_cache_max_items: int = 30000
+    follow_cache_cleanup_interval_hours: int = 6
     
     # 热门推文配置
+    fetch_follow_accounts: bool = True
     fetch_trending: bool = True
+    trending_mode: str = "keyword"  # keyword | global | hybrid
     trending_keywords: List[str] = field(default_factory=list)
+    trending_global_queries: List[str] = field(default_factory=list)
+    trending_realtime_sampling: bool = False
+    trending_queries_per_run: int = 0
+    trending_min_retweets: int = 0
+    trending_pages_per_query: int = 3
+    search_delay: float = 0.5
+    search_page_delay: float = 0.5
+    trending_cache_hours: int = 24
+    trending_cache_max_items: int = 2000
+    trending_cache_file: str = "output/twitter/trending_cache.json"
+    trending_state_file: str = "output/twitter/trending_state.json"
     trending_max_results: int = 30
+    kol_min_results: int = 8
+    keyword_trending_min_results: int = 8
+    priority_accounts: List[str] = field(default_factory=list)
+    relevance_filter_enabled: bool = True
+    relevance_min_score: int = 2
+    relevance_positive_keywords: List[str] = field(default_factory=list)
+    relevance_negative_keywords: List[str] = field(default_factory=list)
     trending_engagement_threshold: int = 10
     
     def get_all_accounts(self) -> List[str]:
-        """获取所有账号列表"""
-        all_accounts = []
-        for category, accounts in self.accounts.items():
-            all_accounts.extend(accounts)
+        """获取所有账号列表（去重，并做别名归一化）。"""
+        alias_map = {
+            "samaltman": "sama",
+            "haigao1": "haigao",
+            "marcoslopezdeprado": "lopezdeprado",
+            "shaynecoplan": "shayne_coplan",
+            "nassimtaleb": "nntaleb",
+            "tradethenews": "trade_the_news",
+            "alexwang_": "alexandr_wang",
+            "emad_mostaque": "emostaque",
+        }
+        all_accounts: List[str] = []
+        seen = set()
+        for _, accounts in self.accounts.items():
+            for raw in (accounts or []):
+                account = str(raw or "").strip().lstrip("@")
+                if not account:
+                    continue
+                account = alias_map.get(account.lower(), account)
+                key = account.lower()
+                if key in seen:
+                    continue
+                seen.add(key)
+                all_accounts.append(account)
         return all_accounts
-    
+
     def get_accounts_by_category(self, category: str) -> List[str]:
         """按分类获取账号"""
         return self.accounts.get(category, [])
@@ -58,6 +107,7 @@ class WechatConfig:
     hot_max_results: int = 30
     hot_hours_ago: int = 48
     hot_categories: List[str] = field(default_factory=list)
+    login_reminder_days: int = 4  # 登录提醒阈值（天）
     
     def get_all_accounts(self) -> List[str]:
         """获取所有公众号列表"""
@@ -137,9 +187,36 @@ class SocialSourceConfig:
                 max_tweets_per_user=twitter_config.get("max_tweets_per_user", 10),
                 max_age_hours=twitter_config.get("max_age_hours", 12),
                 timeout=twitter_config.get("timeout", 15),
+                follow_concurrency=twitter_config.get("follow_concurrency", 1),
+                follow_request_delay=twitter_config.get("follow_request_delay", 1.0),
+                follow_cache_enabled=twitter_config.get("follow_cache_enabled", True),
+                follow_cache_file=twitter_config.get("follow_cache_file", "output/twitter/follow_cache.json"),
+                follow_cache_retention_hours=twitter_config.get("follow_cache_retention_hours", 48),
+                follow_cache_max_items=twitter_config.get("follow_cache_max_items", 30000),
+                follow_cache_cleanup_interval_hours=twitter_config.get("follow_cache_cleanup_interval_hours", 6),
+                fetch_follow_accounts=twitter_config.get("fetch_follow_accounts", True),
                 fetch_trending=twitter_config.get("fetch_trending", True),
+                trending_mode=twitter_config.get("trending_mode", "keyword"),
                 trending_keywords=twitter_config.get("trending_keywords", []),
+                trending_global_queries=twitter_config.get("trending_global_queries", []),
+                trending_realtime_sampling=twitter_config.get("trending_realtime_sampling", False),
+                trending_queries_per_run=twitter_config.get("trending_queries_per_run", 0),
+                trending_min_retweets=twitter_config.get("trending_min_retweets", 0),
+                trending_pages_per_query=twitter_config.get("trending_pages_per_query", 3),
+                search_delay=twitter_config.get("search_delay", 0.5),
+                search_page_delay=twitter_config.get("search_page_delay", 0.5),
+                trending_cache_hours=twitter_config.get("trending_cache_hours", 24),
+                trending_cache_max_items=twitter_config.get("trending_cache_max_items", 2000),
+                trending_cache_file=twitter_config.get("trending_cache_file", "output/twitter/trending_cache.json"),
+                trending_state_file=twitter_config.get("trending_state_file", "output/twitter/trending_state.json"),
                 trending_max_results=twitter_config.get("trending_max_results", 30),
+                kol_min_results=twitter_config.get("kol_min_results", 8),
+                keyword_trending_min_results=twitter_config.get("keyword_trending_min_results", 8),
+                priority_accounts=twitter_config.get("priority_accounts", []),
+                relevance_filter_enabled=twitter_config.get("relevance_filter_enabled", True),
+                relevance_min_score=twitter_config.get("relevance_min_score", 2),
+                relevance_positive_keywords=twitter_config.get("relevance_positive_keywords", []),
+                relevance_negative_keywords=twitter_config.get("relevance_negative_keywords", []),
                 trending_engagement_threshold=twitter_config.get("trending_engagement_threshold", 10)
             )
         return self._twitter
@@ -152,6 +229,16 @@ class SocialSourceConfig:
             config_enabled = wechat_config.get("enabled", True)
             config_service_url = wechat_config.get("service_url", "http://localhost:3001")
             config_auth_key = wechat_config.get("auth_key", "")
+            try:
+                reminder_days = int(
+                    os.environ.get(
+                        "WECHAT_LOGIN_REMINDER_DAYS",
+                        wechat_config.get("login_reminder_days", 4),
+                    )
+                )
+            except (TypeError, ValueError):
+                reminder_days = 4
+            reminder_days = max(1, reminder_days)
             self._wechat = WechatConfig(
                 enabled=self._env_bool("ENABLE_WECHAT", config_enabled),
                 service_url=os.environ.get("WECHAT_SERVICE_URL", config_service_url),
@@ -165,7 +252,8 @@ class SocialSourceConfig:
                 fetch_hot_articles=wechat_config.get("fetch_hot_articles", True),
                 hot_max_results=wechat_config.get("hot_max_results", 30),
                 hot_hours_ago=wechat_config.get("hot_hours_ago", 48),
-                hot_categories=wechat_config.get("hot_categories", [])
+                hot_categories=wechat_config.get("hot_categories", []),
+                login_reminder_days=reminder_days,
             )
         return self._wechat
     
@@ -218,6 +306,10 @@ def print_config_summary():
     print(f"   Nitter 实例: {config.twitter.nitter_instance}")
     print(f"   超时时间: {config.twitter.timeout}s")
     print(f"   每用户推文数: {config.twitter.max_tweets_per_user}")
+    print(f"   抓取节奏: 并发 {config.twitter.follow_concurrency} | 间隔 {config.twitter.follow_request_delay}s")
+    print(f"   关注缓存: {'✅' if config.twitter.follow_cache_enabled else '❌'} | 保留 {config.twitter.follow_cache_retention_hours}h")
+    print(f"   热门TopN: {config.twitter.trending_max_results} | KOL保底: {config.twitter.kol_min_results} | 关键词保底: {config.twitter.keyword_trending_min_results}")
+    print(f"   KOL优先名单: {len(config.twitter.priority_accounts)} 个")
     
     print("\n   📌 关注账号:")
     for category, accounts in config.twitter.accounts.items():

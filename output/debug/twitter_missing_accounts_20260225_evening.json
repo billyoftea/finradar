@@ -1,0 +1,494 @@
+{
+  "summary": {
+    "configured_total": 100,
+    "seen_in_12h": 40,
+    "missing_in_12h": 60,
+    "likely_no_update_within_12h": 33,
+    "likely_stale_or_inactive_48h": 21,
+    "account_issue": 9
+  },
+  "missing_in_12h": [
+    {
+      "user": "AswathDamodaran",
+      "norm": "aswathdamodaran",
+      "category": "deep_value_finance",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "mjmauboussin",
+      "norm": "mjmauboussin",
+      "category": "deep_value_finance",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "modestproposal1",
+      "norm": "modestproposal1",
+      "category": "deep_value_finance",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "John_Hempton",
+      "norm": "john_hempton",
+      "category": "deep_value_finance",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "MebFaber",
+      "norm": "mebfaber",
+      "category": "deep_value_finance",
+      "in_48h_cache": true,
+      "profile_status": null,
+      "profile_flags": []
+    },
+    {
+      "user": "LibertyRPF",
+      "norm": "libertyrpf",
+      "category": "deep_value_finance",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "matthewherper",
+      "norm": "matthewherper",
+      "category": "deep_value_finance",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "MassDevice",
+      "norm": "massdevice",
+      "category": "deep_value_finance",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "megtirrell",
+      "norm": "megtirrell",
+      "category": "deep_value_finance",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "fintechjunkie",
+      "norm": "fintechjunkie",
+      "category": "deep_value_finance",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "lexsokolin",
+      "norm": "lexsokolin",
+      "category": "deep_value_finance",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "HAIGAO",
+      "norm": "haigao",
+      "category": "deep_value_finance",
+      "in_48h_cache": false,
+      "profile_status": 404,
+      "profile_flags": []
+    },
+    {
+      "user": "Rory_Johnston",
+      "norm": "rory_johnston",
+      "category": "deep_value_finance",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "hkuppy",
+      "norm": "hkuppy",
+      "category": "deep_value_finance",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "BrynneKKelly",
+      "norm": "brynnekkelly",
+      "category": "deep_value_finance",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "NatGasWeather",
+      "norm": "natgasweather",
+      "category": "deep_value_finance",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "GavinSBaker",
+      "norm": "gavinsbaker",
+      "category": "deep_value_finance",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "WallStCynic",
+      "norm": "wallstcynic",
+      "category": "deep_value_finance",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "TruthGundlach",
+      "norm": "truthgundlach",
+      "category": "deep_value_finance",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "HowardMarksBook",
+      "norm": "howardmarksbook",
+      "category": "deep_value_finance",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "LukeGromen",
+      "norm": "lukegromen",
+      "category": "deep_value_finance",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "lopezdeprado",
+      "norm": "lopezdeprado",
+      "category": "quant_trading",
+      "in_48h_cache": false,
+      "profile_status": 404,
+      "profile_flags": []
+    },
+    {
+      "user": "epchan",
+      "norm": "epchan",
+      "category": "quant_trading",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "QuantConnect",
+      "norm": "quantconnect",
+      "category": "quant_trading",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "SpotGamma",
+      "norm": "spotgamma",
+      "category": "quant_trading",
+      "in_48h_cache": true,
+      "profile_status": null,
+      "profile_flags": []
+    },
+    {
+      "user": "JamCroissant",
+      "norm": "jamcroissant",
+      "category": "quant_trading",
+      "in_48h_cache": false,
+      "profile_status": null,
+      "profile_flags": []
+    },
+    {
+      "user": "Qullamaggie",
+      "norm": "qullamaggie",
+      "category": "quant_trading",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "pyquantnews",
+      "norm": "pyquantnews",
+      "category": "quant_trading",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "shayne_coplan",
+      "norm": "shayne_coplan",
+      "category": "web3_prediction",
+      "in_48h_cache": false,
+      "profile_status": 404,
+      "profile_flags": []
+    },
+    {
+      "user": "realDonaldTrump",
+      "norm": "realdonaldtrump",
+      "category": "macro_policy",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "NickTimiraos",
+      "norm": "nicktimiraos",
+      "category": "macro_policy",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "Schuldensuehner",
+      "norm": "schuldensuehner",
+      "category": "macro_policy",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "MacroAlf",
+      "norm": "macroalf",
+      "category": "macro_policy",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "michaeljburry",
+      "norm": "michaeljburry",
+      "category": "macro_policy",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "BofA_News",
+      "norm": "bofa_news",
+      "category": "macro_policy",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "nntaleb",
+      "norm": "nntaleb",
+      "category": "macro_policy",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": [
+        "suspended"
+      ]
+    },
+    {
+      "user": "AnthropicAI",
+      "norm": "anthropicai",
+      "category": "frontier_ai",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "DarioAmodei",
+      "norm": "darioamodei",
+      "category": "frontier_ai",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "AmandaAskell",
+      "norm": "amandaaskell",
+      "category": "frontier_ai",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "sama",
+      "norm": "sama",
+      "category": "frontier_ai",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "fchollet",
+      "norm": "fchollet",
+      "category": "frontier_ai",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "DrJimFan",
+      "norm": "drjimfan",
+      "category": "frontier_ai",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "demishassabis",
+      "norm": "demishassabis",
+      "category": "frontier_ai",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "rowancheung",
+      "norm": "rowancheung",
+      "category": "frontier_ai",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "simonw",
+      "norm": "simonw",
+      "category": "frontier_ai",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "alexandr_wang",
+      "norm": "alexandr_wang",
+      "category": "frontier_ai",
+      "in_48h_cache": false,
+      "profile_status": 404,
+      "profile_flags": []
+    },
+    {
+      "user": "rasbt",
+      "norm": "rasbt",
+      "category": "frontier_ai",
+      "in_48h_cache": true,
+      "profile_status": null,
+      "profile_flags": []
+    },
+    {
+      "user": "bindureddy",
+      "norm": "bindureddy",
+      "category": "frontier_ai",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "CBinsights",
+      "norm": "cbinsights",
+      "category": "institutions_thinkers",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "ARKInvest",
+      "norm": "arkinvest",
+      "category": "institutions_thinkers",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "paulg",
+      "norm": "paulg",
+      "category": "institutions_thinkers",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "naval",
+      "norm": "naval",
+      "category": "institutions_thinkers",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "cdixon",
+      "norm": "cdixon",
+      "category": "institutions_thinkers",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "benthompson",
+      "norm": "benthompson",
+      "category": "institutions_thinkers",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "edzitron",
+      "norm": "edzitron",
+      "category": "institutions_thinkers",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "packyM",
+      "norm": "packym",
+      "category": "institutions_thinkers",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "shomikghosh21",
+      "norm": "shomikghosh21",
+      "category": "institutions_thinkers",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "GergelyOrosz",
+      "norm": "gergelyorosz",
+      "category": "institutions_thinkers",
+      "in_48h_cache": true,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "lexfridman",
+      "norm": "lexfridman",
+      "category": "institutions_thinkers",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    },
+    {
+      "user": "balajis",
+      "norm": "balajis",
+      "category": "institutions_thinkers",
+      "in_48h_cache": false,
+      "profile_status": 200,
+      "profile_flags": []
+    }
+  ]
+}

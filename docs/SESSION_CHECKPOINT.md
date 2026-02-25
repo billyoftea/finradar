@@ -243,3 +243,564 @@ f527c73 feat(report): add web search context and structured brief format
 0426360 v2.0
 ```
 
+## 2026-02-11 17:06:50 CST
+- 分支: `main`
+- 最新提交: `b2ae0c4`
+- 当前意图: 生成20260211 evening 报告（no-ai）
+- 下一步: 查看 output/report 结果并持续优化分板块结构与时效过滤规则
+- 工作区状态:
+```
+ M finradar/market/fetcher/wechat_article.py
+ M finradar/market/tracker.py
+ M index.html
+ M output/html/latest/current.html
+ M output/index.html
+ M scripts/generate_report.py
+ M scripts/local.sh
+ M scripts/push_to_notion.py
+?? output/html/2026-02-10/
+?? output/html/2026-02-11/
+?? output/market/market_data_20260210.json
+?? output/market/market_data_20260210_evening.json
+?? output/market/market_data_20260210_morning.json
+?? output/market/market_data_20260211.json
+?? output/market/market_data_20260211_morning.json
+?? output/market/market_report_20260210.txt
+?? output/market/market_report_20260210_evening.txt
+?? output/market/market_report_20260210_morning.txt
+?? output/market/market_report_20260211.txt
+?? output/market/market_report_20260211_morning.txt
+?? output/news/2026-02-10.db
+?? output/news/2026-02-11.db
+?? output/report/daily_20260210_evening.md
+?? output/report/daily_20260210_morning.md
+?? output/report/daily_20260211_evening.md
+?? output/report/daily_20260211_morning.md
+?? output/rss/2026-02-10.db
+?? output/rss/2026-02-11.db
+```
+- 最近提交:
+```
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+9169d82 docs(process): checkpoint latest workflow updates
+eddef6d feat(process): add safe auto-commit helper with checkpoint logging
+3fe6e08 docs(process): update session checkpoint after report refactor
+43f7d1a docs(process): add session handoff workflow and checkpoint tooling
+```
+
+## 2026-02-11 17:07:08 CST
+- 分支: `main`
+- 最新提交: `44e502c`
+- 当前意图: 增强中文晚报结构化体验
+- 下一步: 持续观察 evening 社交数据和分板块长度
+- 工作区状态:
+```
+ M docs/SESSION_CHECKPOINT.md
+ M finradar/market/fetcher/wechat_article.py
+ M finradar/market/tracker.py
+ M index.html
+ M output/html/latest/current.html
+ M output/index.html
+ M scripts/push_to_notion.py
+?? output/html/2026-02-10/
+?? output/html/2026-02-11/
+?? output/market/market_data_20260210.json
+?? output/market/market_data_20260210_evening.json
+?? output/market/market_data_20260210_morning.json
+?? output/market/market_data_20260211.json
+?? output/market/market_data_20260211_morning.json
+?? output/market/market_report_20260210.txt
+?? output/market/market_report_20260210_evening.txt
+?? output/market/market_report_20260210_morning.txt
+?? output/market/market_report_20260211.txt
+?? output/market/market_report_20260211_morning.txt
+?? output/news/2026-02-10.db
+?? output/news/2026-02-11.db
+?? output/report/daily_20260210_evening.md
+?? output/report/daily_20260210_morning.md
+?? output/report/daily_20260211_evening.md
+?? output/report/daily_20260211_morning.md
+?? output/rss/2026-02-10.db
+?? output/rss/2026-02-11.db
+```
+- 最近提交:
+```
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+9169d82 docs(process): checkpoint latest workflow updates
+eddef6d feat(process): add safe auto-commit helper with checkpoint logging
+3fe6e08 docs(process): update session checkpoint after report refactor
+```
+
+## 2026-02-11 17:16:53 CST
+- 分支: `main`
+- 最新提交: `b79ff84`
+- 当前意图: 接入 Yahoo Finance 股票总览并进入日报
+- 下一步: 优化晚报社交数据时段匹配与市场板块压缩
+- 工作区状态:
+```
+ M docs/SESSION_CHECKPOINT.md
+ M finradar/market/fetcher/wechat_article.py
+ M index.html
+ M output/html/latest/current.html
+ M output/index.html
+ M scripts/push_to_notion.py
+?? output/html/2026-02-10/
+?? output/html/2026-02-11/
+?? output/market/market_data_20260210.json
+?? output/market/market_data_20260210_evening.json
+?? output/market/market_data_20260210_morning.json
+?? output/market/market_data_20260211.json
+?? output/market/market_data_20260211_morning.json
+?? output/market/market_report_20260210.txt
+?? output/market/market_report_20260210_evening.txt
+?? output/market/market_report_20260210_morning.txt
+?? output/market/market_report_20260211.txt
+?? output/market/market_report_20260211_morning.txt
+?? output/news/2026-02-10.db
+?? output/news/2026-02-11.db
+?? output/report/daily_20260210_evening.md
+?? output/report/daily_20260210_morning.md
+?? output/report/daily_20260211_evening.md
+?? output/report/daily_20260211_morning.md
+?? output/rss/2026-02-10.db
+?? output/rss/2026-02-11.db
+```
+- 最近提交:
+```
+b79ff84 feat(market): integrate Yahoo Finance global stock overview
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+9169d82 docs(process): checkpoint latest workflow updates
+eddef6d feat(process): add safe auto-commit helper with checkpoint logging
+```
+
+## 2026-02-13 13:39:11 CST
+- 分支: `main`
+- 最新提交: `b79ff84`
+- 当前意图: 生成20260213 morning 报告（with-ai）
+- 下一步: 查看 output/report 结果并持续优化分板块结构与时效过滤规则
+- 工作区状态:
+```
+ M config/config.yaml
+ M docs/SESSION_CHECKPOINT.md
+ M "docs/\346\257\217\346\227\245\345\270\202\345\234\272\350\277\275\350\270\252\344\275\277\347\224\250\346\214\207\345\215\227.md"
+ M finradar/__main__.py
+ M finradar/market/fetcher/wechat_article.py
+ M finradar/market/tracker.py
+ M index.html
+ M output/html/latest/current.html
+ M output/index.html
+ M scripts/generate_report.py
+ M scripts/push_to_notion.py
+?? output/html/2026-02-10/
+?? output/html/2026-02-11/
+?? output/html/2026-02-12/
+?? output/html/2026-02-13/
+?? output/market/market_data_20260210.json
+?? output/market/market_data_20260210_evening.json
+?? output/market/market_data_20260210_morning.json
+?? output/market/market_data_20260211.json
+?? output/market/market_data_20260211_evening.json
+?? output/market/market_data_20260211_morning.json
+?? output/market/market_data_20260212.json
+?? output/market/market_data_20260212_evening.json
+?? output/market/market_data_20260212_morning.json
+?? output/market/market_data_20260213.json
+?? output/market/market_data_20260213_morning.json
+?? output/market/market_report_20260210.txt
+?? output/market/market_report_20260210_evening.txt
+?? output/market/market_report_20260210_morning.txt
+?? output/market/market_report_20260211.txt
+?? output/market/market_report_20260211_evening.txt
+?? output/market/market_report_20260211_morning.txt
+?? output/market/market_report_20260212.txt
+?? output/market/market_report_20260212_evening.txt
+?? output/market/market_report_20260212_morning.txt
+?? output/market/market_report_20260213.txt
+?? output/market/market_report_20260213_morning.txt
+?? output/news/2026-02-10.db
+?? output/news/2026-02-11.db
+?? output/news/2026-02-12.db
+?? output/news/2026-02-13.db
+?? output/report/daily_20260210_evening.md
+?? output/report/daily_20260210_morning.md
+?? output/report/daily_20260211_evening.md
+?? output/report/daily_20260211_morning.md
+?? output/report/daily_20260212_evening.md
+?? output/report/daily_20260212_morning.md
+?? output/report/daily_20260213_morning.md
+?? output/rss/2026-02-10.db
+?? output/rss/2026-02-11.db
+?? output/rss/2026-02-12.db
+?? output/rss/2026-02-13.db
+```
+- 最近提交:
+```
+b79ff84 feat(market): integrate Yahoo Finance global stock overview
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+9169d82 docs(process): checkpoint latest workflow updates
+eddef6d feat(process): add safe auto-commit helper with checkpoint logging
+```
+
+## 2026-02-14 11:29:37 CST
+- 分支: `main`
+- 最新提交: `b79ff84`
+- 当前意图: 生成20260213 evening 报告（with-ai）
+- 下一步: 查看 output/report 结果并持续优化分板块结构与时效过滤规则
+- 工作区状态:
+```
+ M README.local.md
+ M config/config.yaml
+ M docs/SESSION_CHECKPOINT.md
+ M "docs/\346\257\217\346\227\245\345\270\202\345\234\272\350\277\275\350\270\252\344\275\277\347\224\250\346\214\207\345\215\227.md"
+ M finradar/__main__.py
+ M finradar/market/fetcher/github.py
+ M finradar/market/fetcher/social_config.py
+ M finradar/market/fetcher/wechat_article.py
+ M finradar/market/tracker.py
+ M index.html
+ M output/html/latest/current.html
+ M output/index.html
+ M scripts/generate_report.py
+ M scripts/local.sh
+ M scripts/push_to_notion.py
+?? output/html/2026-02-10/
+?? output/html/2026-02-11/
+?? output/html/2026-02-12/
+?? output/html/2026-02-13/
+?? output/html/2026-02-14/
+?? output/market/market_data_20260210.json
+?? output/market/market_data_20260210_evening.json
+?? output/market/market_data_20260210_morning.json
+?? output/market/market_data_20260211.json
+?? output/market/market_data_20260211_evening.json
+?? output/market/market_data_20260211_morning.json
+?? output/market/market_data_20260212.json
+?? output/market/market_data_20260212_evening.json
+?? output/market/market_data_20260212_morning.json
+?? output/market/market_data_20260213.json
+?? output/market/market_data_20260213_evening.json
+?? output/market/market_data_20260213_morning.json
+?? output/market/market_data_20260214.json
+?? output/market/market_data_20260214_morning.json
+?? output/market/market_report_20260210.txt
+?? output/market/market_report_20260210_evening.txt
+?? output/market/market_report_20260210_morning.txt
+?? output/market/market_report_20260211.txt
+?? output/market/market_report_20260211_evening.txt
+?? output/market/market_report_20260211_morning.txt
+?? output/market/market_report_20260212.txt
+?? output/market/market_report_20260212_evening.txt
+?? output/market/market_report_20260212_morning.txt
+?? output/market/market_report_20260213.txt
+?? output/market/market_report_20260213_evening.txt
+?? output/market/market_report_20260213_morning.txt
+?? output/market/market_report_20260214.txt
+?? output/market/market_report_20260214_morning.txt
+?? output/news/2026-02-10.db
+?? output/news/2026-02-11.db
+?? output/news/2026-02-12.db
+?? output/news/2026-02-13.db
+?? output/news/2026-02-14.db
+?? output/report/daily_20260210_evening.md
+?? output/report/daily_20260210_morning.md
+?? output/report/daily_20260211_evening.md
+?? output/report/daily_20260211_morning.md
+?? output/report/daily_20260212_evening.md
+?? output/report/daily_20260212_morning.md
+?? output/report/daily_20260213_evening.md
+?? output/report/daily_20260213_morning.md
+?? output/report/daily_20260214_morning.md
+?? output/rss/2026-02-10.db
+?? output/rss/2026-02-11.db
+?? output/rss/2026-02-12.db
+?? output/rss/2026-02-13.db
+?? output/rss/2026-02-14.db
+```
+- 最近提交:
+```
+b79ff84 feat(market): integrate Yahoo Finance global stock overview
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+9169d82 docs(process): checkpoint latest workflow updates
+eddef6d feat(process): add safe auto-commit helper with checkpoint logging
+```
+
+## 2026-02-14 11:34:19 CST
+- 分支: `main`
+- 最新提交: `b79ff84`
+- 当前意图: 生成20260213 evening 报告（with-ai）
+- 下一步: 查看 output/report 结果并持续优化分板块结构与时效过滤规则
+- 工作区状态:
+```
+ M README.local.md
+ M config/config.yaml
+ M docs/SESSION_CHECKPOINT.md
+ M "docs/\346\257\217\346\227\245\345\270\202\345\234\272\350\277\275\350\270\252\344\275\277\347\224\250\346\214\207\345\215\227.md"
+ M finradar/__main__.py
+ M finradar/market/fetcher/github.py
+ M finradar/market/fetcher/social_config.py
+ M finradar/market/fetcher/wechat_article.py
+ M finradar/market/tracker.py
+ M index.html
+ M output/html/latest/current.html
+ M output/index.html
+ M scripts/generate_report.py
+ M scripts/local.sh
+ M scripts/push_to_notion.py
+?? output/html/2026-02-10/
+?? output/html/2026-02-11/
+?? output/html/2026-02-12/
+?? output/html/2026-02-13/
+?? output/html/2026-02-14/
+?? output/market/market_data_20260210.json
+?? output/market/market_data_20260210_evening.json
+?? output/market/market_data_20260210_morning.json
+?? output/market/market_data_20260211.json
+?? output/market/market_data_20260211_evening.json
+?? output/market/market_data_20260211_morning.json
+?? output/market/market_data_20260212.json
+?? output/market/market_data_20260212_evening.json
+?? output/market/market_data_20260212_morning.json
+?? output/market/market_data_20260213.json
+?? output/market/market_data_20260213_evening.json
+?? output/market/market_data_20260213_morning.json
+?? output/market/market_data_20260214.json
+?? output/market/market_data_20260214_morning.json
+?? output/market/market_report_20260210.txt
+?? output/market/market_report_20260210_evening.txt
+?? output/market/market_report_20260210_morning.txt
+?? output/market/market_report_20260211.txt
+?? output/market/market_report_20260211_evening.txt
+?? output/market/market_report_20260211_morning.txt
+?? output/market/market_report_20260212.txt
+?? output/market/market_report_20260212_evening.txt
+?? output/market/market_report_20260212_morning.txt
+?? output/market/market_report_20260213.txt
+?? output/market/market_report_20260213_evening.txt
+?? output/market/market_report_20260213_morning.txt
+?? output/market/market_report_20260214.txt
+?? output/market/market_report_20260214_morning.txt
+?? output/news/2026-02-10.db
+?? output/news/2026-02-11.db
+?? output/news/2026-02-12.db
+?? output/news/2026-02-13.db
+?? output/news/2026-02-14.db
+?? output/report/daily_20260210_evening.md
+?? output/report/daily_20260210_morning.md
+?? output/report/daily_20260211_evening.md
+?? output/report/daily_20260211_morning.md
+?? output/report/daily_20260212_evening.md
+?? output/report/daily_20260212_morning.md
+?? output/report/daily_20260213_evening.md
+?? output/report/daily_20260213_morning.md
+?? output/report/daily_20260214_morning.md
+?? output/rss/2026-02-10.db
+?? output/rss/2026-02-11.db
+?? output/rss/2026-02-12.db
+?? output/rss/2026-02-13.db
+?? output/rss/2026-02-14.db
+```
+- 最近提交:
+```
+b79ff84 feat(market): integrate Yahoo Finance global stock overview
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+9169d82 docs(process): checkpoint latest workflow updates
+eddef6d feat(process): add safe auto-commit helper with checkpoint logging
+```
+
+## 2026-02-14 11:38:45 CST
+- 分支: `main`
+- 最新提交: `b79ff84`
+- 当前意图: 生成20260213 evening 报告（with-ai）
+- 下一步: 查看 output/report 结果并持续优化分板块结构与时效过滤规则
+- 工作区状态:
+```
+ M README.local.md
+ M config/config.yaml
+ M docs/SESSION_CHECKPOINT.md
+ M "docs/\346\257\217\346\227\245\345\270\202\345\234\272\350\277\275\350\270\252\344\275\277\347\224\250\346\214\207\345\215\227.md"
+ M finradar/__main__.py
+ M finradar/market/fetcher/github.py
+ M finradar/market/fetcher/social_config.py
+ M finradar/market/fetcher/wechat_article.py
+ M finradar/market/tracker.py
+ M index.html
+ M output/html/latest/current.html
+ M output/index.html
+ M scripts/generate_report.py
+ M scripts/local.sh
+ M scripts/push_to_notion.py
+?? output/html/2026-02-10/
+?? output/html/2026-02-11/
+?? output/html/2026-02-12/
+?? output/html/2026-02-13/
+?? output/html/2026-02-14/
+?? output/market/market_data_20260210.json
+?? output/market/market_data_20260210_evening.json
+?? output/market/market_data_20260210_morning.json
+?? output/market/market_data_20260211.json
+?? output/market/market_data_20260211_evening.json
+?? output/market/market_data_20260211_morning.json
+?? output/market/market_data_20260212.json
+?? output/market/market_data_20260212_evening.json
+?? output/market/market_data_20260212_morning.json
+?? output/market/market_data_20260213.json
+?? output/market/market_data_20260213_evening.json
+?? output/market/market_data_20260213_morning.json
+?? output/market/market_data_20260214.json
+?? output/market/market_data_20260214_morning.json
+?? output/market/market_report_20260210.txt
+?? output/market/market_report_20260210_evening.txt
+?? output/market/market_report_20260210_morning.txt
+?? output/market/market_report_20260211.txt
+?? output/market/market_report_20260211_evening.txt
+?? output/market/market_report_20260211_morning.txt
+?? output/market/market_report_20260212.txt
+?? output/market/market_report_20260212_evening.txt
+?? output/market/market_report_20260212_morning.txt
+?? output/market/market_report_20260213.txt
+?? output/market/market_report_20260213_evening.txt
+?? output/market/market_report_20260213_morning.txt
+?? output/market/market_report_20260214.txt
+?? output/market/market_report_20260214_morning.txt
+?? output/news/2026-02-10.db
+?? output/news/2026-02-11.db
+?? output/news/2026-02-12.db
+?? output/news/2026-02-13.db
+?? output/news/2026-02-14.db
+?? output/report/daily_20260210_evening.md
+?? output/report/daily_20260210_morning.md
+?? output/report/daily_20260211_evening.md
+?? output/report/daily_20260211_morning.md
+?? output/report/daily_20260212_evening.md
+?? output/report/daily_20260212_morning.md
+?? output/report/daily_20260213_evening.md
+?? output/report/daily_20260213_morning.md
+?? output/report/daily_20260214_morning.md
+?? output/rss/2026-02-10.db
+?? output/rss/2026-02-11.db
+?? output/rss/2026-02-12.db
+?? output/rss/2026-02-13.db
+?? output/rss/2026-02-14.db
+```
+- 最近提交:
+```
+b79ff84 feat(market): integrate Yahoo Finance global stock overview
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+9169d82 docs(process): checkpoint latest workflow updates
+eddef6d feat(process): add safe auto-commit helper with checkpoint logging
+```
+
+## 2026-02-14 11:44:10 CST
+- 分支: `main`
+- 最新提交: `b79ff84`
+- 当前意图: 生成20260213 morning 报告（with-ai）
+- 下一步: 查看 output/report 结果并持续优化分板块结构与时效过滤规则
+- 工作区状态:
+```
+ M README.local.md
+ M config/config.yaml
+ M docs/SESSION_CHECKPOINT.md
+ M "docs/\346\257\217\346\227\245\345\270\202\345\234\272\350\277\275\350\270\252\344\275\277\347\224\250\346\214\207\345\215\227.md"
+ M finradar/__main__.py
+ M finradar/market/fetcher/github.py
+ M finradar/market/fetcher/social_config.py
+ M finradar/market/fetcher/wechat_article.py
+ M finradar/market/tracker.py
+ M index.html
+ M output/html/latest/current.html
+ M output/index.html
+ M scripts/generate_report.py
+ M scripts/local.sh
+ M scripts/push_to_notion.py
+?? output/html/2026-02-10/
+?? output/html/2026-02-11/
+?? output/html/2026-02-12/
+?? output/html/2026-02-13/
+?? output/html/2026-02-14/
+?? output/market/market_data_20260210.json
+?? output/market/market_data_20260210_evening.json
+?? output/market/market_data_20260210_morning.json
+?? output/market/market_data_20260211.json
+?? output/market/market_data_20260211_evening.json
+?? output/market/market_data_20260211_morning.json
+?? output/market/market_data_20260212.json
+?? output/market/market_data_20260212_evening.json
+?? output/market/market_data_20260212_morning.json
+?? output/market/market_data_20260213.json
+?? output/market/market_data_20260213_evening.json
+?? output/market/market_data_20260213_morning.json
+?? output/market/market_data_20260214.json
+?? output/market/market_data_20260214_morning.json
+?? output/market/market_report_20260210.txt
+?? output/market/market_report_20260210_evening.txt
+?? output/market/market_report_20260210_morning.txt
+?? output/market/market_report_20260211.txt
+?? output/market/market_report_20260211_evening.txt
+?? output/market/market_report_20260211_morning.txt
+?? output/market/market_report_20260212.txt
+?? output/market/market_report_20260212_evening.txt
+?? output/market/market_report_20260212_morning.txt
+?? output/market/market_report_20260213.txt
+?? output/market/market_report_20260213_evening.txt
+?? output/market/market_report_20260213_morning.txt
+?? output/market/market_report_20260214.txt
+?? output/market/market_report_20260214_morning.txt
+?? output/news/2026-02-10.db
+?? output/news/2026-02-11.db
+?? output/news/2026-02-12.db
+?? output/news/2026-02-13.db
+?? output/news/2026-02-14.db
+?? output/report/daily_20260210_evening.md
+?? output/report/daily_20260210_morning.md
+?? output/report/daily_20260211_evening.md
+?? output/report/daily_20260211_morning.md
+?? output/report/daily_20260212_evening.md
+?? output/report/daily_20260212_morning.md
+?? output/report/daily_20260213_evening.md
+?? output/report/daily_20260213_morning.md
+?? output/report/daily_20260214_morning.md
+?? output/rss/2026-02-10.db
+?? output/rss/2026-02-11.db
+?? output/rss/2026-02-12.db
+?? output/rss/2026-02-13.db
+?? output/rss/2026-02-14.db
+```
+- 最近提交:
+```
+b79ff84 feat(market): integrate Yahoo Finance global stock overview
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+9169d82 docs(process): checkpoint latest workflow updates
+eddef6d feat(process): add safe auto-commit helper with checkpoint logging
+```
+

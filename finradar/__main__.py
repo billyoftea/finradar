@@ -1685,7 +1685,7 @@ def main():
     用法:
       python -m finradar                    # 默认：热榜新闻 + 市场数据 全部执行
       python -m finradar --mode news        # 仅热榜新闻
-      python -m finradar --mode market      # 仅市场数据（A股/期货/贵金属/加密货币）
+      python -m finradar --mode market      # 仅市场数据（A股/Yahoo全球股票/期货/贵金属/加密货币）
       python -m finradar --mode social      # 仅社交媒体（Twitter + 微信）
       python -m finradar --mode all         # 全部执行
     """
@@ -1697,7 +1697,7 @@ def main():
 运行模式:
   all      全部执行（热榜新闻 + 市场数据 + 社交媒体）
   news     仅热榜新闻抓取与分析
-  market   仅市场数据（A股/期货/贵金属/加密货币）
+  market   仅市场数据（A股/Yahoo全球股票/期货/贵金属/加密货币）
   social   仅社交媒体（Twitter + 微信公众号）
         """
     )
