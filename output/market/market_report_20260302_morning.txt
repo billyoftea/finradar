@@ -1,0 +1,36 @@
+==================================================
+📊 每日市场追踪报告
+📅 2026年03月02日 08:10
+==================================================
+
+🎯 【投机方向（超短）】
+----------------------------------------
+  - 当前无清晰高波动主线，先观察不追单。
+  - 纪律：单笔风险不超过本金 1%-2%。
+
+🐦 【Twitter 热点】
+----------------------------------------
+  来源统计: 关注账号 922 条 | 热门讨论 0 条
+     @TheInformation: Google’s Project Maven fight with the Pentagon was a precursor to today’s AI-mil...
+     ❤️ 0
+     @FT: A dispatch from the Iranian capital, where the prevailing mood is one of fear an...
+     ❤️ 0
+     @TheEconomist: Donald Trump likes to start military campaigns at weekends. One theory is that h...
+     ❤️ 0
+     @NikkeiAsia: Indonesian plan to import 100,000 Indian trucks blasted by home automakers  http...
+     ❤️ 0
+     @CGTNOfficial: Graphics: China's afforestation, grassland restoration in 2025 http://localhost/...
+     ❤️ 0
+
+📱 【微信公众号】
+----------------------------------------
+  来源统计: 关注公众号 114 篇 | 热门文章 4 篇
+  🔥 [华泰证券金融工程] 华泰金工 | 上周港股科技类ETF净流入超百亿
+  🔥 [36氪] 智元机器人正式进入德国市场；AITO问界在阿联酋斩获200台首批订单｜36氪出海
+  🔥 [QuantML] 打破量化AI黑盒：引入“情绪衰减”机制，如何将短线预测准确率推升至65%？
+  🔥 [数据科学实战] 用 Python 实现卡尔曼滤波器，估算股票的真实价格
+  📄 [36氪] 8点1氪：阿联酋宣布承担所有滞留旅客费用；宗馥莉砍掉娃哈哈机器人业务；五粮液回应
+
+==================================================
+📌 报告生成完毕
+==================================================

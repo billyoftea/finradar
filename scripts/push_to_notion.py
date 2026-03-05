@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 # coding=utf-8
 """
-将 finradar Markdown 报告写入 Notion 父页面的子页面。
+将 finradar Markdown 报告写入 Notion：
+- 页面模式：写入父页面的子页面
+- 数据库模式：写入 Notion Database 的一条页面记录（推荐）
 
 用法示例:
   python scripts/push_to_notion.py --date 20260209 --type morning
   NOTION_API_TOKEN=... NOTION_PARENT_PAGE_ID=... python scripts/push_to_notion.py --type evening
+  NOTION_API_TOKEN=... NOTION_DATABASE_ID=... python scripts/push_to_notion.py --type evening
 """
 
 import argparse
@@ -57,13 +60,13 @@ def parse_bool(value: str | None, default: bool = False) -> bool:
     return default
 
 
-def extract_page_id(raw: str) -> str:
+def extract_notion_id(raw: str) -> str:
     if not raw:
-        raise ValueError("Notion 父页面不能为空")
+        raise ValueError("Notion 页面/数据库 ID 不能为空")
     cleaned = re.sub(r"[^0-9a-fA-F]", "", raw)
     m = re.search(r"[0-9a-fA-F]{32}", cleaned)
     if not m:
-        raise ValueError(f"无法从输入中解析 Notion page id: {raw}")
+        raise ValueError(f"无法从输入中解析 Notion id: {raw}")
     return m.group(0).lower()
 
 
@@ -465,17 +468,101 @@ def create_or_replace_subpage(token: str, parent_page_id: str, title: str, block
     return page_id, page_url, mode
 
 
+def get_database_title_property(token: str, database_id: str) -> str:
+    """获取数据库中的 title 属性名。"""
+    db = notion_request("GET", f"/databases/{database_id}", token)
+    props = db.get("properties", {}) if isinstance(db, dict) else {}
+    for prop_name, prop_meta in props.items():
+        if isinstance(prop_meta, dict) and prop_meta.get("type") == "title":
+            return prop_name
+    raise RuntimeError("Notion 数据库未找到 title 属性")
+
+
+def list_database_pages_by_title(token: str, database_id: str, title_property: str, title: str) -> list[dict]:
+    """按标题查询数据库中同名页面。"""
+    payload = {
+        "page_size": 100,
+        "filter": {
+            "property": title_property,
+            "title": {"equals": title},
+        },
+    }
+    pages: list[dict] = []
+    next_cursor = None
+    while True:
+        query = dict(payload)
+        if next_cursor:
+            query["start_cursor"] = next_cursor
+        data = notion_request("POST", f"/databases/{database_id}/query", token, payload=query)
+        pages.extend(data.get("results", []) if isinstance(data, dict) else [])
+        if not isinstance(data, dict) or not data.get("has_more"):
+            break
+        next_cursor = data.get("next_cursor")
+    return pages
+
+
+def create_database_page(
+    token: str,
+    database_id: str,
+    title_property: str,
+    title: str,
+    blocks: list[dict],
+) -> tuple[str, str]:
+    """在 Notion Database 中创建一条页面记录，并写入正文 blocks。"""
+    first_batch = blocks[:100]
+    payload = {
+        "parent": {"database_id": database_id},
+        "properties": {
+            title_property: {
+                "title": [
+                    {"type": "text", "text": {"content": title[:200]}}
+                ]
+            }
+        },
+    }
+    if first_batch:
+        payload["children"] = first_batch
+
+    page = notion_request("POST", "/pages", token, payload)
+    page_id = page["id"]
+    page_url = page.get("url", "")
+    append_blocks_to_page(token, page_id, blocks[100:])
+    return page_id, page_url
+
+
+def create_or_replace_database_page(
+    token: str,
+    database_id: str,
+    title: str,
+    blocks: list[dict],
+) -> tuple[str, str, str]:
+    """
+    数据库模式：若同标题记录存在，则归档旧记录后重建。
+    """
+    title_property = get_database_title_property(token, database_id)
+    mode = "created"
+    for row in list_database_pages_by_title(token, database_id, title_property, title):
+        page_id = str(row.get("id", "")).strip()
+        if not page_id:
+            continue
+        notion_request("PATCH", f"/pages/{page_id}", token, {"archived": True})
+        mode = "replaced"
+    new_page_id, new_page_url = create_database_page(token, database_id, title_property, title, blocks)
+    return new_page_id, new_page_url, mode
+
+
 def main() -> int:
     now_bj = now_beijing()
-    parser = argparse.ArgumentParser(description="将 finradar 报告写入 Notion 子页面")
+    parser = argparse.ArgumentParser(description="将 finradar 报告写入 Notion（子页面或数据库）")
     parser.add_argument("--date", default=now_bj.strftime("%Y%m%d"), help="日期 YYYYMMDD")
     parser.add_argument("--type", choices=["morning", "evening", "auto"], default="auto", help="报告类型")
     parser.add_argument("--file", default=None, help="Markdown 文件路径（默认按日期+类型推导）")
-    parser.add_argument("--title", default=None, help="Notion 子页面标题（可选）")
+    parser.add_argument("--title", default=None, help="Notion 页面标题（可选）")
     parser.add_argument("--merge-daily", action="store_true", help="同一天早晚报合并后推送同一页面")
     parser.add_argument("--no-merge-daily", action="store_true", help="禁用同日早晚报合并")
     parser.add_argument("--token", default=None, help="Notion API Token（可选，默认读环境变量）")
-    parser.add_argument("--parent", default=None, help="Notion 父页面 ID 或 URL（可选，默认读环境变量）")
+    parser.add_argument("--parent", default=None, help="Notion 父页面 ID 或 URL（页面模式）")
+    parser.add_argument("--database", default=None, help="Notion Database ID 或 URL（数据库模式，优先）")
     args = parser.parse_args()
 
     report_type = resolve_report_type(args.type)
@@ -494,20 +581,33 @@ def main() -> int:
         or os.environ.get("NOTION_PARENT_PAGE")
         or ""
     ).strip()
+    database_raw = (
+        args.database
+        or os.environ.get("NOTION_DATABASE_ID")
+        or os.environ.get("NOTION_DATABASE")
+        or ""
+    ).strip()
 
     if not token:
         raise SystemExit("❌ 未提供 NOTION_API_TOKEN")
-    if not parent_raw:
-        raise SystemExit("❌ 未提供 NOTION_PARENT_PAGE_ID/URL")
+    if not parent_raw and not database_raw:
+        raise SystemExit("❌ 未提供 NOTION_DATABASE_ID 或 NOTION_PARENT_PAGE_ID/URL")
 
-    parent_page_id = extract_page_id(parent_raw)
-    merge_daily = parse_bool(os.environ.get("NOTION_MERGE_DAILY"), True)
+    parent_page_id = extract_notion_id(parent_raw) if parent_raw else ""
+    database_id = extract_notion_id(database_raw) if database_raw else ""
+    # 默认早报/晚报分开推送到不同页面；只有显式开启时才合并
+    merge_daily = parse_bool(os.environ.get("NOTION_MERGE_DAILY"), False)
     if args.merge_daily:
         merge_daily = True
     if args.no_merge_daily:
         merge_daily = False
 
-    notion_request("GET", f"/pages/{parent_page_id}", token)
+    target_mode = "database" if database_id else "page"
+    if target_mode == "database":
+        notion_request("GET", f"/databases/{database_id}", token)
+    else:
+        notion_request("GET", f"/pages/{parent_page_id}", token)
+
     markdown_text, source_label = load_markdown_content(
         date_str=date_str,
         report_type=report_type,
@@ -516,9 +616,13 @@ def main() -> int:
     )
     blocks = markdown_to_notion_blocks(markdown_text)
     title = build_page_title(date_str, report_type, args.title, merge_daily=merge_daily)
-    page_id, page_url, mode = create_or_replace_subpage(token, parent_page_id, title, blocks)
+    if target_mode == "database":
+        page_id, page_url, mode = create_or_replace_database_page(token, database_id, title, blocks)
+    else:
+        page_id, page_url, mode = create_or_replace_subpage(token, parent_page_id, title, blocks)
 
     print("✅ Notion 写入成功")
+    print(f"   target: {target_mode}")
     print(f"   mode: {mode}")
     print(f"   标题: {title}")
     print(f"   page_id: {page_id}")

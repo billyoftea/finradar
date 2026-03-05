@@ -60,34 +60,38 @@
 或环境变量：
 - `WECHAT_AUTH_KEY`
 
-## 5. Notion 自动写入（早晚报子页面）
+## 5. Notion 写入（Database 推荐）
 
-先配置 Notion Token 和父页面（只需一次）：
+优先推荐配置到 Notion Database（只需一次）：
 ```bash
-./scripts/local.sh notion-config "<YOUR_NOTION_TOKEN>" "https://www.notion.so/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+./scripts/local.sh notion-db-config "<YOUR_NOTION_TOKEN>" "https://www.notion.so/<DATABASE_ID>"
 ```
 
-手动推送某天报告：
+若仍想用父页面子页面模式：
+```bash
+./scripts/local.sh notion-config "<YOUR_NOTION_TOKEN>" "https://www.notion.so/<PARENT_PAGE_ID>"
+```
+
+手动推送某天报告（数据库模式/页面模式都可）：
 ```bash
 ./scripts/local.sh notion-push morning 20260209
 ./scripts/local.sh notion-push evening 20260209
 ```
 
-同一天早晚报合并成一页（时间线阅读，默认开启）：
+同一天早晚报合并成一页（可选）：
 ```bash
-./scripts/local.sh notion-push evening 20260209
+NOTION_MERGE_DAILY=1 ./scripts/local.sh notion-push evening 20260209
 ```
-临时关闭合并：
+临时关闭合并（默认即关闭）：
 ```bash
 ./scripts/local.sh notion-push evening 20260209 --no-merge-daily
 ```
 
 说明：
 - 配置保存在项目根目录 `.notion.env`（已加入 `.gitignore`）
-- `cron-install` 后会在每天 08:00 / 20:00 自动执行 Notion 子页面写入
+- `cron-install` 当前只会自动抓取并生成早/晚报，**已停止自动 Notion 推送**
 - `cron-install` 会启用 Twitter 关注缓存的 48h 滚动清理（每 6 小时执行）
-- 默认会把同一天早晚报合并到同一 Notion 页面（标题：`finradar YYYY-MM-DD 日报`）
-- 可通过 `NOTION_MERGE_DAILY=0` 或命令参数 `--no-merge-daily` 关闭合并
+- 默认不合并早晚报（`NOTION_MERGE_DAILY=0`）
 
 ## 6. Docker 可选用法
 

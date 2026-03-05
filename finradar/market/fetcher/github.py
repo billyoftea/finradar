@@ -24,9 +24,11 @@ GitHub API 限制:
 
 import asyncio
 import math
+import re
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
 import logging
+from urllib.parse import urlencode
 
 try:
     from github import Github
@@ -40,6 +42,13 @@ try:
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
+
+try:
+    from bs4 import BeautifulSoup
+    BS4_AVAILABLE = True
+except ImportError:
+    BeautifulSoup = None
+    BS4_AVAILABLE = False
 
 from . import BaseFetcher
 from ..models.market_data import GitHubTrendingRepo
@@ -94,6 +103,19 @@ class GitHubFetcher(BaseFetcher):
         # GitHub Token（可选，用于提高 API 限额）
         self.token = self.config.get("token", "")
         self.authenticated = bool(str(self.token).strip())
+        self.source = str(self.config.get("source", "search_api") or "search_api").strip().lower()
+        if self.source not in {"search_api", "trending_page"}:
+            logger.warning("Invalid github.source=%s, fallback to search_api", self.source)
+            self.source = "search_api"
+        self.only_trending = bool(self.config.get("only_trending", False))
+        self.trending_since = str(self.config.get("trending_since", "daily") or "daily").strip().lower()
+        if self.trending_since not in {"daily", "weekly", "monthly"}:
+            logger.warning("Invalid github.trending_since=%s, fallback to daily", self.trending_since)
+            self.trending_since = "daily"
+        self.trending_language = str(self.config.get("trending_language", "") or "").strip()
+        self.trending_spoken_language = str(
+            self.config.get("trending_spoken_language", "") or ""
+        ).strip()
         
         # 初始化客户端
         if PYGITHUB_AVAILABLE and self.token:
@@ -138,9 +160,25 @@ class GitHubFetcher(BaseFetcher):
         """
         loop = asyncio.get_event_loop()
         
+        trending_fetcher = self._fetch_trending_page_repos if self.source == "trending_page" else self._fetch_trending_repos
+        trending_future = loop.run_in_executor(None, trending_fetcher)
+
+        # 仅抓 Trending：其余分类全部留空
+        if self.only_trending:
+            trending = await trending_future
+            return {
+                "trending": trending if not isinstance(trending, Exception) else [],
+                "ai_trending": [],
+                "fintech_trending": [],
+                "quant_trending": [],
+                "web3_trending": [],
+                "interesting_trending": [],
+                "timestamp": datetime.now()
+            }
+
         # 并行获取不同类型的趋势数据
         tasks = [
-            loop.run_in_executor(None, self._fetch_trending_repos),
+            trending_future,
             loop.run_in_executor(None, self._fetch_ai_repos),
             loop.run_in_executor(None, self._fetch_fintech_repos),
             loop.run_in_executor(None, self._fetch_quant_repos),
@@ -151,7 +189,7 @@ class GitHubFetcher(BaseFetcher):
             *tasks,
             return_exceptions=True
         )
-        
+
         return {
             "trending": trending if not isinstance(trending, Exception) else [],
             "ai_trending": ai_repos if not isinstance(ai_repos, Exception) else [],
@@ -161,6 +199,132 @@ class GitHubFetcher(BaseFetcher):
             "interesting_trending": interesting_repos if not isinstance(interesting_repos, Exception) else [],
             "timestamp": datetime.now()
         }
+
+    @staticmethod
+    def _extract_first_int(text: str) -> int:
+        """从文本中提取第一个整数（支持逗号分隔）。"""
+        if not text:
+            return 0
+        matched = re.search(r"\d[\d,]*", str(text))
+        if not matched:
+            return 0
+        try:
+            return int(matched.group(0).replace(",", ""))
+        except Exception:
+            return 0
+
+    def _build_trending_url(self) -> str:
+        """构建 GitHub Trending 页面 URL。"""
+        params: Dict[str, str] = {"since": self.trending_since}
+        if self.trending_language:
+            params["l"] = self.trending_language
+        spoken = self.trending_spoken_language.lower()
+        if spoken and spoken not in {"any", "none"}:
+            params["spoken_language_code"] = self.trending_spoken_language
+        query = urlencode(params)
+        return f"https://github.com/trending?{query}" if query else "https://github.com/trending"
+
+    def _fetch_trending_page_repos(self) -> List[Dict]:
+        """直接抓取 GitHub Trending 页面。"""
+        if not REQUESTS_AVAILABLE:
+            logger.warning("requests unavailable, fallback to search_api for github trending")
+            return self._fetch_trending_repos()
+        if not BS4_AVAILABLE:
+            logger.warning("beautifulsoup4 unavailable, fallback to search_api for github trending")
+            return self._fetch_trending_repos()
+
+        try:
+            url = self._build_trending_url()
+            headers = {
+                "User-Agent": (
+                    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                    "(KHTML, like Gecko) Chrome/131.0 Safari/537.36"
+                ),
+                "Accept": "text/html,application/xhtml+xml",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Cache-Control": "no-cache",
+            }
+            response = requests.get(url, headers=headers, timeout=30)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
+            rows = soup.select("article.Box-row")
+            captured_at = datetime.utcnow().isoformat() + "Z"
+            repos: List[Dict[str, Any]] = []
+            seen = set()
+
+            for row in rows:
+                repo_link = row.select_one("h2 a")
+                if repo_link is None:
+                    continue
+                href = str(repo_link.get("href", "") or "").strip().strip("/")
+                parts = [p for p in href.split("/") if p]
+                if len(parts) < 2:
+                    continue
+
+                owner = parts[0]
+                name = parts[1]
+                full_name = f"{owner}/{name}"
+                if full_name in seen:
+                    continue
+                seen.add(full_name)
+
+                desc_node = row.select_one("p")
+                description = desc_node.get_text(" ", strip=True) if desc_node else ""
+                lang_node = row.select_one('[itemprop="programmingLanguage"]')
+                language = lang_node.get_text(" ", strip=True) if lang_node else "Unknown"
+
+                stars = 0
+                forks = 0
+                for a_node in row.select("a[href]"):
+                    href_text = str(a_node.get("href", "") or "").strip()
+                    text = a_node.get_text(" ", strip=True)
+                    if href_text.endswith("/stargazers"):
+                        stars = self._extract_first_int(text)
+                    elif href_text.endswith("/forks"):
+                        forks = self._extract_first_int(text)
+
+                trend_period_stars = 0
+                for span in row.select("span"):
+                    text = span.get_text(" ", strip=True)
+                    normalized = text.lower()
+                    if "star" in normalized and (
+                        "today" in normalized or "this week" in normalized or "this month" in normalized
+                    ):
+                        trend_period_stars = self._extract_first_int(text)
+                        break
+
+                avatar = ""
+                avatar_node = row.select_one("img.avatar")
+                if avatar_node is not None:
+                    avatar = str(avatar_node.get("src", "") or "").strip()
+                    if avatar.startswith("//"):
+                        avatar = f"https:{avatar}"
+
+                repos.append(
+                    {
+                        "name": name,
+                        "full_name": full_name,
+                        "description": description,
+                        "url": f"https://github.com/{full_name}",
+                        "stars": stars,
+                        "forks": forks,
+                        "language": language,
+                        "topics": [],
+                        "created_at": "",
+                        "updated_at": captured_at,
+                        "owner": owner,
+                        "owner_avatar": avatar,
+                        "trend_period_stars": trend_period_stars,
+                    }
+                )
+
+                if len(repos) >= self.fetch_count:
+                    break
+
+            return repos
+        except Exception as e:
+            logger.error("Error parsing github trending page: %s", e)
+            return []
     
     def _fetch_trending_repos(self) -> List[Dict]:
         """

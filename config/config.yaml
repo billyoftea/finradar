@@ -121,180 +121,99 @@ twitter:
 
   # Nitter 实例配置
   nitter_instance: "http://localhost:8080"  # 自建 Nitter 实例地址
-                                            # 必须填写你的自建 Nitter 实例
+                                            # 留空则使用公共实例（不稳定）
 
-  # 关注账号列表（按你提供的100人名单分组）
-  # 分类: deep_value_finance(30), quant_trading(10), web3_prediction(5),
-  #       macro_policy(15), frontier_ai(20), institutions_thinkers(20)
+  # 关注账号列表（已验证可用）
+  # 分类: macro（宏观/央行）, finance（金融/投行）, crypto（加密货币）,
+  #        tech（AI/科技）, politics（地缘政治）, quant（量化/数据）
   accounts:
-    deep_value_finance:
-      - "AswathDamodaran"
-      - "mjmauboussin"
-      - "modestproposal1"
-      - "John_Hempton"
-      - "MebFaber"
-      - "LibertyRPF"
-      - "matthewherper"
-      - "MassDevice"
-      - "AdamFeuerstein"
-      - "megtirrell"
-      - "fintechjunkie"
-      - "lexsokolin"
-      - "TheStalwart"
-      - "Sino_Market"
-      - "HAIGAO"
-      - "Rory_Johnston"
-      - "hkuppy"
-      - "BrynneKKelly"
-      - "chigrl"
-      - "NatGasWeather"
-      - "TaviCosta"
-      - "GavinSBaker"
-      - "WallStCynic"
-      - "TurnerNovak"
-      - "LizAnnSonders"
-      - "Hedgeye"
-      - "TruthGundlach"
-      - "HowardMarksBook"
-      - "LynAldenContact"
-      - "LukeGromen"
-    quant_trading:
-      - "lopezdeprado"
-      - "epchan"
-      - "QuantConnect"
-      - "SpotGamma"
-      - "JamCroissant"
-      - "unusual_whales"
-      - "SqueezeMetrics"
-      - "Qullamaggie"
-      - "DeItaone"
-      - "pyquantnews"
-    web3_prediction:
-      - "Polymarket"
-      - "shayne_coplan"
-      - "justinsuntron"
-      - "VitalikButerin"
-      - "NateSilver538"
-    macro_policy:
-      - "realDonaldTrump"
-      - "WhiteHouse"
-      - "NickTimiraos"
-      - "RayDalio"
-      - "Schuldensuehner"
-      - "MacroAlf"
-      - "michaeljburry"
-      - "BofA_News"
-      - "CMEGroup"
-      - "KobeissiLetter"
-      - "charliebilello"
-      - "RaoulGMI"
-      - "nntaleb"
-      - "Trade_The_News"
-      - "zerohedge"
-    frontier_ai:
-      - "ClaudeAI"
-      - "AnthropicAI"
-      - "DarioAmodei"
-      - "AmandaAskell"
-      - "sama"
-      - "elonmusk"
-      - "karpathy"
-      - "hardmaru"
-      - "ylecun"
-      - "fchollet"
-      - "DrJimFan"
-      - "swyx"
-      - "AndrewYNg"
-      - "demishassabis"
-      - "rowancheung"
-      - "simonw"
-      - "alexandr_wang"
-      - "rasbt"
-      - "EMostaque"
-      - "bindureddy"
-    institutions_thinkers:
-      - "a16z"
-      - "Sequoia"
-      - "TheInformation"
-      - "CBinsights"
-      - "ARKInvest"
-      - "paulg"
-      - "naval"
-      - "pmarca"
-      - "cdixon"
-      - "benthompson"
-      - "edzitron"
-      - "packyM"
-      - "shomikghosh21"
-      - "GergelyOrosz"
-      - "lexfridman"
-      - "visualcap"
-      - "chamath"
-      - "balajis"
-      - "patrick_oshag"
-      - "jason"
+    macro:                               # 宏观经济 & 央行政策
+      - "MacroAlf"                       # Alfonso Peccatiello - 宏观分析
+      - "federalreserve"                 # 美联储官方
+      - "NickTimiraos"                   # WSJ 美联储记者（Fed Whisperer）
+      - "SoberLook"                      # 宏观数据可视化
+      - "LynAldenContact"               # Lyn Alden - 宏观+投资
+      - "PeterSchiff"                    # 黄金多头/宏观评论
+      - "jimbianco"                      # Jim Bianco - 利率/债券
+      - "dampedspring"                   # Andy Constan - 宏观策略
+      - "DavidBeckworth"                 # David Beckworth - 货币政策
+    finance:                             # 金融市场 & 投行研报
+      - "unusual_whales"                 # 期权异动监控
+      - "zerohedge"                      # 金融新闻/市场评论
+      - "DeItaone"                       # 突发财经新闻 (Walter Bloomberg)
+      - "markets"                        # Bloomberg Markets
+      - "Schuldensuehner"                # Holger Zschaepitz - 欧洲/全球市场
+      - "jessefelder"                    # Jesse Felder - 价值投资
+      - "GoldmanSachs"                   # 高盛官方
+      - "FT"                             # 金融时报
+      - "business"                       # Bloomberg Business
+      - "WSJ"                            # 华尔街日报
+      - "Sino_Market"                    # 中国市场英文资讯
+      - "CNBC"                           # CNBC 财经
+      - "ReutersBiz"                     # 路透社商业
+    crypto:                              # 加密货币 & Web3
+      - "VitalikButerin"                 # 以太坊创始人
+      - "cz_binance"                     # Binance 创始人
+      - "WatcherGuru"                    # 加密新闻快讯
+      - "whale_alert"                    # 大额转账监控
+      - "DefiLlama"                      # DeFi 数据聚合
+      - "glassnode"                      # Glassnode 链上数据
+      - "WuBlockchain"                   # 吴说 (加密行业中文圈)
+      - "ScopeProtocol"                  # Scope 链上分析
+      - "CoinDesk"                       # CoinDesk 官方
+      - "MessariCrypto"                  # Messari 研究
+    tech:                                # AI & 科技
+      - "elonmusk"                       # Elon Musk
+      - "sama"                           # Sam Altman (OpenAI)
+      - "OpenAI"                         # OpenAI 官方
+      - "ylecun"                         # Yann LeCun (Meta AI)
+      - "AndrewYNg"                      # Andrew Ng (AI教育)
+      - "demishassabis"                  # Demis Hassabis (DeepMind)
+      - "ClaudeAI"                       # Anthropic Claude
+      - "GoogleDeepMind"                 # Google DeepMind 官方
+      - "karpathy"                       # Andrej Karpathy
+      - "huggingface"                    # Hugging Face (开源AI)
+      - "_jasonwei"                      # Jason Wei (Google Brain)
+      - "swyx"                           # swyx - AI工程
+      - "bindureddy"                     # Bindu Reddy (Abacus.AI)
+      - "benthompson"                    # Ben Thompson (Stratechery 科技趋势)
+      - "TechCrunch"                     # TechCrunch 科技新闻
+      - "TheInformation"                 # The Information (科技深度)
+    politics:                            # 地缘政治 & 国际关系
+      - "BNONews"                        # 突发新闻
+      - "spectatorindex"                 # The Spectator Index (地缘数据)
+      - "SteveHerman"                    # Steve Herman (VOA 白宫记者)
+      - "ReutersWorld"                   # 路透社国际
+      - "CGTNOfficial"                   # CGTN (中国国际视角)
+      - "SCMPNews"                       # 南华早报
+      - "globaltimesnews"                # 环球时报英文版
+      - "NikkeiAsia"                     # 日经亚洲
+      - "BBCWorld"                       # BBC 世界新闻
+      - "AP"                             # 美联社
+      - "IanBremmer"                     # Ian Bremmer (GZERO 地缘风险)
+      - "TheEconomist"                   # 经济学人
+    quant:                               # 量化 & 数据科学
+      - "QuantMeta"                      # 量化交易策略
+      - "lopezdeprado"                   # Marcos Lopez de Prado (量化大师)
+      - "CFAinstitute"                   # CFA Institute
+      - "TwoSigma"                       # Two Sigma (量化基金)
+      - "QuantaMagazine"                 # Quanta Magazine (数学/科学)
+      - "QuantInsti"                     # QuantInsti (量化教育)
 
   # 热门推文获取配置
-  fetch_follow_accounts: true           # 是否抓取关注账号时间线
   fetch_trending: true                  # 是否抓取热门推文（基于关键词搜索）
-  # 热门抓取模式:
-  # - keyword: 仅使用 trending_keywords（旧行为）
-  # - global: 仅使用 trending_global_queries（全网话题扫描，推荐用于“全量热议”）
-  # - hybrid: 两者都用
-  trending_mode: "hybrid"
   # 热门搜索关键词列表（会搜索这些关键词并返回高互动量的推文）
   trending_keywords:
-    - "bitcoin OR btc OR ethereum OR ETH OR crypto OR cryptocurrency OR blockchain"  # 加密/区块链
-    - "AI OR \"artificial intelligence\" OR ChatGPT OR GPT OR OpenAI OR Claude OR Gemini"  # AI
-    - "stock market OR SPY OR QQQ OR nasdaq OR dow OR \"russell 2000\""  # 股票市场
-    - "fed OR inflation OR recession OR economy OR \"interest rates\" OR \"treasury yield\""  # 宏观
-    - "nvidia OR AMD OR Intel OR semiconductors OR chips OR \"AI servers\""  # 芯片/算力
-    - "fintech OR payments OR \"digital bank\" OR Stripe OR PayPal"  # 金融科技
-    - "web3 OR defi OR stablecoin OR ETF OR tokenization"  # Web3资产化
-  # 全网模式查询（仅英文）
-  trending_global_queries:
-    - "lang:en"
-  # 实时小量抓取（推荐：稳定优先）
-  # - true: 每次只抓一小部分 query，并汇总最近窗口内缓存
-  # - false: 每次全量抓所有 query
-  trending_realtime_sampling: false
-  trending_queries_per_run: 10          # 仅在 realtime_sampling=true 时生效
-  trending_min_retweets: 0              # 全网模式最小转推数过滤（0=不限制，覆盖更全）
-  trending_pages_per_query: 1           # 每个 query 抓取页数（越大越全，越慢）
-  search_delay: 2.5                     # query 之间延迟（秒），降低 429 风险
-  search_page_delay: 2.5                # 同一 query 翻页延迟（秒）
-  trending_cache_hours: 24              # 聚合窗口（小时），用于“最终汇总”
-  trending_cache_max_items: 3000        # 缓存最大条数
-  trending_cache_file: "output/twitter/trending_cache.json"
-  trending_state_file: "output/twitter/trending_state.json"
-  trending_max_results: 30              # 每次抓取保留的推文总数（TopN）
-  kol_min_results: 8                    # KOL补充：最终至少保留的关注账号推文数
-  keyword_trending_min_results: 10      # 关键词搜索补充：最终至少保留的“关键词搜索”热门推文数（不含lang:*全网）
-  priority_accounts:                    # KOL优先名单（优先入选）
-    - "elonmusk"
-    - "sama"
-    - "samaltman"
-    - "AswathDamodaran"
-    - "TheStalwart"
-    - "LynAldenContact"
-    - "NickTimiraos"
-    - "RayDalio"
-    - "MacroAlf"
-    - "KobeissiLetter"
-    - "realDonaldTrump"
-    - "WhiteHouse"
-    - "ClaudeAI"
-    - "AnthropicAI"
-    - "DarioAmodei"
-    - "karpathy"
-    - "demishassabis"
-    - "AndrewYNg"
-    - "VitalikButerin"
-    - "Polymarket"
-  trending_engagement_threshold: 0      # 最小互动数阈值（0=关闭互动过滤，仅按时间窗口）
+    - "bitcoin OR btc OR cryptocurrency"  # 加密货币
+    - "AI OR \"artificial intelligence\" OR ChatGPT OR GPT"  # AI
+    - "stock market OR SPY OR QQQ"       # 金融市场
+    - "economy OR inflation OR Fed"      # 宏观经济
+    - "nvidia OR AMD OR Intel"           # 芯片AI
+  trending_max_results: 30             # 热门推文最大返回数量
+  trending_engagement_threshold: 10     # 最小互动数阈值（点赞+转推），低于此值不收录
 
   # 获取设置
-  max_tweets_per_user: 0                # 每个账号获取的推文数量（0=不限制）
+  max_tweets_per_user: 10               # 每个账号获取的推文数量
   max_age_hours: 12                     # 最大推文年龄（小时），配合12小时抓取周期，0=不限制
   timeout: 15                           # 请求超时时间（秒）
 
@@ -410,30 +329,7 @@ wechat:
 
 
 # ===============================================================
-# 6. GitHub 项目趋势
-#
-# 用于市场模块中的 GitHub 趋势抓取（python -m finradar --mode market）
-# 目标：扩大候选池并做多样性采样，减少“同一批项目反复出现”。
-# ===============================================================
-github:
-  enabled: true                         # 是否启用 GitHub 趋势抓取
-  token: "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"                             # GitHub PAT（建议配置；无 token 将自动降载）
-  fetch_count: 24                       # 每个主题最终保留数量（trending/ai/fintech/quant/web3/interesting）
-  search_candidates_multiplier: 4       # 候选池放大倍数（越大覆盖越广）
-  max_candidates_per_query: 80          # 单条查询最大候选数上限
-  max_language_boost_queries: 4         # 语言补充查询条数（无 token 时自动降到 1）
-  max_per_owner: 1                      # 同一 owner 在单主题最大入选数
-  max_per_language: 6                   # 同一语言在单主题最大入选数
-  languages:                            # 用于语言补充查询，提升覆盖面
-    - "python"
-    - "typescript"
-    - "rust"
-    - "go"
-    - "javascript"
-
-
-# ===============================================================
-# 7. 报告模式
+# 6. 报告模式
 #
 # 🔸 daily（当日汇总模式）
 #    • 推送时机：按时推送(默认每小时推送一次)

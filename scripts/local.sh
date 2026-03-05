@@ -184,6 +184,18 @@ cmd_report() {
             break
         fi
     done
+
+    # 默认先刷新社交抓取，避免报告读取旧的 social 快照
+    # 可通过 REPORT_AUTO_REFRESH_SOCIAL=0 关闭
+    local auto_refresh_social="${REPORT_AUTO_REFRESH_SOCIAL:-1}"
+    local today_bj
+    today_bj="$(TZ=Asia/Shanghai date '+%Y%m%d')"
+    local target_date="${date_arg:-$today_bj}"
+    if [ "$auto_refresh_social" = "1" ] && [ "$target_date" = "$today_bj" ]; then
+        echo "♻️ 报告前刷新社交数据: mode=social"
+        (cd "$ROOT_DIR" && "$PYTHON_BIN" -m finradar --mode social)
+    fi
+
     if [ -n "$date_arg" ]; then
         echo "📝 生成报告: type=$report_type, date=$date_arg ${extra_args[*]}"
         (cd "$ROOT_DIR" && "$PYTHON_BIN" scripts/generate_report.py --type "$report_type" --date "$date_arg" "${extra_args[@]}")
@@ -224,9 +236,31 @@ cmd_notion_config() {
     cat > "$NOTION_ENV_FILE" <<EOF
 NOTION_API_TOKEN='$escaped_token'
 NOTION_PARENT_PAGE='$escaped_parent'
+NOTION_DATABASE_ID=''
+NOTION_MERGE_DAILY='0'
 EOF
     chmod 600 "$NOTION_ENV_FILE"
     echo "✅ Notion 配置已写入: $NOTION_ENV_FILE"
+}
+
+cmd_notion_db_config() {
+    local token="${1:-}"
+    local database="${2:-}"
+    if [ -z "$token" ] || [ -z "$database" ]; then
+        echo "❌ 用法: ./scripts/local.sh notion-db-config <notion_token> <database_url_or_id>"
+        exit 1
+    fi
+    local escaped_token escaped_db
+    escaped_token="${token//\'/\'\"\'\"\'}"
+    escaped_db="${database//\'/\'\"\'\"\'}"
+    cat > "$NOTION_ENV_FILE" <<EOF
+NOTION_API_TOKEN='$escaped_token'
+NOTION_PARENT_PAGE=''
+NOTION_DATABASE_ID='$escaped_db'
+NOTION_MERGE_DAILY='0'
+EOF
+    chmod 600 "$NOTION_ENV_FILE"
+    echo "✅ Notion Database 配置已写入: $NOTION_ENV_FILE"
 }
 
 cmd_notion_push() {
@@ -250,8 +284,8 @@ build_cron_block() {
 $CRON_BEGIN
 */30 * * * * cd $ROOT_DIR && $PYTHON_BIN -m finradar --mode market >> $LOG_DIR/cron-market.log 2>&1 && $PYTHON_BIN -m finradar --mode news >> $LOG_DIR/cron-news.log 2>&1
 0 */6 * * * cd $ROOT_DIR && $ROOT_DIR/scripts/local.sh cleanup-social-ttl >> $LOG_DIR/cron-social-cleanup.log 2>&1
-0 * * * * cd $ROOT_DIR && [ "\$(TZ=Asia/Shanghai date +\%H)" = "08" ] && $PYTHON_BIN -m finradar --mode social >> $LOG_DIR/cron-social.log 2>&1 && $PYTHON_BIN scripts/generate_report.py --type morning >> $LOG_DIR/cron-report.log 2>&1 && $ROOT_DIR/scripts/local.sh notion-push morning >> $LOG_DIR/cron-notion.log 2>&1
-0 * * * * cd $ROOT_DIR && [ "\$(TZ=Asia/Shanghai date +\%H)" = "20" ] && $PYTHON_BIN -m finradar --mode social >> $LOG_DIR/cron-social.log 2>&1 && $PYTHON_BIN scripts/generate_report.py --type evening >> $LOG_DIR/cron-report.log 2>&1 && $ROOT_DIR/scripts/local.sh notion-push evening >> $LOG_DIR/cron-notion.log 2>&1
+0 * * * * cd $ROOT_DIR && [ "\$(TZ=Asia/Shanghai date +\%H)" = "08" ] && $PYTHON_BIN -m finradar --mode social >> $LOG_DIR/cron-social.log 2>&1 && $PYTHON_BIN scripts/generate_report.py --type morning >> $LOG_DIR/cron-report.log 2>&1 && $ROOT_DIR/scripts/local.sh notion-push morning \$(TZ=Asia/Shanghai date +\%Y\%m\%d) >> $LOG_DIR/cron-notion.log 2>&1
+0 * * * * cd $ROOT_DIR && [ "\$(TZ=Asia/Shanghai date +\%H)" = "20" ] && $PYTHON_BIN -m finradar --mode social >> $LOG_DIR/cron-social.log 2>&1 && $PYTHON_BIN scripts/generate_report.py --type evening >> $LOG_DIR/cron-report.log 2>&1 && $ROOT_DIR/scripts/local.sh notion-push evening \$(TZ=Asia/Shanghai date +\%Y\%m\%d) >> $LOG_DIR/cron-notion.log 2>&1
 $CRON_END
 EOF
 }
@@ -274,8 +308,8 @@ cmd_cron_install() {
     echo "✅ 本地定时任务已安装:"
     echo "   - 每30分钟: 市场 + 热榜"
     echo "   - 每6小时: 清理关注推文缓存（仅保留48小时）"
-    echo "   - 每天08:00: 社交抓取 + 早报 + Notion 子页面推送"
-    echo "   - 每天20:00: 社交抓取 + 晚报 + Notion 子页面推送"
+    echo "   - 每天08:00: 社交抓取 + 早报 + 自动推送 Notion"
+    echo "   - 每天20:00: 社交抓取 + 晚报 + 自动推送 Notion"
 }
 
 cmd_cron_remove() {
@@ -357,6 +391,9 @@ autocommit)
 notion-config)
     cmd_notion_config "${2:-}" "${3:-}"
     ;;
+notion-db-config)
+    cmd_notion_db_config "${2:-}" "${3:-}"
+    ;;
 notion-push)
     cmd_notion_push "${2:-auto}" "${3:-}"
     ;;
@@ -373,8 +410,9 @@ finradar 本地运行工具
   report [type] [date] [extra-args]  生成报告 (morning/evening/auto)
   checkpoint [intent] [next-step]     记录会话 checkpoint
   autocommit "<msg>" [extra-args]     自动提交并记录 checkpoint
-  notion-config <token> <parent>  写入 Notion 配置到 .notion.env
-  notion-push [type] [date] [extra-args] 推送报告到 Notion 子页面
+  notion-config <token> <parent>  写入 Notion 父页面模式配置到 .notion.env
+  notion-db-config <token> <db>   写入 Notion Database 模式配置到 .notion.env
+  notion-push [type] [date] [extra-args] 推送报告到 Notion（数据库优先）
   cron-install             安装本地定时任务（08:00 / 20:00 + 每30分钟）
   cron-remove              删除本地定时任务
   status                   查看最近产出和定时任务状态
@@ -387,6 +425,7 @@ finradar 本地运行工具
   ./scripts/local.sh checkpoint "补充联网检索" "继续优化关键词"
   ./scripts/local.sh autocommit "feat(report): xxx" --include "scripts/generate_report.py,README.local.md"
   ./scripts/local.sh notion-config ntn_xxx https://www.notion.so/xxx
+  ./scripts/local.sh notion-db-config ntn_xxx https://www.notion.so/<db_id>
   ./scripts/local.sh notion-push morning 20260209
   NOTION_MERGE_DAILY=1 ./scripts/local.sh notion-push evening 20260209
   ./scripts/local.sh cron-install

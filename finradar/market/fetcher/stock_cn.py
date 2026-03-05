@@ -144,6 +144,20 @@ class StockCNFetcher(BaseFetcher):
         is_trade_day = check_day.weekday() < 5
         self._trade_day_cache[key] = is_trade_day
         return is_trade_day
+
+    @staticmethod
+    def _parse_numeric(value: Any, default: float = 0.0) -> float:
+        """解析数值字符串（兼容逗号、百分号、单位）。"""
+        if isinstance(value, (int, float)):
+            return float(value)
+        text = str(value or "").strip().replace(",", "")
+        text = text.replace("%", "").replace("亿元", "").replace("亿", "").replace("万手", "")
+        if text in {"", "--", "None", "nan", "NaN"}:
+            return default
+        try:
+            return float(text)
+        except Exception:
+            return default
     
     def _fetch_indices(self) -> List[Dict]:
         """获取主要指数数据"""
@@ -189,25 +203,61 @@ class StockCNFetcher(BaseFetcher):
             df = ak.stock_hsgt_fund_flow_summary_em()
             if df is None or df.empty:
                 return {}
-            
+
+            def _to_float(value: Any) -> float:
+                if isinstance(value, (int, float)):
+                    return float(value)
+                text = str(value or "").strip().replace(",", "")
+                text = text.replace("亿元", "").replace("亿", "")
+                if text in {"", "--", "None", "nan", "NaN"}:
+                    return 0.0
+                try:
+                    return float(text)
+                except Exception:
+                    return 0.0
+
+            direction_col = next((c for c in ("资金方向", "方向") if c in df.columns), "")
+            board_col = next((c for c in ("板块", "市场", "通道") if c in df.columns), "")
+            net_col = next((c for c in ("成交净买额", "资金净流入", "净买入额", "净流入") if c in df.columns), "")
+            date_col = next((c for c in ("交易日", "日期") if c in df.columns), "")
+            status_col = next((c for c in ("交易状态", "状态") if c in df.columns), "")
+
+            if not direction_col or not net_col:
+                logger.warning("north flow schema changed: columns=%s", list(df.columns))
+                return {}
+
             # 筛选北向资金（沪股通 + 深股通）
-            north_data = df[df['资金方向'] == '北向']
+            north_data = df[df[direction_col].astype(str).str.contains("北向", na=False)]
             if north_data.empty:
                 return {}
-            
+
+            north_data = north_data.copy()
+            north_data["_net_flow_num"] = north_data[net_col].apply(_to_float)
+
             # 计算北向资金总净流入（沪股通 + 深股通）
-            total_net_flow = north_data['成交净买额'].sum()
-            trade_date = north_data.iloc[0].get('交易日', '')
-            
+            total_net_flow = float(north_data["_net_flow_num"].sum())
+            trade_date = north_data.iloc[0].get(date_col, "") if date_col else ""
+            trade_status = str(north_data.iloc[0].get(status_col, "")) if status_col else ""
+
             # 获取详细数据
-            hu_data = north_data[north_data['板块'] == '沪股通']
-            shen_data = north_data[north_data['板块'] == '深股通']
-            
+            if board_col:
+                hu_data = north_data[north_data[board_col].astype(str).str.contains("沪股通", na=False)]
+                shen_data = north_data[north_data[board_col].astype(str).str.contains("深股通", na=False)]
+            else:
+                hu_data = north_data.iloc[0:0]
+                shen_data = north_data.iloc[0:0]
+
+            hu_net_flow = float(hu_data["_net_flow_num"].sum()) if not hu_data.empty else 0.0
+            shen_net_flow = float(shen_data["_net_flow_num"].sum()) if not shen_data.empty else 0.0
+            is_zero_snapshot = abs(total_net_flow) < 1e-9 and abs(hu_net_flow) < 1e-9 and abs(shen_net_flow) < 1e-9
+
             return {
                 "net_flow": round(float(total_net_flow), 2),  # 单位: 亿元
                 "date": str(trade_date),
-                "hu_net_flow": round(float(hu_data['成交净买额'].iloc[0]), 2) if not hu_data.empty else 0,
-                "shen_net_flow": round(float(shen_data['成交净买额'].iloc[0]), 2) if not shen_data.empty else 0,
+                "hu_net_flow": round(hu_net_flow, 2),
+                "shen_net_flow": round(shen_net_flow, 2),
+                "trade_status": trade_status,
+                "is_zero_snapshot": bool(is_zero_snapshot),
             }
         except Exception as e:
             logger.error(f"Error fetching north flow: {e}")
@@ -241,8 +291,94 @@ class StockCNFetcher(BaseFetcher):
             
             return results
         except Exception as e:
-            logger.error(f"Error fetching sectors: {e}")
-            return []
+            logger.warning(f"stock_board_industry_name_em failed, fallback to ths focus sectors: {e}")
+            return self._fetch_focus_sectors_with_ths()
+
+    def _fetch_focus_sectors_with_ths(self) -> List[Dict]:
+        """
+        当东方财富板块接口不可用时，回退抓取同花顺重点板块快照。
+        仅抓取配置中的重点板块，保证报告最小可用板块信息。
+        """
+        results: List[Dict] = []
+        sector_names: List[str] = []
+        for category, names in (self.focus_sectors or {}).items():
+            if not isinstance(names, list):
+                continue
+            for name in names:
+                if isinstance(name, str) and name.strip():
+                    sector_names.append(name.strip())
+        sector_names = list(dict.fromkeys(sector_names))
+        if not sector_names:
+            return results
+
+        available_names: List[str] = []
+        try:
+            names_df = ak.stock_board_industry_name_ths()
+            if names_df is not None and not names_df.empty and "name" in names_df.columns:
+                available_names = [
+                    str(v).strip() for v in names_df["name"].tolist()
+                    if str(v).strip()
+                ]
+        except Exception as name_err:
+            logger.warning("ths sector name list unavailable: %s", name_err)
+
+        selected_names: List[str] = []
+        if available_names:
+            for name in sector_names:
+                if name in available_names:
+                    selected_names.append(name)
+                    continue
+                fuzzy = next(
+                    (
+                        item for item in available_names
+                        if name in item or item in name
+                    ),
+                    "",
+                )
+                if fuzzy:
+                    selected_names.append(fuzzy)
+        else:
+            selected_names = sector_names[:]
+
+        selected_names = list(dict.fromkeys([x for x in selected_names if x]))
+        if not selected_names:
+            return results
+
+        for sector_name in selected_names:
+            try:
+                info_df = ak.stock_board_industry_info_ths(symbol=sector_name)
+                if info_df is None or info_df.empty:
+                    continue
+                info_map = {
+                    str(row.get("项目", "")).strip(): row.get("值")
+                    for _, row in info_df.iterrows()
+                }
+
+                change_pct = self._parse_numeric(info_map.get("板块涨幅"), 0.0)
+                amount = self._parse_numeric(info_map.get("成交额(亿)"), 0.0)
+                net_inflow = self._parse_numeric(info_map.get("资金净流入(亿)"), 0.0)
+
+                category = "other"
+                for cat, names in self.focus_sectors.items():
+                    if sector_name in names:
+                        category = cat
+                        break
+
+                results.append({
+                    "name": sector_name,
+                    "change_pct": round(change_pct, 2),
+                    "turnover": 0.0,
+                    "volume": 0.0,
+                    "amount": amount,
+                    "leading_stock": "",
+                    "category": category,
+                    "net_inflow": round(net_inflow, 2),
+                    "source": "ths_fallback",
+                })
+            except Exception as err:
+                logger.warning("ths sector detail unavailable for %s: %s", sector_name, err)
+                continue
+        return results
     
     def _fetch_market_stats(self) -> Dict:
         """获取市场涨跌统计

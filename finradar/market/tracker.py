@@ -682,8 +682,18 @@ class MarketTracker:
             
             fetcher = NitterRSSFetcher(config)
             if fetcher.enabled:
-                max_age_hours = twitter_conf.max_age_hours
-                logger.info(f"🐦 正在抓取 Twitter 热点 (实例: {twitter_conf.nitter_instance}, 时间范围: {max_age_hours}小时)...")
+                configured_max_age_hours = int(getattr(twitter_conf, "max_age_hours", 12) or 12)
+                try:
+                    hot_window_hours = int(os.environ.get("SOCIAL_HOT_WINDOW_HOURS", "12") or 12)
+                except (TypeError, ValueError):
+                    hot_window_hours = 12
+                effective_window_hours = max(1, hot_window_hours)
+                logger.info(
+                    "🐦 正在抓取 Twitter 热点 (实例: %s, 抓取时间窗口: %sh, 配置max_age_hours=%sh)...",
+                    twitter_conf.nitter_instance,
+                    effective_window_hours,
+                    configured_max_age_hours,
+                )
                 logger.info(f"   关注账号: {len(config['accounts'])} 个")
 
                 follow_only_scan = str(os.environ.get("TWITTER_FOLLOW_ONLY_SCAN", "")).strip().lower() in {"1", "true", "yes", "on"}
@@ -775,11 +785,11 @@ class MarketTracker:
                     merged.append(tweet)
 
                 # 仅按时间过滤
-                if max_age_hours > 0 and merged:
-                    from datetime import timedelta, timezone
-                    cutoff_time = datetime.now().astimezone() - timedelta(hours=max_age_hours)
+                pre_time_filter_count = len(merged)
+                post_time_filter_count = len(merged)
+                if effective_window_hours > 0 and merged:
+                    cutoff_time = datetime.now().astimezone() - timedelta(hours=effective_window_hours)
 
-                    before_count = len(merged)
                     filtered_tweets = []
                     for tweet in merged:
                         candidate_time = tweet.get("created_at", "") or tweet.get("fetched_at", "")
@@ -798,7 +808,14 @@ class MarketTracker:
                             filtered_tweets.append(tweet)
 
                     merged = filtered_tweets
-                    logger.info(f"   时间过滤: {before_count}条 → {len(merged)}条 (过去{max_age_hours}小时内)")
+                    post_time_filter_count = len(merged)
+                    logger.info(
+                        "   时间过滤: %s条 → %s条 (过去%s小时内)",
+                        pre_time_filter_count,
+                        post_time_filter_count,
+                        effective_window_hours,
+                    )
+                time_filter_removed_count = max(0, pre_time_filter_count - post_time_filter_count)
 
                 def _is_keyword_query(item: Dict[str, Any]) -> bool:
                     query = str(item.get("keyword", "") or "").strip().lower()
@@ -854,6 +871,10 @@ class MarketTracker:
                     "follow_cache_size": int(follow_cache_stats.get("cache_after_count", len(follow_tweets)) or len(follow_tweets)),
                     "follow_cache_dropped_old_count": int(follow_cache_stats.get("dropped_old_count", 0) or 0),
                     "trending_tweets_count": len(trending_tweets),
+                    "time_filter_window_hours": int(effective_window_hours),
+                    "pre_time_filter_count": int(pre_time_filter_count),
+                    "post_time_filter_count": int(post_time_filter_count),
+                    "time_filter_removed_count": int(time_filter_removed_count),
                     "trending_errors": trending_errors,
                     "trending_query_mode": trending_result.get("query_mode") if fetch_trending_enabled else "",
                     "trending_queries_used": trending_result.get("queries_used", []) if fetch_trending_enabled else [],
@@ -905,19 +926,78 @@ class MarketTracker:
                 return None
             
             fetch_content = wechat_conf.fetch_content
-            max_age_hours = wechat_conf.max_age_hours
+            configured_max_age_hours = int(getattr(wechat_conf, "max_age_hours", 12) or 12)
+            try:
+                hot_window_hours = int(os.environ.get("SOCIAL_HOT_WINDOW_HOURS", "12") or 12)
+            except (TypeError, ValueError):
+                hot_window_hours = 12
+            effective_window_hours = max(1, hot_window_hours)
             auth_key_health = fetcher.get_auth_key_health()
-            logger.info(f"📱 正在抓取微信公众号文章 (服务: {wechat_conf.service_url}, 时间范围: {max_age_hours}小时, 抓取全文: {'是' if fetch_content else '否'})...")
+            logger.info(
+                "📱 正在抓取微信公众号文章 (服务: %s, 抓取时间窗口: %sh, 配置max_age_hours=%sh, 抓取全文: %s)...",
+                wechat_conf.service_url,
+                effective_window_hours,
+                configured_max_age_hours,
+                '是' if fetch_content else '否',
+            )
             
             # 计算时间截止点
-            from datetime import timedelta
-            cutoff_time = datetime.now() - timedelta(hours=max_age_hours) if max_age_hours > 0 else None
+            cutoff_time = datetime.now() - timedelta(hours=effective_window_hours) if effective_window_hours > 0 else None
             
             # 获取所有配置的公众号
             all_accounts = wechat_conf.get_all_accounts()
             logger.info(f"   配置的公众号: {len(all_accounts)} 个")
+            per_account_limit = int(getattr(wechat_conf, "max_articles_per_account", 0) or 0)
+            if per_account_limit <= 0:
+                logger.info("   普通公众号抓取: 不限篇数（按时间窗口分页抓取）")
+            else:
+                logger.info("   普通公众号抓取: 每号上限 %s 篇", per_account_limit)
+
+            async def _fetch_account_articles_paginated(fakeid: str, account_name: str) -> List[Any]:
+                """分页抓取单个公众号文章；count<=0 视为不限篇数，仅受时间窗口约束。"""
+                page_size = 20  # wechat-article-exporter 单页最大 20
+                articles_acc: List[Any] = []
+                offset = 0
+
+                while True:
+                    if per_account_limit > 0:
+                        remaining = per_account_limit - len(articles_acc)
+                        if remaining <= 0:
+                            break
+                        request_size = max(1, min(page_size, remaining))
+                    else:
+                        request_size = page_size
+
+                    page_articles = await fetcher.get_articles(
+                        fakeid,
+                        offset=offset,
+                        count=request_size,
+                        account_name=account_name,
+                    )
+                    if not page_articles:
+                        break
+
+                    for art in page_articles:
+                        art.account_name = account_name
+                    articles_acc.extend(page_articles)
+
+                    # 触达时间窗口下界后停止翻页，避免无意义全量回溯。
+                    oldest_time = min(
+                        (art.publish_time for art in page_articles if getattr(art, "publish_time", None)),
+                        default=None,
+                    )
+                    if cutoff_time and oldest_time and oldest_time < cutoff_time:
+                        break
+
+                    if len(page_articles) < request_size:
+                        break
+                    offset += len(page_articles)
+
+                return articles_acc
             
             all_articles = []
+            follow_before_time_filter_count = 0
+            follow_after_time_filter_count = 0
             account_lookup_failures = []
             for account_name in all_accounts:
                 try:
@@ -928,20 +1008,25 @@ class MarketTracker:
                         account_lookup_failures.append(f"{account_name}: {reason}")
                         continue
 
-                    # 先获取文章列表（不含全文）
-                    articles = await fetcher.get_articles(
-                        accounts[0].fakeid, 
-                        count=wechat_conf.max_articles_per_account
-                    )
-                    # 添加公众号名称
-                    for art in articles:
-                        art.account_name = account_name
+                    # 分页获取文章列表（不含全文）
+                    articles = await _fetch_account_articles_paginated(accounts[0].fakeid, account_name)
                     
                     # ⚠️ 关键：先时间过滤，再抓取全文
                     if cutoff_time:
                         before_filter = len(articles)
+                        follow_before_time_filter_count += before_filter
                         articles = [a for a in articles if a.publish_time and a.publish_time >= cutoff_time]
-                        logger.info(f"   {account_name}: {before_filter}篇 → 过滤后{len(articles)}篇({max_age_hours}h内)")
+                        follow_after_time_filter_count += len(articles)
+                        logger.info(
+                            "   %s: %s篇 → 过滤后%s篇(%sh内)",
+                            account_name,
+                            before_filter,
+                            len(articles),
+                            effective_window_hours,
+                        )
+                    else:
+                        follow_before_time_filter_count += len(articles)
+                        follow_after_time_filter_count += len(articles)
                     
                     # 如果启用全文抓取，对过滤后的文章抓取全文
                     if fetch_content and articles:
@@ -967,11 +1052,13 @@ class MarketTracker:
                 logger.info("🔥 正在抓取微信公众号热门文章...")
                 hot_result = await fetcher.fetch_hot_articles(
                     max_results=wechat_conf.hot_max_results,
-                    hours_ago=wechat_conf.hot_hours_ago,
+                    hours_ago=effective_window_hours,
                     categories=wechat_conf.hot_categories or None
                 )
                 hot_errors = hot_result.get("errors", []) or []
                 hot_articles = hot_result.get("hot_articles", []) or []
+                hot_total_found = int(hot_result.get("total_found", len(hot_articles)) or 0)
+                hot_high_quality_count = int(hot_result.get("high_quality_count", len(hot_articles)) or 0)
 
                 # 可选：为热门文章补抓全文，便于后续 AI 深度总结
                 if fetch_content and hot_articles:
@@ -984,6 +1071,9 @@ class MarketTracker:
                             logger.debug(f"获取热门文章全文失败 {getattr(article, 'title', '')}: {e}")
                         if i < len(hot_articles):
                             await asyncio.sleep(wechat_conf.content_delay)
+            else:
+                hot_total_found = 0
+                hot_high_quality_count = 0
             
             # 按发布时间排序（最新的在前）
             all_articles.sort(key=lambda x: x.publish_time if x.publish_time else datetime.min, reverse=True)
@@ -1109,6 +1199,13 @@ class MarketTracker:
                 "articles": merged_articles[:80],
                 "follow_articles_count": len(all_articles),
                 "hot_articles_count": len(hot_articles),
+                "time_filter_window_hours": int(effective_window_hours),
+                "follow_before_time_filter_count": int(follow_before_time_filter_count),
+                "follow_after_time_filter_count": int(follow_after_time_filter_count),
+                "follow_time_filter_removed_count": int(max(0, follow_before_time_filter_count - follow_after_time_filter_count)),
+                "hot_fetch_hours_ago": int(effective_window_hours),
+                "hot_total_found_count": int(hot_total_found),
+                "hot_high_quality_count": int(hot_high_quality_count),
                 "hot_errors": hot_errors,
                 "account_lookup_failures": account_lookup_failures[:80],
                 "login_required": login_required,

@@ -344,10 +344,11 @@ class WechatArticleFetcher:
         try:
             # 使用公开 API v1 接口
             url = f"{self.base_url}/api/public/v1/article"
+            page_size = 20 if int(count or 0) <= 0 else min(int(count), 20)
             params = {
                 "fakeid": fakeid,
                 "begin": offset,
-                "size": min(count, 20)  # API 限制最大 20
+                "size": page_size  # API 限制最大 20；count<=0 视为按单页上限抓取
             }
             
             async with session.get(url, params=params, headers=self._get_headers()) as resp:
@@ -656,8 +657,10 @@ class WechatArticleFetcher:
             if art.read_count > 0 or art.like_count > 0 or len(art.digest or art.content) > 100
         ]
         
+        selected_hot = high_quality if int(max_results or 0) <= 0 else high_quality[:max_results]
+
         return {
-            "hot_articles": high_quality[:max_results],
+            "hot_articles": selected_hot,
             "total_found": len(all_articles),
             "high_quality_count": len(high_quality),
             "errors": errors,

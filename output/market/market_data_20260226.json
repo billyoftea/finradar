@@ -1,0 +1,980 @@
+{
+  "timestamp": "2026-02-26T23:30:35.186098+08:00",
+  "mode": "market",
+  "report_type": "latest",
+  "data": {
+    "stock_cn": {
+      "indices": [
+        {
+          "name": "上证指数",
+          "code": "000001",
+          "price": 4146.631,
+          "change": -0.5999999999994543,
+          "change_pct": -0.01,
+          "volume": 65170282600.0,
+          "open": 4151.068,
+          "high": 4152.193,
+          "low": 4127.153
+        },
+        {
+          "name": "深证成指",
+          "code": "399001",
+          "price": 14503.786,
+          "change": 27.921000000000276,
+          "change_pct": 0.19,
+          "volume": 79313407541.0,
+          "open": 14495.858,
+          "high": 14536.076,
+          "low": 14408.875
+        },
+        {
+          "name": "沪深300",
+          "code": "000300",
+          "price": 4726.874,
+          "change": -9.012000000000626,
+          "change_pct": -0.19,
+          "volume": 23484764400.0,
+          "open": 4741.39,
+          "high": 4742.148,
+          "low": 4706.694
+        },
+        {
+          "name": "创业板指",
+          "code": "399006",
+          "price": 3344.982,
+          "change": -9.836999999999989,
+          "change_pct": -0.29,
+          "volume": 25161974420.0,
+          "open": 3346.743,
+          "high": 3351.573,
+          "low": 3310.554
+        },
+        {
+          "name": "科创50",
+          "code": "000688",
+          "price": 1485.865,
+          "change": 12.579999999999927,
+          "change_pct": 0.85,
+          "volume": 1115413400.0,
+          "open": 1478.726,
+          "high": 1494.749,
+          "low": 1456.033
+        },
+        {
+          "name": "中证500",
+          "code": "000905",
+          "price": 8557.216,
+          "change": 29.657000000001062,
+          "change_pct": 0.35,
+          "volume": 25411176500.0,
+          "open": 8542.832,
+          "high": 8582.763,
+          "low": 8490.922
+        }
+      ],
+      "north_flow": {
+        "net_flow": 0.0,
+        "date": "2026-02-26",
+        "hu_net_flow": 0.0,
+        "shen_net_flow": 0.0
+      },
+      "sectors": [],
+      "market_stats": {
+        "limit_up_count": 61,
+        "limit_down_count": 3
+      },
+      "market_closed": false,
+      "market_status": "正常交易",
+      "timestamp": "2026-02-26 15:30:03.311223"
+    },
+    "yahoo_stock": {
+      "markets": [
+        {
+          "symbol": "^GSPC",
+          "name": "标普500",
+          "region": "美股",
+          "market": "index",
+          "currency": "USD",
+          "price": 6872.24,
+          "change": -73.89,
+          "change_pct": -1.06,
+          "prev_close": 6946.13,
+          "open": 6944.74,
+          "high": 6947.25,
+          "low": 6863.84,
+          "volume": 783191054,
+          "url": "https://finance.yahoo.com/quote/%5EGSPC"
+        },
+        {
+          "symbol": "^IXIC",
+          "name": "纳斯达克综合",
+          "region": "美股",
+          "market": "index",
+          "currency": "USD",
+          "price": 22736.53,
+          "change": -415.55,
+          "change_pct": -1.79,
+          "prev_close": 23152.08,
+          "open": 23100.58,
+          "high": 23109.46,
+          "low": 22698.61,
+          "volume": 2321410000,
+          "url": "https://finance.yahoo.com/quote/%5EIXIC"
+        },
+        {
+          "symbol": "^DJI",
+          "name": "道琼斯工业指数",
+          "region": "美股",
+          "market": "index",
+          "currency": "USD",
+          "price": 49284.06,
+          "change": -198.09,
+          "change_pct": -0.4,
+          "prev_close": 49482.15,
+          "open": 49544.58,
+          "high": 49815.22,
+          "low": 49243.2,
+          "volume": 200965846,
+          "url": "https://finance.yahoo.com/quote/%5EDJI"
+        },
+        {
+          "symbol": "^RUT",
+          "name": "罗素2000",
+          "region": "美股",
+          "market": "index",
+          "currency": "USD",
+          "price": 2658.5,
+          "change": -4.83,
+          "change_pct": -0.18,
+          "prev_close": 2663.33,
+          "open": 2665.19,
+          "high": 2674.64,
+          "low": 2658.5,
+          "volume": 0,
+          "url": "https://finance.yahoo.com/quote/%5ERUT"
+        },
+        {
+          "symbol": "^VIX",
+          "name": "VIX波动率指数",
+          "region": "美股",
+          "market": "index",
+          "currency": "USD",
+          "price": 19.23,
+          "change": 1.3,
+          "change_pct": 7.25,
+          "prev_close": 17.93,
+          "open": 18.07,
+          "high": 19.23,
+          "low": 17.5,
+          "volume": 0,
+          "url": "https://finance.yahoo.com/quote/%5EVIX"
+        },
+        {
+          "symbol": "^HSI",
+          "name": "恒生指数",
+          "region": "港股",
+          "market": "index",
+          "currency": "HKD",
+          "price": 26381.02,
+          "change": -384.7,
+          "change_pct": -1.44,
+          "prev_close": 26765.72,
+          "open": 27019.74,
+          "high": 27024.07,
+          "low": 26373.01,
+          "volume": 0,
+          "url": "https://finance.yahoo.com/quote/%5EHSI"
+        },
+        {
+          "symbol": "^N225",
+          "name": "日经225",
+          "region": "日股",
+          "market": "index",
+          "currency": "JPY",
+          "price": 58753.39,
+          "change": 170.27,
+          "change_pct": 0.29,
+          "prev_close": 58583.12,
+          "open": 58995.39,
+          "high": 59332.43,
+          "low": 58577.84,
+          "volume": 0,
+          "url": "https://finance.yahoo.com/quote/%5EN225"
+        },
+        {
+          "symbol": "^KS11",
+          "name": "韩国综合指数",
+          "region": "韩股",
+          "market": "index",
+          "currency": "KRW",
+          "price": 6307.27,
+          "change": 223.41,
+          "change_pct": 3.67,
+          "prev_close": 6083.86,
+          "open": 6121.03,
+          "high": 6313.27,
+          "low": 6107.41,
+          "volume": 1409623,
+          "url": "https://finance.yahoo.com/quote/%5EKS11"
+        },
+        {
+          "symbol": "^FTSE",
+          "name": "英国富时100",
+          "region": "欧股",
+          "market": "index",
+          "currency": "GBP",
+          "price": 10815.63,
+          "change": 9.23,
+          "change_pct": 0.09,
+          "prev_close": 10806.4,
+          "open": 10806.37,
+          "high": 10831.89,
+          "low": 10770.78,
+          "volume": 0,
+          "url": "https://finance.yahoo.com/quote/%5EFTSE"
+        },
+        {
+          "symbol": "^GDAXI",
+          "name": "德国DAX",
+          "region": "欧股",
+          "market": "index",
+          "currency": "EUR",
+          "price": 25223.62,
+          "change": 47.68,
+          "change_pct": 0.19,
+          "prev_close": 25175.94,
+          "open": 25095.86,
+          "high": 25318.95,
+          "low": 25088.49,
+          "volume": 0,
+          "url": "https://finance.yahoo.com/quote/%5EGDAXI"
+        },
+        {
+          "symbol": "^FCHI",
+          "name": "法国CAC40",
+          "region": "欧股",
+          "market": "index",
+          "currency": "EUR",
+          "price": 8614.36,
+          "change": 55.29,
+          "change_pct": 0.65,
+          "prev_close": 8559.07,
+          "open": 8568.76,
+          "high": 8642.23,
+          "low": 8562.86,
+          "volume": 0,
+          "url": "https://finance.yahoo.com/quote/%5EFCHI"
+        },
+        {
+          "symbol": "000001.SS",
+          "name": "上证综指",
+          "region": "A股",
+          "market": "index",
+          "currency": "CNY",
+          "price": 4146.63,
+          "change": -0.6,
+          "change_pct": -0.01,
+          "prev_close": 4147.23,
+          "open": 4151.07,
+          "high": 4152.19,
+          "low": 4127.15,
+          "volume": 745773160,
+          "url": "https://finance.yahoo.com/quote/000001.SS"
+        }
+      ],
+      "overview": {
+        "total": 12,
+        "up": 6,
+        "down": 6,
+        "flat": 0,
+        "by_region": [
+          {
+            "region": "A股",
+            "count": 1,
+            "avg_change_pct": -0.01,
+            "up": 0,
+            "down": 1
+          },
+          {
+            "region": "日股",
+            "count": 1,
+            "avg_change_pct": 0.29,
+            "up": 1,
+            "down": 0
+          },
+          {
+            "region": "欧股",
+            "count": 3,
+            "avg_change_pct": 0.31,
+            "up": 3,
+            "down": 0
+          },
+          {
+            "region": "港股",
+            "count": 1,
+            "avg_change_pct": -1.44,
+            "up": 0,
+            "down": 1
+          },
+          {
+            "region": "美股",
+            "count": 5,
+            "avg_change_pct": 0.76,
+            "up": 1,
+            "down": 4
+          },
+          {
+            "region": "韩股",
+            "count": 1,
+            "avg_change_pct": 3.67,
+            "up": 1,
+            "down": 0
+          }
+        ],
+        "top_movers": [
+          {
+            "symbol": "^VIX",
+            "name": "VIX波动率指数",
+            "region": "美股",
+            "market": "index",
+            "currency": "USD",
+            "price": 19.23,
+            "change": 1.3,
+            "change_pct": 7.25,
+            "prev_close": 17.93,
+            "open": 18.07,
+            "high": 19.23,
+            "low": 17.5,
+            "volume": 0,
+            "url": "https://finance.yahoo.com/quote/%5EVIX"
+          },
+          {
+            "symbol": "^KS11",
+            "name": "韩国综合指数",
+            "region": "韩股",
+            "market": "index",
+            "currency": "KRW",
+            "price": 6307.27,
+            "change": 223.41,
+            "change_pct": 3.67,
+            "prev_close": 6083.86,
+            "open": 6121.03,
+            "high": 6313.27,
+            "low": 6107.41,
+            "volume": 1409623,
+            "url": "https://finance.yahoo.com/quote/%5EKS11"
+          },
+          {
+            "symbol": "^IXIC",
+            "name": "纳斯达克综合",
+            "region": "美股",
+            "market": "index",
+            "currency": "USD",
+            "price": 22736.53,
+            "change": -415.55,
+            "change_pct": -1.79,
+            "prev_close": 23152.08,
+            "open": 23100.58,
+            "high": 23109.46,
+            "low": 22698.61,
+            "volume": 2321410000,
+            "url": "https://finance.yahoo.com/quote/%5EIXIC"
+          },
+          {
+            "symbol": "^HSI",
+            "name": "恒生指数",
+            "region": "港股",
+            "market": "index",
+            "currency": "HKD",
+            "price": 26381.02,
+            "change": -384.7,
+            "change_pct": -1.44,
+            "prev_close": 26765.72,
+            "open": 27019.74,
+            "high": 27024.07,
+            "low": 26373.01,
+            "volume": 0,
+            "url": "https://finance.yahoo.com/quote/%5EHSI"
+          },
+          {
+            "symbol": "^GSPC",
+            "name": "标普500",
+            "region": "美股",
+            "market": "index",
+            "currency": "USD",
+            "price": 6872.24,
+            "change": -73.89,
+            "change_pct": -1.06,
+            "prev_close": 6946.13,
+            "open": 6944.74,
+            "high": 6947.25,
+            "low": 6863.84,
+            "volume": 783191054,
+            "url": "https://finance.yahoo.com/quote/%5EGSPC"
+          }
+        ]
+      },
+      "timestamp": "2026-02-26T15:30:04.325801",
+      "source": "yahoo_finance"
+    },
+    "precious_metal": {
+      "metals": {
+        "gold": {
+          "symbol": "GC=F",
+          "name": "黄金",
+          "name_en": "Gold",
+          "price": 5177.0,
+          "change": -29.4,
+          "change_pct": -0.56,
+          "open": 5175.3,
+          "high": 5221.9,
+          "low": 5154.6,
+          "volume": 77037,
+          "unit": "美元/盎司",
+          "prev_close": 5206.4
+        },
+        "silver": {
+          "symbol": "SI=F",
+          "name": "白银",
+          "name_en": "Silver",
+          "price": 86.98,
+          "change": -3.96,
+          "change_pct": -4.35,
+          "open": 89.56,
+          "high": 90.99,
+          "low": 86.12,
+          "volume": 38436,
+          "unit": "美元/盎司",
+          "prev_close": 90.94
+        }
+      },
+      "timestamp": "2026-02-26 15:30:04.387336"
+    },
+    "crypto": {
+      "coins": [
+        {
+          "id": "bitcoin",
+          "symbol": "BTC",
+          "name": "Bitcoin",
+          "price": 66961,
+          "market_cap": 1339173890792,
+          "market_cap_rank": 1,
+          "volume_24h": 57200066986,
+          "change_24h": -0.07994,
+          "change_7d": 0.8523801869966522,
+          "high_24h": 69487,
+          "low_24h": 66975,
+          "ath": 126080,
+          "ath_change_pct": -46.88967,
+          "is_meme": false,
+          "category": "mainstream",
+          "image": "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png?1696501400"
+        },
+        {
+          "id": "ethereum",
+          "symbol": "ETH",
+          "name": "Ethereum",
+          "price": 2022.17,
+          "market_cap": 244007143127,
+          "market_cap_rank": 2,
+          "volume_24h": 30445553729,
+          "change_24h": 1.11419,
+          "change_7d": 5.266308176198593,
+          "high_24h": 2121.02,
+          "low_24h": 1999.89,
+          "ath": 4946.05,
+          "ath_change_pct": -59.11541,
+          "is_meme": false,
+          "category": "mainstream",
+          "image": "https://coin-images.coingecko.com/coins/images/279/large/ethereum.png?1696501628"
+        },
+        {
+          "id": "solana",
+          "symbol": "SOL",
+          "name": "Solana",
+          "price": 85.93,
+          "market_cap": 48956939442,
+          "market_cap_rank": 7,
+          "volume_24h": 5875633767,
+          "change_24h": 0.68854,
+          "change_7d": 6.231102838375046,
+          "high_24h": 90.65,
+          "low_24h": 85.34,
+          "ath": 293.31,
+          "ath_change_pct": -70.70518,
+          "is_meme": false,
+          "category": "mainstream",
+          "image": "https://coin-images.coingecko.com/coins/images/4128/large/solana.png?1718769756"
+        }
+      ],
+      "timestamp": "2026-02-26 15:30:04.722273"
+    },
+    "futures": {
+      "commodity": [],
+      "index_futures": [
+        {
+          "code": "IF",
+          "name": "沪深300期货",
+          "underlying": "沪深300",
+          "price": 4712.2,
+          "change": -18.8,
+          "change_pct": -0.4,
+          "type": "index"
+        },
+        {
+          "code": "IC",
+          "name": "中证500期货",
+          "underlying": "中证500",
+          "price": 8537.4,
+          "change": 19.2,
+          "change_pct": 0.23,
+          "type": "index"
+        },
+        {
+          "code": "IH",
+          "name": "上证50期货",
+          "underlying": "上证50",
+          "price": 3034.6,
+          "change": -23.4,
+          "change_pct": -0.77,
+          "type": "index"
+        },
+        {
+          "code": "IM",
+          "name": "中证1000期货",
+          "underlying": "中证1000",
+          "price": 8443.4,
+          "change": 41.6,
+          "change_pct": 0.5,
+          "type": "index"
+        }
+      ],
+      "international": [
+        {
+          "code": "CL=F",
+          "name": "WTI原油",
+          "price": 65.52,
+          "change": 0.1,
+          "change_pct": 0.15,
+          "unit": "美元/桶",
+          "type": "international"
+        },
+        {
+          "code": "BZ=F",
+          "name": "布伦特原油",
+          "price": 71.12,
+          "change": 0.27,
+          "change_pct": 0.38,
+          "unit": "美元/桶",
+          "type": "international"
+        },
+        {
+          "code": "NG=F",
+          "name": "天然气",
+          "price": 2.79,
+          "change": -0.18,
+          "change_pct": -6.13,
+          "unit": "美元/MMBtu",
+          "type": "international"
+        },
+        {
+          "code": "HG=F",
+          "name": "COMEX铜",
+          "price": 6.01,
+          "change": 0.03,
+          "change_pct": 0.53,
+          "unit": "美元/磅",
+          "type": "international"
+        }
+      ],
+      "timestamp": "2026-02-26 15:30:35.185589"
+    },
+    "github": {
+      "trending": [
+        {
+          "name": "SpacetimeDB",
+          "full_name": "clockworklabs/SpacetimeDB",
+          "description": "Development at the speed of light",
+          "url": "https://github.com/clockworklabs/SpacetimeDB",
+          "stars": 20655,
+          "forks": 735,
+          "language": "Rust",
+          "topics": [],
+          "created_at": "",
+          "updated_at": "2026-02-26T15:30:06.046597Z",
+          "owner": "clockworklabs",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/196249?s=40&v=4",
+          "trend_period_stars": 974
+        },
+        {
+          "name": "superpowers",
+          "full_name": "obra/superpowers",
+          "description": "An agentic skills framework & software development methodology that works.",
+          "url": "https://github.com/obra/superpowers",
+          "stars": 62913,
+          "forks": 4802,
+          "language": "Shell",
+          "topics": [],
+          "created_at": "",
+          "updated_at": "2026-02-26T15:30:06.046597Z",
+          "owner": "obra",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/45416?s=40&v=4",
+          "trend_period_stars": 1528
+        },
+        {
+          "name": "Agent-Skills-for-Context-Engineering",
+          "full_name": "muratcankoylan/Agent-Skills-for-Context-Engineering",
+          "description": "A comprehensive collection of Agent Skills for context engineering, multi-agent architectures, and production agent systems. Use when building, optimizing, or debugging agent systems that require effective context management.",
+          "url": "https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering",
+          "stars": 11475,
+          "forks": 898,
+          "language": "Python",
+          "topics": [],
+          "created_at": "",
+          "updated_at": "2026-02-26T15:30:06.046597Z",
+          "owner": "muratcankoylan",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/132029956?s=40&v=4",
+          "trend_period_stars": 923
+        },
+        {
+          "name": "deer-flow",
+          "full_name": "bytedance/deer-flow",
+          "description": "An open-source SuperAgent harness that researches, codes, and creates. With the help of sandboxes, memories, tools, skills and subagents, it handles different levels of tasks that could take minutes to hours.",
+          "url": "https://github.com/bytedance/deer-flow",
+          "stars": 20935,
+          "forks": 2590,
+          "language": "TypeScript",
+          "topics": [],
+          "created_at": "",
+          "updated_at": "2026-02-26T15:30:06.046597Z",
+          "owner": "bytedance",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/1003147?s=40&v=4",
+          "trend_period_stars": 622
+        },
+        {
+          "name": "skills",
+          "full_name": "huggingface/skills",
+          "description": "",
+          "url": "https://github.com/huggingface/skills",
+          "stars": 6834,
+          "forks": 401,
+          "language": "Python",
+          "topics": [],
+          "created_at": "",
+          "updated_at": "2026-02-26T15:30:06.046597Z",
+          "owner": "huggingface",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/19620375?s=40&v=4",
+          "trend_period_stars": 711
+        },
+        {
+          "name": "cc-switch",
+          "full_name": "farion1231/cc-switch",
+          "description": "A cross-platform desktop All-in-One assistant tool for Claude Code, Codex, OpenCode & Gemini CLI.",
+          "url": "https://github.com/farion1231/cc-switch",
+          "stars": 20516,
+          "forks": 1275,
+          "language": "Rust",
+          "topics": [],
+          "created_at": "",
+          "updated_at": "2026-02-26T15:30:06.046597Z",
+          "owner": "farion1231",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/44939412?s=40&v=4",
+          "trend_period_stars": 341
+        },
+        {
+          "name": "Scrapling",
+          "full_name": "D4Vinci/Scrapling",
+          "description": "🕷️ An adaptive Web Scraping framework that handles everything from a single request to a full-scale crawl!",
+          "url": "https://github.com/D4Vinci/Scrapling",
+          "stars": 16508,
+          "forks": 1085,
+          "language": "Python",
+          "topics": [],
+          "created_at": "",
+          "updated_at": "2026-02-26T15:30:06.046597Z",
+          "owner": "D4Vinci",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/20604835?s=40&v=4",
+          "trend_period_stars": 2893
+        },
+        {
+          "name": "claude-flow",
+          "full_name": "ruvnet/claude-flow",
+          "description": "🌊 The leading agent orchestration platform for Claude. Deploy intelligent multi-agent swarms, coordinate autonomous workflows, and build conversational AI systems. Features enterprise-grade architecture, distributed swarm intelligence, RAG integration, and native Claude Code / Codex Integration",
+          "url": "https://github.com/ruvnet/claude-flow",
+          "stars": 14785,
+          "forks": 1731,
+          "language": "TypeScript",
+          "topics": [],
+          "created_at": "",
+          "updated_at": "2026-02-26T15:30:06.046597Z",
+          "owner": "ruvnet",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/2934394?s=40&v=4",
+          "trend_period_stars": 210
+        },
+        {
+          "name": "ruvector",
+          "full_name": "ruvnet/ruvector",
+          "description": "RuVector is a High Performance, Real-Time, Self-Learning, Vector Graph Neural Network, and Database built in Rust.",
+          "url": "https://github.com/ruvnet/ruvector",
+          "stars": 1430,
+          "forks": 168,
+          "language": "Rust",
+          "topics": [],
+          "created_at": "",
+          "updated_at": "2026-02-26T15:30:06.046597Z",
+          "owner": "ruvnet",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/81847?s=40&v=4",
+          "trend_period_stars": 438
+        },
+        {
+          "name": "moonshine",
+          "full_name": "moonshine-ai/moonshine",
+          "description": "Fast and accurate automatic speech recognition (ASR) for edge devices",
+          "url": "https://github.com/moonshine-ai/moonshine",
+          "stars": 5075,
+          "forks": 243,
+          "language": "C",
+          "topics": [],
+          "created_at": "",
+          "updated_at": "2026-02-26T15:30:06.046597Z",
+          "owner": "moonshine-ai",
+          "owner_avatar": "https://avatars.githubusercontent.com/u/15764776?s=40&v=4",
+          "trend_period_stars": 515
+        }
+      ],
+      "ai_trending": [],
+      "fintech_trending": [],
+      "quant_trending": [],
+      "web3_trending": [],
+      "interesting_trending": [],
+      "timestamp": "2026-02-26 15:30:06.053266"
+    },
+    "stock_overview": {
+      "summary": {
+        "tracked": 18,
+        "up": 9,
+        "down": 9,
+        "flat": 0,
+        "up_ratio_pct": 50.0,
+        "sources": {
+          "stock_cn": 6,
+          "yahoo_finance": 12
+        }
+      },
+      "by_region": [
+        {
+          "region": "韩股",
+          "count": 1,
+          "up": 1,
+          "down": 0,
+          "avg_change_pct": 3.67
+        },
+        {
+          "region": "美股",
+          "count": 5,
+          "up": 1,
+          "down": 4,
+          "avg_change_pct": 0.76
+        },
+        {
+          "region": "欧股",
+          "count": 3,
+          "up": 3,
+          "down": 0,
+          "avg_change_pct": 0.31
+        },
+        {
+          "region": "日股",
+          "count": 1,
+          "up": 1,
+          "down": 0,
+          "avg_change_pct": 0.29
+        },
+        {
+          "region": "A股",
+          "count": 7,
+          "up": 3,
+          "down": 4,
+          "avg_change_pct": 0.13
+        },
+        {
+          "region": "港股",
+          "count": 1,
+          "up": 0,
+          "down": 1,
+          "avg_change_pct": -1.44
+        }
+      ],
+      "key_indices": [
+        {
+          "source": "yahoo_finance",
+          "region": "美股",
+          "name": "纳斯达克综合",
+          "symbol": "^IXIC",
+          "price": 22736.53,
+          "change_pct": -1.79,
+          "currency": "USD"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "港股",
+          "name": "恒生指数",
+          "symbol": "^HSI",
+          "price": 26381.02,
+          "change_pct": -1.44,
+          "currency": "HKD"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "美股",
+          "name": "标普500",
+          "symbol": "^GSPC",
+          "price": 6872.24,
+          "change_pct": -1.06,
+          "currency": "USD"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "欧股",
+          "name": "法国CAC40",
+          "symbol": "^FCHI",
+          "price": 8614.36,
+          "change_pct": 0.65,
+          "currency": "EUR"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "美股",
+          "name": "道琼斯工业指数",
+          "symbol": "^DJI",
+          "price": 49284.06,
+          "change_pct": -0.4,
+          "currency": "USD"
+        },
+        {
+          "source": "stock_cn",
+          "region": "A股",
+          "name": "创业板指",
+          "symbol": "399006",
+          "price": 3344.98,
+          "change_pct": -0.29,
+          "currency": "CNY"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "日股",
+          "name": "日经225",
+          "symbol": "^N225",
+          "price": 58753.39,
+          "change_pct": 0.29,
+          "currency": "JPY"
+        },
+        {
+          "source": "stock_cn",
+          "region": "A股",
+          "name": "深证成指",
+          "symbol": "399001",
+          "price": 14503.79,
+          "change_pct": 0.19,
+          "currency": "CNY"
+        }
+      ],
+      "top_gainers": [
+        {
+          "source": "yahoo_finance",
+          "region": "美股",
+          "name": "VIX波动率指数",
+          "symbol": "^VIX",
+          "price": 19.23,
+          "change_pct": 7.25,
+          "currency": "USD"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "韩股",
+          "name": "韩国综合指数",
+          "symbol": "^KS11",
+          "price": 6307.27,
+          "change_pct": 3.67,
+          "currency": "KRW"
+        },
+        {
+          "source": "stock_cn",
+          "region": "A股",
+          "name": "科创50",
+          "symbol": "000688",
+          "price": 1485.87,
+          "change_pct": 0.85,
+          "currency": "CNY"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "欧股",
+          "name": "法国CAC40",
+          "symbol": "^FCHI",
+          "price": 8614.36,
+          "change_pct": 0.65,
+          "currency": "EUR"
+        },
+        {
+          "source": "stock_cn",
+          "region": "A股",
+          "name": "中证500",
+          "symbol": "000905",
+          "price": 8557.22,
+          "change_pct": 0.35,
+          "currency": "CNY"
+        }
+      ],
+      "top_losers": [
+        {
+          "source": "yahoo_finance",
+          "region": "美股",
+          "name": "纳斯达克综合",
+          "symbol": "^IXIC",
+          "price": 22736.53,
+          "change_pct": -1.79,
+          "currency": "USD"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "港股",
+          "name": "恒生指数",
+          "symbol": "^HSI",
+          "price": 26381.02,
+          "change_pct": -1.44,
+          "currency": "HKD"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "美股",
+          "name": "标普500",
+          "symbol": "^GSPC",
+          "price": 6872.24,
+          "change_pct": -1.06,
+          "currency": "USD"
+        },
+        {
+          "source": "yahoo_finance",
+          "region": "美股",
+          "name": "道琼斯工业指数",
+          "symbol": "^DJI",
+          "price": 49284.06,
+          "change_pct": -0.4,
+          "currency": "USD"
+        },
+        {
+          "source": "stock_cn",
+          "region": "A股",
+          "name": "创业板指",
+          "symbol": "399006",
+          "price": 3344.98,
+          "change_pct": -0.29,
+          "currency": "CNY"
+        }
+      ],
+      "timestamp": "2026-02-26T23:30:35.185876+08:00"
+    }
+  },
+  "errors": []
+}

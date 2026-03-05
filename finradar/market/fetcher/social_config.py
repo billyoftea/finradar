@@ -18,7 +18,7 @@ class TwitterConfig:
     enabled: bool = True
     nitter_instance: str = "http://localhost:8080"
     accounts: Dict[str, List[str]] = field(default_factory=dict)
-    max_tweets_per_user: int = 10
+    max_tweets_per_user: int = 0  # 0=不限制
     max_age_hours: int = 12  # 最大推文年龄（小时），配合12小时抓取周期，0=不限制
     timeout: int = 15
     follow_concurrency: int = 1
@@ -97,14 +97,14 @@ class WechatConfig:
     timeout: int = 30
     auth_key: str = ""  # API 认证密钥
     accounts: Dict[str, List[str]] = field(default_factory=dict)
-    max_articles_per_account: int = 20
+    max_articles_per_account: int = 0  # 0=不限制（按时间窗口分页抓取）
     max_age_hours: int = 12  # 最大文章年龄（小时），配合12小时抓取周期，0=不限制
     fetch_content: bool = False  # 是否抓取文章全文内容
     content_delay: float = 0.5  # 抓取全文之间的延迟（秒）
     
     # 热门文章配置
     fetch_hot_articles: bool = True
-    hot_max_results: int = 30
+    hot_max_results: int = 0  # 0=不限制
     hot_hours_ago: int = 48
     hot_categories: List[str] = field(default_factory=list)
     login_reminder_days: int = 4  # 登录提醒阈值（天）
@@ -184,7 +184,7 @@ class SocialSourceConfig:
                 enabled=self._env_bool("ENABLE_TWITTER", config_enabled),
                 nitter_instance=os.environ.get("NITTER_INSTANCE", config_instance),
                 accounts=twitter_config.get("accounts", {}),
-                max_tweets_per_user=twitter_config.get("max_tweets_per_user", 10),
+                max_tweets_per_user=twitter_config.get("max_tweets_per_user", 0),
                 max_age_hours=twitter_config.get("max_age_hours", 12),
                 timeout=twitter_config.get("timeout", 15),
                 follow_concurrency=twitter_config.get("follow_concurrency", 1),
@@ -245,12 +245,12 @@ class SocialSourceConfig:
                 timeout=wechat_config.get("timeout", 30),
                 auth_key=os.environ.get("WECHAT_AUTH_KEY", config_auth_key),
                 accounts=wechat_config.get("accounts", {}),
-                max_articles_per_account=wechat_config.get("max_articles_per_account", 20),
+                max_articles_per_account=wechat_config.get("max_articles_per_account", 0),
                 max_age_hours=wechat_config.get("max_age_hours", 24),
                 fetch_content=wechat_config.get("fetch_content", False),
                 content_delay=wechat_config.get("content_delay", 0.5),
                 fetch_hot_articles=wechat_config.get("fetch_hot_articles", True),
-                hot_max_results=wechat_config.get("hot_max_results", 30),
+                hot_max_results=wechat_config.get("hot_max_results", 0),
                 hot_hours_ago=wechat_config.get("hot_hours_ago", 48),
                 hot_categories=wechat_config.get("hot_categories", []),
                 login_reminder_days=reminder_days,

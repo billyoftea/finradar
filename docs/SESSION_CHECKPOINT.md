@@ -804,3 +804,1058 @@ ebee66e docs(process): checkpoint after auto-commit safety update
 eddef6d feat(process): add safe auto-commit helper with checkpoint logging
 ```
 
+## 2026-02-25 20:13:16 CST
+- 分支: `main`
+- 最新提交: `28ecd90`
+- 当前意图: 生成20260225 auto 报告（with-ai）
+- 下一步: 查看 output/report 结果并持续优化分板块结构与时效过滤规则
+- 工作区状态:
+```
+ M README.local.md
+ M index.html
+ M output/html/latest/current.html
+ M output/index.html
+ M output/market/market_data_20260225.json
+ M output/market/market_data_20260225_evening.json
+ M output/market/market_report_20260225.txt
+ M output/market/market_report_20260225_evening.txt
+ M output/news/2026-02-25.db
+ M output/rss/2026-02-25.db
+ M output/twitter/follow_cache.json
+ M scripts/generate_report.py
+ M scripts/local.sh
+ M scripts/push_to_notion.py
+?? output/debug/test_new_report_20260225_morning.md
+?? output/debug/test_new_report_20260225_morning_v2.md
+?? output/html/2026-02-25/20-02.html
+?? output/report/daily_20260225_evening.md
+?? output/report/next_track_history.jsonl
+?? output/report/next_track_state.json
+?? output/state/
+?? output/twitter/report_used_tweets.jsonl
+```
+- 最近提交:
+```
+28ecd90 1
+3971735 chore(twitter): remove public nitter instance references
+b79ff84 feat(market): integrate Yahoo Finance global stock overview
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+```
+
+## 2026-02-26 19:09:57 CST
+- 分支: `main`
+- 最新提交: `28ecd90`
+- 当前意图: 生成20260226 evening 报告（with-ai）
+- 下一步: 查看 output/report 结果并持续优化分板块结构与时效过滤规则
+- 工作区状态:
+```
+ M README.local.md
+ M config/config.yaml
+ M docs/SESSION_CHECKPOINT.md
+ M finradar/market/fetcher/github.py
+ M finradar/market/fetcher/nitter_rss.py
+ M finradar/market/fetcher/social_config.py
+ M finradar/market/fetcher/wechat_article.py
+ M finradar/market/tracker.py
+ M index.html
+ M output/html/latest/current.html
+ M output/index.html
+ M output/market/market_data_20260225.json
+ M output/market/market_data_20260225_evening.json
+ M output/market/market_report_20260225.txt
+ M output/market/market_report_20260225_evening.txt
+ M output/news/2026-02-25.db
+ M output/rss/2026-02-25.db
+ M output/twitter/follow_cache.json
+ M scripts/generate_report.py
+ M scripts/local.sh
+ M scripts/push_to_notion.py
+?? output/debug/test_new_report_20260225_morning.md
+?? output/debug/test_new_report_20260225_morning_v2.md
+?? output/debug/test_report_20260225_evening_ai.md
+?? output/debug/test_report_20260225_evening_ai_v2.md
+?? output/debug/test_report_20260225_evening_ai_v3.md
+?? output/debug/test_report_20260225_evening_ai_v4.md
+?? output/debug/test_report_20260225_evening_ai_v5.md
+?? output/debug/test_report_20260225_evening_noai.md
+?? output/debug/test_report_20260226_morning_ai_v6.md
+?? output/html/2026-02-25/20-02.html
+?? output/html/2026-02-25/20-32.html
+?? output/html/2026-02-25/21-02.html
+?? output/html/2026-02-25/21-32.html
+?? output/html/2026-02-25/22-02.html
+?? output/html/2026-02-25/22-32.html
+?? output/html/2026-02-25/23-01.html
+?? output/html/2026-02-25/23-31.html
+?? output/html/2026-02-26/
+?? output/market/market_data_20260226.json
+?? output/market/market_data_20260226_evening.json
+?? output/market/market_data_20260226_morning.json
+?? output/market/market_report_20260226.txt
+?? output/market/market_report_20260226_evening.txt
+?? output/market/market_report_20260226_morning.txt
+?? output/news/2026-02-26.db
+?? output/report/daily_20260225_evening.md
+?? output/report/daily_20260226_evening.md
+?? output/report/daily_20260226_morning.md
+?? output/report/next_track_history.jsonl
+?? output/report/next_track_state.json
+?? output/rss/2026-02-26.db
+?? output/state/
+?? output/twitter/report_used_tweets.jsonl
+?? "\345\267\245\344\275\234\346\265\201.md"
+?? "\346\250\241\346\235\277.md"
+```
+- 最近提交:
+```
+28ecd90 1
+3971735 chore(twitter): remove public nitter instance references
+b79ff84 feat(market): integrate Yahoo Finance global stock overview
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+```
+
+## 2026-02-27 10:14:11 CST
+- 分支: `main`
+- 最新提交: `28ecd90`
+- 当前意图: 生成20260227 morning 报告（with-ai）
+- 下一步: 查看 output/report 结果并持续优化分板块结构与时效过滤规则
+- 工作区状态:
+```
+ M README.local.md
+ M config/config.yaml
+ M docs/SESSION_CHECKPOINT.md
+ M finradar/market/fetcher/github.py
+ M finradar/market/fetcher/nitter_rss.py
+ M finradar/market/fetcher/social_config.py
+ M finradar/market/fetcher/wechat_article.py
+ M finradar/market/tracker.py
+ M index.html
+ M output/html/latest/current.html
+ M output/index.html
+ M output/market/market_data_20260225.json
+ M output/market/market_data_20260225_evening.json
+ M output/market/market_report_20260225.txt
+ M output/market/market_report_20260225_evening.txt
+ M output/news/2026-02-25.db
+ M output/rss/2026-02-25.db
+ M output/twitter/follow_cache.json
+ M scripts/generate_report.py
+ M scripts/local.sh
+ M scripts/push_to_notion.py
+?? output/debug/test_new_report_20260225_morning.md
+?? output/debug/test_new_report_20260225_morning_v2.md
+?? output/debug/test_report_20260225_evening_ai.md
+?? output/debug/test_report_20260225_evening_ai_v2.md
+?? output/debug/test_report_20260225_evening_ai_v3.md
+?? output/debug/test_report_20260225_evening_ai_v4.md
+?? output/debug/test_report_20260225_evening_ai_v5.md
+?? output/debug/test_report_20260225_evening_noai.md
+?? output/debug/test_report_20260226_morning_ai_v6.md
+?? output/html/2026-02-25/20-02.html
+?? output/html/2026-02-25/20-32.html
+?? output/html/2026-02-25/21-02.html
+?? output/html/2026-02-25/21-32.html
+?? output/html/2026-02-25/22-02.html
+?? output/html/2026-02-25/22-32.html
+?? output/html/2026-02-25/23-01.html
+?? output/html/2026-02-25/23-31.html
+?? output/html/2026-02-26/
+?? output/html/2026-02-27/
+?? output/market/market_data_20260226.json
+?? output/market/market_data_20260226_evening.json
+?? output/market/market_data_20260226_morning.json
+?? output/market/market_data_20260227.json
+?? output/market/market_data_20260227_morning.json
+?? output/market/market_report_20260226.txt
+?? output/market/market_report_20260226_evening.txt
+?? output/market/market_report_20260226_morning.txt
+?? output/market/market_report_20260227.txt
+?? output/market/market_report_20260227_morning.txt
+?? output/news/2026-02-26.db
+?? output/news/2026-02-27.db
+?? output/report/daily_20260225_evening.md
+?? output/report/daily_20260226_evening.md
+?? output/report/daily_20260226_morning.md
+?? output/report/daily_20260227_morning.md
+?? output/report/next_track_history.jsonl
+?? output/report/next_track_state.json
+?? output/rss/2026-02-26.db
+?? output/rss/2026-02-27.db
+?? output/state/
+?? output/twitter/report_used_tweets.jsonl
+?? "\345\267\245\344\275\234\346\265\201.md"
+?? "\346\250\241\346\235\277.md"
+```
+- 最近提交:
+```
+28ecd90 1
+3971735 chore(twitter): remove public nitter instance references
+b79ff84 feat(market): integrate Yahoo Finance global stock overview
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+```
+
+## 2026-02-27 10:55:06 CST
+- 分支: `main`
+- 最新提交: `28ecd90`
+- 当前意图: 生成20260227 morning 报告（with-ai）
+- 下一步: 查看 output/report 结果并持续优化分板块结构与时效过滤规则
+- 工作区状态:
+```
+ M README.local.md
+ M config/config.yaml
+ M docs/SESSION_CHECKPOINT.md
+ D finradar/__pycache__/__init__.cpython-312.pyc
+ D finradar/__pycache__/__main__.cpython-312.pyc
+ D finradar/__pycache__/context.cpython-312.pyc
+ D finradar/ai/__pycache__/__init__.cpython-312.pyc
+ D finradar/ai/__pycache__/analyzer.cpython-312.pyc
+ D finradar/ai/__pycache__/client.cpython-312.pyc
+ D finradar/ai/__pycache__/formatter.cpython-312.pyc
+ D finradar/ai/__pycache__/translator.cpython-312.pyc
+ D finradar/core/__pycache__/__init__.cpython-312.pyc
+ D finradar/core/__pycache__/analyzer.cpython-312.pyc
+ D finradar/core/__pycache__/config.cpython-312.pyc
+ D finradar/core/__pycache__/data.cpython-312.pyc
+ D finradar/core/__pycache__/frequency.cpython-312.pyc
+ D finradar/core/__pycache__/loader.cpython-312.pyc
+ D finradar/crawler/__pycache__/__init__.cpython-312.pyc
+ D finradar/crawler/__pycache__/fetcher.cpython-312.pyc
+ D finradar/market/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/__pycache__/tracker.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/crypto.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/futures.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/github.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/nitter_rss.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/precious_metal.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/social_config.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/stock_cn.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/twitter.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/wechat_article.cpython-312.pyc
+ M finradar/market/fetcher/github.py
+ M finradar/market/fetcher/nitter_rss.py
+ M finradar/market/fetcher/social_config.py
+ M finradar/market/fetcher/stock_cn.py
+ M finradar/market/fetcher/wechat_article.py
+ D finradar/market/models/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/models/__pycache__/market_data.cpython-312.pyc
+ M finradar/market/tracker.py
+ D finradar/notification/__pycache__/__init__.cpython-312.pyc
+ D finradar/notification/__pycache__/batch.cpython-312.pyc
+ D finradar/notification/__pycache__/dispatcher.cpython-312.pyc
+ D finradar/notification/__pycache__/formatters.cpython-312.pyc
+ D finradar/notification/__pycache__/push_manager.cpython-312.pyc
+ D finradar/notification/__pycache__/renderer.cpython-312.pyc
+ D finradar/notification/__pycache__/senders.cpython-312.pyc
+ D finradar/notification/__pycache__/splitter.cpython-312.pyc
+ D finradar/report/__pycache__/__init__.cpython-312.pyc
+ D finradar/report/__pycache__/formatter.cpython-312.pyc
+ D finradar/report/__pycache__/generator.cpython-312.pyc
+ D finradar/report/__pycache__/helpers.cpython-312.pyc
+ D finradar/report/__pycache__/html.cpython-312.pyc
+ D finradar/storage/__pycache__/__init__.cpython-312.pyc
+ D finradar/storage/__pycache__/base.cpython-312.pyc
+ D finradar/storage/__pycache__/local.cpython-312.pyc
+ D finradar/storage/__pycache__/manager.cpython-312.pyc
+ D finradar/storage/__pycache__/remote.cpython-312.pyc
+ D finradar/storage/__pycache__/sqlite_mixin.cpython-312.pyc
+ D finradar/utils/__pycache__/__init__.cpython-312.pyc
+ D finradar/utils/__pycache__/time.cpython-312.pyc
+ D finradar/utils/__pycache__/url.cpython-312.pyc
+ M index.html
+ D mcp_server/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/__pycache__/server.cpython-312.pyc
+ D mcp_server/services/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/services/__pycache__/cache_service.cpython-312.pyc
+ D mcp_server/services/__pycache__/data_service.cpython-312.pyc
+ D mcp_server/services/__pycache__/parser_service.cpython-312.pyc
+ D mcp_server/tools/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/tools/__pycache__/analytics.cpython-312.pyc
+ D mcp_server/tools/__pycache__/config_mgmt.cpython-312.pyc
+ D mcp_server/tools/__pycache__/data_query.cpython-312.pyc
+ D mcp_server/tools/__pycache__/search_tools.cpython-312.pyc
+ D mcp_server/tools/__pycache__/storage_sync.cpython-312.pyc
+ D mcp_server/tools/__pycache__/system.cpython-312.pyc
+ D mcp_server/utils/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/utils/__pycache__/date_parser.cpython-312.pyc
+ D mcp_server/utils/__pycache__/errors.cpython-312.pyc
+ D mcp_server/utils/__pycache__/validators.cpython-312.pyc
+ D output/debug/test_follow_cache.json
+ D output/debug/twitter_account_health_full.json
+ D output/debug/twitter_brief_output_20260225_070933.md
+ D output/debug/twitter_fetch_20260225_060603.json
+ D output/debug/twitter_fetch_20260225_060603.md
+ D output/debug/twitter_fetch_20260225_070933.json
+ D output/debug/twitter_fetch_20260225_151602.json
+ D output/debug/twitter_fetch_20260225_151602.md
+ D output/debug/twitter_fetch_20260225_152228.json
+ D output/debug/twitter_fetch_20260225_152331.json
+ D output/debug/twitter_fetch_20260225_153839.json
+ D output/debug/twitter_fetch_20260225_153941.json
+ D output/debug/twitter_fetch_20260225_154313.json
+ D output/debug/twitter_fetch_live_20260225_090836.json
+ D output/debug/twitter_fetch_live_20260225_090836.md
+ D output/debug/twitter_io_bundle_20260225_070933.md
+ D output/debug/twitter_io_bundle_20260225_151602.md
+ D output/debug/twitter_missing_accounts_20260225_evening.json
+ D output/debug/twitter_missing_accounts_live_probe_20260225_evening.json
+ D output/debug/twitter_output_20260225_151602.md
+ D output/debug/twitter_profile_probe_slow.json
+ D output/debug/twitter_prompt_20260225_070933.md
+ D output/debug/twitter_prompt_20260225_151602.md
+ D output/debug/twitter_replacement_probe_20260225_085910.json
+ D output/debug/twitter_replacement_probe_20260225_085948.json
+ M output/html/latest/current.html
+ M output/index.html
+ M output/market/market_data_20260225.json
+ M output/market/market_data_20260225_evening.json
+ M output/market/market_report_20260225.txt
+ M output/market/market_report_20260225_evening.txt
+ M output/news/2026-02-25.db
+ M output/rss/2026-02-25.db
+ M output/twitter/follow_cache.json
+ M scripts/generate_report.py
+ M scripts/local.sh
+ M scripts/push_to_notion.py
+?? output/html/2026-02-25/20-02.html
+?? output/html/2026-02-25/20-32.html
+?? output/html/2026-02-25/21-02.html
+?? output/html/2026-02-25/21-32.html
+?? output/html/2026-02-25/22-02.html
+?? output/html/2026-02-25/22-32.html
+?? output/html/2026-02-25/23-01.html
+?? output/html/2026-02-25/23-31.html
+?? output/html/2026-02-26/
+?? output/html/2026-02-27/
+?? output/market/market_data_20260226.json
+?? output/market/market_data_20260226_evening.json
+?? output/market/market_data_20260226_morning.json
+?? output/market/market_data_20260227.json
+?? output/market/market_data_20260227_morning.json
+?? output/market/market_report_20260226.txt
+?? output/market/market_report_20260226_evening.txt
+?? output/market/market_report_20260226_morning.txt
+?? output/market/market_report_20260227.txt
+?? output/market/market_report_20260227_morning.txt
+?? output/news/2026-02-26.db
+?? output/news/2026-02-27.db
+?? output/report/daily_20260225_evening.md
+?? output/report/daily_20260226_evening.md
+?? output/report/daily_20260226_morning.md
+?? output/report/daily_20260227_morning.md
+?? output/report/next_track_history.jsonl
+?? output/report/next_track_state.json
+?? output/rss/2026-02-26.db
+?? output/rss/2026-02-27.db
+?? output/state/
+?? output/twitter/report_used_tweets.jsonl
+?? "\345\267\245\344\275\234\346\265\201.md"
+?? "\346\250\241\346\235\277.md"
+```
+- 最近提交:
+```
+28ecd90 1
+3971735 chore(twitter): remove public nitter instance references
+b79ff84 feat(market): integrate Yahoo Finance global stock overview
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+```
+
+## 2026-02-27 11:05:59 CST
+- 分支: `main`
+- 最新提交: `28ecd90`
+- 当前意图: 生成20260227 morning 报告（with-ai）
+- 下一步: 查看 output/report 结果并持续优化分板块结构与时效过滤规则
+- 工作区状态:
+```
+ M README.local.md
+ M config/config.yaml
+ M docs/SESSION_CHECKPOINT.md
+ D finradar/__pycache__/__init__.cpython-312.pyc
+ D finradar/__pycache__/__main__.cpython-312.pyc
+ D finradar/__pycache__/context.cpython-312.pyc
+ D finradar/ai/__pycache__/__init__.cpython-312.pyc
+ D finradar/ai/__pycache__/analyzer.cpython-312.pyc
+ D finradar/ai/__pycache__/client.cpython-312.pyc
+ D finradar/ai/__pycache__/formatter.cpython-312.pyc
+ D finradar/ai/__pycache__/translator.cpython-312.pyc
+ D finradar/core/__pycache__/__init__.cpython-312.pyc
+ D finradar/core/__pycache__/analyzer.cpython-312.pyc
+ D finradar/core/__pycache__/config.cpython-312.pyc
+ D finradar/core/__pycache__/data.cpython-312.pyc
+ D finradar/core/__pycache__/frequency.cpython-312.pyc
+ D finradar/core/__pycache__/loader.cpython-312.pyc
+ D finradar/crawler/__pycache__/__init__.cpython-312.pyc
+ D finradar/crawler/__pycache__/fetcher.cpython-312.pyc
+ D finradar/market/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/__pycache__/tracker.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/crypto.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/futures.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/github.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/nitter_rss.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/precious_metal.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/social_config.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/stock_cn.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/twitter.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/wechat_article.cpython-312.pyc
+ M finradar/market/fetcher/github.py
+ M finradar/market/fetcher/nitter_rss.py
+ M finradar/market/fetcher/social_config.py
+ M finradar/market/fetcher/stock_cn.py
+ M finradar/market/fetcher/wechat_article.py
+ D finradar/market/models/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/models/__pycache__/market_data.cpython-312.pyc
+ M finradar/market/tracker.py
+ D finradar/notification/__pycache__/__init__.cpython-312.pyc
+ D finradar/notification/__pycache__/batch.cpython-312.pyc
+ D finradar/notification/__pycache__/dispatcher.cpython-312.pyc
+ D finradar/notification/__pycache__/formatters.cpython-312.pyc
+ D finradar/notification/__pycache__/push_manager.cpython-312.pyc
+ D finradar/notification/__pycache__/renderer.cpython-312.pyc
+ D finradar/notification/__pycache__/senders.cpython-312.pyc
+ D finradar/notification/__pycache__/splitter.cpython-312.pyc
+ D finradar/report/__pycache__/__init__.cpython-312.pyc
+ D finradar/report/__pycache__/formatter.cpython-312.pyc
+ D finradar/report/__pycache__/generator.cpython-312.pyc
+ D finradar/report/__pycache__/helpers.cpython-312.pyc
+ D finradar/report/__pycache__/html.cpython-312.pyc
+ D finradar/storage/__pycache__/__init__.cpython-312.pyc
+ D finradar/storage/__pycache__/base.cpython-312.pyc
+ D finradar/storage/__pycache__/local.cpython-312.pyc
+ D finradar/storage/__pycache__/manager.cpython-312.pyc
+ D finradar/storage/__pycache__/remote.cpython-312.pyc
+ D finradar/storage/__pycache__/sqlite_mixin.cpython-312.pyc
+ D finradar/utils/__pycache__/__init__.cpython-312.pyc
+ D finradar/utils/__pycache__/time.cpython-312.pyc
+ D finradar/utils/__pycache__/url.cpython-312.pyc
+ M index.html
+ D mcp_server/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/__pycache__/server.cpython-312.pyc
+ D mcp_server/services/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/services/__pycache__/cache_service.cpython-312.pyc
+ D mcp_server/services/__pycache__/data_service.cpython-312.pyc
+ D mcp_server/services/__pycache__/parser_service.cpython-312.pyc
+ D mcp_server/tools/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/tools/__pycache__/analytics.cpython-312.pyc
+ D mcp_server/tools/__pycache__/config_mgmt.cpython-312.pyc
+ D mcp_server/tools/__pycache__/data_query.cpython-312.pyc
+ D mcp_server/tools/__pycache__/search_tools.cpython-312.pyc
+ D mcp_server/tools/__pycache__/storage_sync.cpython-312.pyc
+ D mcp_server/tools/__pycache__/system.cpython-312.pyc
+ D mcp_server/utils/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/utils/__pycache__/date_parser.cpython-312.pyc
+ D mcp_server/utils/__pycache__/errors.cpython-312.pyc
+ D mcp_server/utils/__pycache__/validators.cpython-312.pyc
+ D output/debug/test_follow_cache.json
+ D output/debug/twitter_account_health_full.json
+ D output/debug/twitter_brief_output_20260225_070933.md
+ D output/debug/twitter_fetch_20260225_060603.json
+ D output/debug/twitter_fetch_20260225_060603.md
+ D output/debug/twitter_fetch_20260225_070933.json
+ D output/debug/twitter_fetch_20260225_151602.json
+ D output/debug/twitter_fetch_20260225_151602.md
+ D output/debug/twitter_fetch_20260225_152228.json
+ D output/debug/twitter_fetch_20260225_152331.json
+ D output/debug/twitter_fetch_20260225_153839.json
+ D output/debug/twitter_fetch_20260225_153941.json
+ D output/debug/twitter_fetch_20260225_154313.json
+ D output/debug/twitter_fetch_live_20260225_090836.json
+ D output/debug/twitter_fetch_live_20260225_090836.md
+ D output/debug/twitter_io_bundle_20260225_070933.md
+ D output/debug/twitter_io_bundle_20260225_151602.md
+ D output/debug/twitter_missing_accounts_20260225_evening.json
+ D output/debug/twitter_missing_accounts_live_probe_20260225_evening.json
+ D output/debug/twitter_output_20260225_151602.md
+ D output/debug/twitter_profile_probe_slow.json
+ D output/debug/twitter_prompt_20260225_070933.md
+ D output/debug/twitter_prompt_20260225_151602.md
+ D output/debug/twitter_replacement_probe_20260225_085910.json
+ D output/debug/twitter_replacement_probe_20260225_085948.json
+ M output/html/latest/current.html
+ M output/index.html
+ M output/market/market_data_20260225.json
+ M output/market/market_data_20260225_evening.json
+ M output/market/market_report_20260225.txt
+ M output/market/market_report_20260225_evening.txt
+ M output/news/2026-02-25.db
+ M output/rss/2026-02-25.db
+ M output/twitter/follow_cache.json
+ M scripts/generate_report.py
+ M scripts/local.sh
+ M scripts/push_to_notion.py
+?? output/html/2026-02-25/20-02.html
+?? output/html/2026-02-25/20-32.html
+?? output/html/2026-02-25/21-02.html
+?? output/html/2026-02-25/21-32.html
+?? output/html/2026-02-25/22-02.html
+?? output/html/2026-02-25/22-32.html
+?? output/html/2026-02-25/23-01.html
+?? output/html/2026-02-25/23-31.html
+?? output/html/2026-02-26/
+?? output/html/2026-02-27/
+?? output/market/market_data_20260226.json
+?? output/market/market_data_20260226_evening.json
+?? output/market/market_data_20260226_morning.json
+?? output/market/market_data_20260227.json
+?? output/market/market_data_20260227_morning.json
+?? output/market/market_report_20260226.txt
+?? output/market/market_report_20260226_evening.txt
+?? output/market/market_report_20260226_morning.txt
+?? output/market/market_report_20260227.txt
+?? output/market/market_report_20260227_morning.txt
+?? output/news/2026-02-26.db
+?? output/news/2026-02-27.db
+?? output/report/daily_20260225_evening.md
+?? output/report/daily_20260226_evening.md
+?? output/report/daily_20260226_morning.md
+?? output/report/daily_20260227_morning.md
+?? output/report/next_track_history.jsonl
+?? output/report/next_track_state.json
+?? output/rss/2026-02-26.db
+?? output/rss/2026-02-27.db
+?? output/state/
+?? output/twitter/report_used_tweets.jsonl
+?? "\345\267\245\344\275\234\346\265\201.md"
+?? "\346\250\241\346\235\277.md"
+```
+- 最近提交:
+```
+28ecd90 1
+3971735 chore(twitter): remove public nitter instance references
+b79ff84 feat(market): integrate Yahoo Finance global stock overview
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+```
+
+## 2026-02-27 11:13:42 CST
+- 分支: `main`
+- 最新提交: `28ecd90`
+- 当前意图: 生成20260227 morning 报告（with-ai）
+- 下一步: 查看 output/report 结果并持续优化分板块结构与时效过滤规则
+- 工作区状态:
+```
+ M README.local.md
+ M config/config.yaml
+ M docs/SESSION_CHECKPOINT.md
+ D finradar/__pycache__/__init__.cpython-312.pyc
+ D finradar/__pycache__/__main__.cpython-312.pyc
+ D finradar/__pycache__/context.cpython-312.pyc
+ D finradar/ai/__pycache__/__init__.cpython-312.pyc
+ D finradar/ai/__pycache__/analyzer.cpython-312.pyc
+ D finradar/ai/__pycache__/client.cpython-312.pyc
+ D finradar/ai/__pycache__/formatter.cpython-312.pyc
+ D finradar/ai/__pycache__/translator.cpython-312.pyc
+ D finradar/core/__pycache__/__init__.cpython-312.pyc
+ D finradar/core/__pycache__/analyzer.cpython-312.pyc
+ D finradar/core/__pycache__/config.cpython-312.pyc
+ D finradar/core/__pycache__/data.cpython-312.pyc
+ D finradar/core/__pycache__/frequency.cpython-312.pyc
+ D finradar/core/__pycache__/loader.cpython-312.pyc
+ D finradar/crawler/__pycache__/__init__.cpython-312.pyc
+ D finradar/crawler/__pycache__/fetcher.cpython-312.pyc
+ D finradar/market/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/__pycache__/tracker.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/crypto.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/futures.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/github.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/nitter_rss.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/precious_metal.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/social_config.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/stock_cn.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/twitter.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/wechat_article.cpython-312.pyc
+ M finradar/market/fetcher/github.py
+ M finradar/market/fetcher/nitter_rss.py
+ M finradar/market/fetcher/social_config.py
+ M finradar/market/fetcher/stock_cn.py
+ M finradar/market/fetcher/wechat_article.py
+ D finradar/market/models/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/models/__pycache__/market_data.cpython-312.pyc
+ M finradar/market/tracker.py
+ D finradar/notification/__pycache__/__init__.cpython-312.pyc
+ D finradar/notification/__pycache__/batch.cpython-312.pyc
+ D finradar/notification/__pycache__/dispatcher.cpython-312.pyc
+ D finradar/notification/__pycache__/formatters.cpython-312.pyc
+ D finradar/notification/__pycache__/push_manager.cpython-312.pyc
+ D finradar/notification/__pycache__/renderer.cpython-312.pyc
+ D finradar/notification/__pycache__/senders.cpython-312.pyc
+ D finradar/notification/__pycache__/splitter.cpython-312.pyc
+ D finradar/report/__pycache__/__init__.cpython-312.pyc
+ D finradar/report/__pycache__/formatter.cpython-312.pyc
+ D finradar/report/__pycache__/generator.cpython-312.pyc
+ D finradar/report/__pycache__/helpers.cpython-312.pyc
+ D finradar/report/__pycache__/html.cpython-312.pyc
+ D finradar/storage/__pycache__/__init__.cpython-312.pyc
+ D finradar/storage/__pycache__/base.cpython-312.pyc
+ D finradar/storage/__pycache__/local.cpython-312.pyc
+ D finradar/storage/__pycache__/manager.cpython-312.pyc
+ D finradar/storage/__pycache__/remote.cpython-312.pyc
+ D finradar/storage/__pycache__/sqlite_mixin.cpython-312.pyc
+ D finradar/utils/__pycache__/__init__.cpython-312.pyc
+ D finradar/utils/__pycache__/time.cpython-312.pyc
+ D finradar/utils/__pycache__/url.cpython-312.pyc
+ M index.html
+ D mcp_server/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/__pycache__/server.cpython-312.pyc
+ D mcp_server/services/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/services/__pycache__/cache_service.cpython-312.pyc
+ D mcp_server/services/__pycache__/data_service.cpython-312.pyc
+ D mcp_server/services/__pycache__/parser_service.cpython-312.pyc
+ D mcp_server/tools/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/tools/__pycache__/analytics.cpython-312.pyc
+ D mcp_server/tools/__pycache__/config_mgmt.cpython-312.pyc
+ D mcp_server/tools/__pycache__/data_query.cpython-312.pyc
+ D mcp_server/tools/__pycache__/search_tools.cpython-312.pyc
+ D mcp_server/tools/__pycache__/storage_sync.cpython-312.pyc
+ D mcp_server/tools/__pycache__/system.cpython-312.pyc
+ D mcp_server/utils/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/utils/__pycache__/date_parser.cpython-312.pyc
+ D mcp_server/utils/__pycache__/errors.cpython-312.pyc
+ D mcp_server/utils/__pycache__/validators.cpython-312.pyc
+ D output/debug/test_follow_cache.json
+ D output/debug/twitter_account_health_full.json
+ D output/debug/twitter_brief_output_20260225_070933.md
+ D output/debug/twitter_fetch_20260225_060603.json
+ D output/debug/twitter_fetch_20260225_060603.md
+ D output/debug/twitter_fetch_20260225_070933.json
+ D output/debug/twitter_fetch_20260225_151602.json
+ D output/debug/twitter_fetch_20260225_151602.md
+ D output/debug/twitter_fetch_20260225_152228.json
+ D output/debug/twitter_fetch_20260225_152331.json
+ D output/debug/twitter_fetch_20260225_153839.json
+ D output/debug/twitter_fetch_20260225_153941.json
+ D output/debug/twitter_fetch_20260225_154313.json
+ D output/debug/twitter_fetch_live_20260225_090836.json
+ D output/debug/twitter_fetch_live_20260225_090836.md
+ D output/debug/twitter_io_bundle_20260225_070933.md
+ D output/debug/twitter_io_bundle_20260225_151602.md
+ D output/debug/twitter_missing_accounts_20260225_evening.json
+ D output/debug/twitter_missing_accounts_live_probe_20260225_evening.json
+ D output/debug/twitter_output_20260225_151602.md
+ D output/debug/twitter_profile_probe_slow.json
+ D output/debug/twitter_prompt_20260225_070933.md
+ D output/debug/twitter_prompt_20260225_151602.md
+ D output/debug/twitter_replacement_probe_20260225_085910.json
+ D output/debug/twitter_replacement_probe_20260225_085948.json
+ M output/html/latest/current.html
+ M output/index.html
+ M output/market/market_data_20260225.json
+ M output/market/market_data_20260225_evening.json
+ M output/market/market_report_20260225.txt
+ M output/market/market_report_20260225_evening.txt
+ M output/news/2026-02-25.db
+ M output/rss/2026-02-25.db
+ M output/twitter/follow_cache.json
+ M scripts/generate_report.py
+ M scripts/local.sh
+ M scripts/push_to_notion.py
+?? output/html/2026-02-25/20-02.html
+?? output/html/2026-02-25/20-32.html
+?? output/html/2026-02-25/21-02.html
+?? output/html/2026-02-25/21-32.html
+?? output/html/2026-02-25/22-02.html
+?? output/html/2026-02-25/22-32.html
+?? output/html/2026-02-25/23-01.html
+?? output/html/2026-02-25/23-31.html
+?? output/html/2026-02-26/
+?? output/html/2026-02-27/
+?? output/market/market_data_20260226.json
+?? output/market/market_data_20260226_evening.json
+?? output/market/market_data_20260226_morning.json
+?? output/market/market_data_20260227.json
+?? output/market/market_data_20260227_morning.json
+?? output/market/market_report_20260226.txt
+?? output/market/market_report_20260226_evening.txt
+?? output/market/market_report_20260226_morning.txt
+?? output/market/market_report_20260227.txt
+?? output/market/market_report_20260227_morning.txt
+?? output/news/2026-02-26.db
+?? output/news/2026-02-27.db
+?? output/report/daily_20260225_evening.md
+?? output/report/daily_20260226_evening.md
+?? output/report/daily_20260226_morning.md
+?? output/report/daily_20260227_morning.md
+?? output/report/next_track_history.jsonl
+?? output/report/next_track_state.json
+?? output/rss/2026-02-26.db
+?? output/rss/2026-02-27.db
+?? output/state/
+?? output/twitter/report_used_tweets.jsonl
+?? "\345\267\245\344\275\234\346\265\201.md"
+?? "\346\250\241\346\235\277.md"
+```
+- 最近提交:
+```
+28ecd90 1
+3971735 chore(twitter): remove public nitter instance references
+b79ff84 feat(market): integrate Yahoo Finance global stock overview
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+```
+
+## 2026-02-27 11:21:19 CST
+- 分支: `main`
+- 最新提交: `28ecd90`
+- 当前意图: 生成20260227 morning 报告（with-ai）
+- 下一步: 查看 output/report 结果并持续优化分板块结构与时效过滤规则
+- 工作区状态:
+```
+ M README.local.md
+ M config/config.yaml
+ M docs/SESSION_CHECKPOINT.md
+ D finradar/__pycache__/__init__.cpython-312.pyc
+ D finradar/__pycache__/__main__.cpython-312.pyc
+ D finradar/__pycache__/context.cpython-312.pyc
+ D finradar/ai/__pycache__/__init__.cpython-312.pyc
+ D finradar/ai/__pycache__/analyzer.cpython-312.pyc
+ D finradar/ai/__pycache__/client.cpython-312.pyc
+ D finradar/ai/__pycache__/formatter.cpython-312.pyc
+ D finradar/ai/__pycache__/translator.cpython-312.pyc
+ D finradar/core/__pycache__/__init__.cpython-312.pyc
+ D finradar/core/__pycache__/analyzer.cpython-312.pyc
+ D finradar/core/__pycache__/config.cpython-312.pyc
+ D finradar/core/__pycache__/data.cpython-312.pyc
+ D finradar/core/__pycache__/frequency.cpython-312.pyc
+ D finradar/core/__pycache__/loader.cpython-312.pyc
+ D finradar/crawler/__pycache__/__init__.cpython-312.pyc
+ D finradar/crawler/__pycache__/fetcher.cpython-312.pyc
+ D finradar/market/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/__pycache__/tracker.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/crypto.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/futures.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/github.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/nitter_rss.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/precious_metal.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/social_config.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/stock_cn.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/twitter.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/wechat_article.cpython-312.pyc
+ M finradar/market/fetcher/github.py
+ M finradar/market/fetcher/nitter_rss.py
+ M finradar/market/fetcher/social_config.py
+ M finradar/market/fetcher/stock_cn.py
+ M finradar/market/fetcher/wechat_article.py
+ D finradar/market/models/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/models/__pycache__/market_data.cpython-312.pyc
+ M finradar/market/tracker.py
+ D finradar/notification/__pycache__/__init__.cpython-312.pyc
+ D finradar/notification/__pycache__/batch.cpython-312.pyc
+ D finradar/notification/__pycache__/dispatcher.cpython-312.pyc
+ D finradar/notification/__pycache__/formatters.cpython-312.pyc
+ D finradar/notification/__pycache__/push_manager.cpython-312.pyc
+ D finradar/notification/__pycache__/renderer.cpython-312.pyc
+ D finradar/notification/__pycache__/senders.cpython-312.pyc
+ D finradar/notification/__pycache__/splitter.cpython-312.pyc
+ D finradar/report/__pycache__/__init__.cpython-312.pyc
+ D finradar/report/__pycache__/formatter.cpython-312.pyc
+ D finradar/report/__pycache__/generator.cpython-312.pyc
+ D finradar/report/__pycache__/helpers.cpython-312.pyc
+ D finradar/report/__pycache__/html.cpython-312.pyc
+ D finradar/storage/__pycache__/__init__.cpython-312.pyc
+ D finradar/storage/__pycache__/base.cpython-312.pyc
+ D finradar/storage/__pycache__/local.cpython-312.pyc
+ D finradar/storage/__pycache__/manager.cpython-312.pyc
+ D finradar/storage/__pycache__/remote.cpython-312.pyc
+ D finradar/storage/__pycache__/sqlite_mixin.cpython-312.pyc
+ D finradar/utils/__pycache__/__init__.cpython-312.pyc
+ D finradar/utils/__pycache__/time.cpython-312.pyc
+ D finradar/utils/__pycache__/url.cpython-312.pyc
+ M index.html
+ D mcp_server/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/__pycache__/server.cpython-312.pyc
+ D mcp_server/services/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/services/__pycache__/cache_service.cpython-312.pyc
+ D mcp_server/services/__pycache__/data_service.cpython-312.pyc
+ D mcp_server/services/__pycache__/parser_service.cpython-312.pyc
+ D mcp_server/tools/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/tools/__pycache__/analytics.cpython-312.pyc
+ D mcp_server/tools/__pycache__/config_mgmt.cpython-312.pyc
+ D mcp_server/tools/__pycache__/data_query.cpython-312.pyc
+ D mcp_server/tools/__pycache__/search_tools.cpython-312.pyc
+ D mcp_server/tools/__pycache__/storage_sync.cpython-312.pyc
+ D mcp_server/tools/__pycache__/system.cpython-312.pyc
+ D mcp_server/utils/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/utils/__pycache__/date_parser.cpython-312.pyc
+ D mcp_server/utils/__pycache__/errors.cpython-312.pyc
+ D mcp_server/utils/__pycache__/validators.cpython-312.pyc
+ D output/debug/test_follow_cache.json
+ D output/debug/twitter_account_health_full.json
+ D output/debug/twitter_brief_output_20260225_070933.md
+ D output/debug/twitter_fetch_20260225_060603.json
+ D output/debug/twitter_fetch_20260225_060603.md
+ D output/debug/twitter_fetch_20260225_070933.json
+ D output/debug/twitter_fetch_20260225_151602.json
+ D output/debug/twitter_fetch_20260225_151602.md
+ D output/debug/twitter_fetch_20260225_152228.json
+ D output/debug/twitter_fetch_20260225_152331.json
+ D output/debug/twitter_fetch_20260225_153839.json
+ D output/debug/twitter_fetch_20260225_153941.json
+ D output/debug/twitter_fetch_20260225_154313.json
+ D output/debug/twitter_fetch_live_20260225_090836.json
+ D output/debug/twitter_fetch_live_20260225_090836.md
+ D output/debug/twitter_io_bundle_20260225_070933.md
+ D output/debug/twitter_io_bundle_20260225_151602.md
+ D output/debug/twitter_missing_accounts_20260225_evening.json
+ D output/debug/twitter_missing_accounts_live_probe_20260225_evening.json
+ D output/debug/twitter_output_20260225_151602.md
+ D output/debug/twitter_profile_probe_slow.json
+ D output/debug/twitter_prompt_20260225_070933.md
+ D output/debug/twitter_prompt_20260225_151602.md
+ D output/debug/twitter_replacement_probe_20260225_085910.json
+ D output/debug/twitter_replacement_probe_20260225_085948.json
+ M output/html/latest/current.html
+ M output/index.html
+ M output/market/market_data_20260225.json
+ M output/market/market_data_20260225_evening.json
+ M output/market/market_report_20260225.txt
+ M output/market/market_report_20260225_evening.txt
+ M output/news/2026-02-25.db
+ M output/rss/2026-02-25.db
+ M output/twitter/follow_cache.json
+ M scripts/generate_report.py
+ M scripts/local.sh
+ M scripts/push_to_notion.py
+?? output/html/2026-02-25/20-02.html
+?? output/html/2026-02-25/20-32.html
+?? output/html/2026-02-25/21-02.html
+?? output/html/2026-02-25/21-32.html
+?? output/html/2026-02-25/22-02.html
+?? output/html/2026-02-25/22-32.html
+?? output/html/2026-02-25/23-01.html
+?? output/html/2026-02-25/23-31.html
+?? output/html/2026-02-26/
+?? output/html/2026-02-27/
+?? output/market/market_data_20260226.json
+?? output/market/market_data_20260226_evening.json
+?? output/market/market_data_20260226_morning.json
+?? output/market/market_data_20260227.json
+?? output/market/market_data_20260227_morning.json
+?? output/market/market_report_20260226.txt
+?? output/market/market_report_20260226_evening.txt
+?? output/market/market_report_20260226_morning.txt
+?? output/market/market_report_20260227.txt
+?? output/market/market_report_20260227_morning.txt
+?? output/news/2026-02-26.db
+?? output/news/2026-02-27.db
+?? output/report/daily_20260225_evening.md
+?? output/report/daily_20260226_evening.md
+?? output/report/daily_20260226_morning.md
+?? output/report/daily_20260227_morning.md
+?? output/report/next_track_history.jsonl
+?? output/report/next_track_state.json
+?? output/rss/2026-02-26.db
+?? output/rss/2026-02-27.db
+?? output/state/
+?? output/twitter/report_used_tweets.jsonl
+?? "\345\267\245\344\275\234\346\265\201.md"
+?? "\346\250\241\346\235\277.md"
+```
+- 最近提交:
+```
+28ecd90 1
+3971735 chore(twitter): remove public nitter instance references
+b79ff84 feat(market): integrate Yahoo Finance global stock overview
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+```
+
+## 2026-02-27 22:58:03 CST
+- 分支: `main`
+- 最新提交: `28ecd90`
+- 当前意图: 生成20260227 morning 报告（with-ai）
+- 下一步: 查看 output/report 结果并持续优化分板块结构与时效过滤规则
+- 工作区状态:
+```
+ M README.local.md
+ M config/config.yaml
+ M docs/SESSION_CHECKPOINT.md
+ D finradar/__pycache__/__init__.cpython-312.pyc
+ D finradar/__pycache__/__main__.cpython-312.pyc
+ D finradar/__pycache__/context.cpython-312.pyc
+ D finradar/ai/__pycache__/__init__.cpython-312.pyc
+ D finradar/ai/__pycache__/analyzer.cpython-312.pyc
+ D finradar/ai/__pycache__/client.cpython-312.pyc
+ D finradar/ai/__pycache__/formatter.cpython-312.pyc
+ D finradar/ai/__pycache__/translator.cpython-312.pyc
+ D finradar/core/__pycache__/__init__.cpython-312.pyc
+ D finradar/core/__pycache__/analyzer.cpython-312.pyc
+ D finradar/core/__pycache__/config.cpython-312.pyc
+ D finradar/core/__pycache__/data.cpython-312.pyc
+ D finradar/core/__pycache__/frequency.cpython-312.pyc
+ D finradar/core/__pycache__/loader.cpython-312.pyc
+ D finradar/crawler/__pycache__/__init__.cpython-312.pyc
+ D finradar/crawler/__pycache__/fetcher.cpython-312.pyc
+ D finradar/market/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/__pycache__/tracker.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/crypto.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/futures.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/github.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/nitter_rss.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/precious_metal.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/social_config.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/stock_cn.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/twitter.cpython-312.pyc
+ D finradar/market/fetcher/__pycache__/wechat_article.cpython-312.pyc
+ M finradar/market/fetcher/github.py
+ M finradar/market/fetcher/nitter_rss.py
+ M finradar/market/fetcher/social_config.py
+ M finradar/market/fetcher/stock_cn.py
+ M finradar/market/fetcher/wechat_article.py
+ D finradar/market/models/__pycache__/__init__.cpython-312.pyc
+ D finradar/market/models/__pycache__/market_data.cpython-312.pyc
+ M finradar/market/tracker.py
+ D finradar/notification/__pycache__/__init__.cpython-312.pyc
+ D finradar/notification/__pycache__/batch.cpython-312.pyc
+ D finradar/notification/__pycache__/dispatcher.cpython-312.pyc
+ D finradar/notification/__pycache__/formatters.cpython-312.pyc
+ D finradar/notification/__pycache__/push_manager.cpython-312.pyc
+ D finradar/notification/__pycache__/renderer.cpython-312.pyc
+ D finradar/notification/__pycache__/senders.cpython-312.pyc
+ D finradar/notification/__pycache__/splitter.cpython-312.pyc
+ D finradar/report/__pycache__/__init__.cpython-312.pyc
+ D finradar/report/__pycache__/formatter.cpython-312.pyc
+ D finradar/report/__pycache__/generator.cpython-312.pyc
+ D finradar/report/__pycache__/helpers.cpython-312.pyc
+ D finradar/report/__pycache__/html.cpython-312.pyc
+ D finradar/storage/__pycache__/__init__.cpython-312.pyc
+ D finradar/storage/__pycache__/base.cpython-312.pyc
+ D finradar/storage/__pycache__/local.cpython-312.pyc
+ D finradar/storage/__pycache__/manager.cpython-312.pyc
+ D finradar/storage/__pycache__/remote.cpython-312.pyc
+ D finradar/storage/__pycache__/sqlite_mixin.cpython-312.pyc
+ D finradar/utils/__pycache__/__init__.cpython-312.pyc
+ D finradar/utils/__pycache__/time.cpython-312.pyc
+ D finradar/utils/__pycache__/url.cpython-312.pyc
+ M index.html
+ D mcp_server/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/__pycache__/server.cpython-312.pyc
+ D mcp_server/services/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/services/__pycache__/cache_service.cpython-312.pyc
+ D mcp_server/services/__pycache__/data_service.cpython-312.pyc
+ D mcp_server/services/__pycache__/parser_service.cpython-312.pyc
+ D mcp_server/tools/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/tools/__pycache__/analytics.cpython-312.pyc
+ D mcp_server/tools/__pycache__/config_mgmt.cpython-312.pyc
+ D mcp_server/tools/__pycache__/data_query.cpython-312.pyc
+ D mcp_server/tools/__pycache__/search_tools.cpython-312.pyc
+ D mcp_server/tools/__pycache__/storage_sync.cpython-312.pyc
+ D mcp_server/tools/__pycache__/system.cpython-312.pyc
+ D mcp_server/utils/__pycache__/__init__.cpython-312.pyc
+ D mcp_server/utils/__pycache__/date_parser.cpython-312.pyc
+ D mcp_server/utils/__pycache__/errors.cpython-312.pyc
+ D mcp_server/utils/__pycache__/validators.cpython-312.pyc
+ D output/debug/test_follow_cache.json
+ D output/debug/twitter_account_health_full.json
+ D output/debug/twitter_brief_output_20260225_070933.md
+ D output/debug/twitter_fetch_20260225_060603.json
+ D output/debug/twitter_fetch_20260225_060603.md
+ D output/debug/twitter_fetch_20260225_070933.json
+ D output/debug/twitter_fetch_20260225_151602.json
+ D output/debug/twitter_fetch_20260225_151602.md
+ D output/debug/twitter_fetch_20260225_152228.json
+ D output/debug/twitter_fetch_20260225_152331.json
+ D output/debug/twitter_fetch_20260225_153839.json
+ D output/debug/twitter_fetch_20260225_153941.json
+ D output/debug/twitter_fetch_20260225_154313.json
+ D output/debug/twitter_fetch_live_20260225_090836.json
+ D output/debug/twitter_fetch_live_20260225_090836.md
+ D output/debug/twitter_io_bundle_20260225_070933.md
+ D output/debug/twitter_io_bundle_20260225_151602.md
+ D output/debug/twitter_missing_accounts_20260225_evening.json
+ D output/debug/twitter_missing_accounts_live_probe_20260225_evening.json
+ D output/debug/twitter_output_20260225_151602.md
+ D output/debug/twitter_profile_probe_slow.json
+ D output/debug/twitter_prompt_20260225_070933.md
+ D output/debug/twitter_prompt_20260225_151602.md
+ D output/debug/twitter_replacement_probe_20260225_085910.json
+ D output/debug/twitter_replacement_probe_20260225_085948.json
+ M output/html/latest/current.html
+ M output/index.html
+ M output/market/market_data_20260225.json
+ M output/market/market_data_20260225_evening.json
+ M output/market/market_report_20260225.txt
+ M output/market/market_report_20260225_evening.txt
+ M output/news/2026-02-25.db
+ M output/rss/2026-02-25.db
+ M output/twitter/follow_cache.json
+ M scripts/generate_report.py
+ M scripts/local.sh
+ M scripts/push_to_notion.py
+?? output/html/2026-02-25/20-02.html
+?? output/html/2026-02-25/20-32.html
+?? output/html/2026-02-25/21-02.html
+?? output/html/2026-02-25/21-32.html
+?? output/html/2026-02-25/22-02.html
+?? output/html/2026-02-25/22-32.html
+?? output/html/2026-02-25/23-01.html
+?? output/html/2026-02-25/23-31.html
+?? output/html/2026-02-26/
+?? output/html/2026-02-27/
+?? output/market/market_data_20260226.json
+?? output/market/market_data_20260226_evening.json
+?? output/market/market_data_20260226_morning.json
+?? output/market/market_data_20260227.json
+?? output/market/market_data_20260227_evening.json
+?? output/market/market_data_20260227_morning.json
+?? output/market/market_report_20260226.txt
+?? output/market/market_report_20260226_evening.txt
+?? output/market/market_report_20260226_morning.txt
+?? output/market/market_report_20260227.txt
+?? output/market/market_report_20260227_evening.txt
+?? output/market/market_report_20260227_morning.txt
+?? output/news/2026-02-26.db
+?? output/news/2026-02-27.db
+?? output/report/daily_20260225_evening.md
+?? output/report/daily_20260226_evening.md
+?? output/report/daily_20260226_morning.md
+?? output/report/daily_20260227_evening.md
+?? output/report/daily_20260227_morning.md
+?? output/report/next_track_history.jsonl
+?? output/report/next_track_state.json
+?? output/rss/2026-02-26.db
+?? output/rss/2026-02-27.db
+?? output/state/
+?? output/twitter/report_used_tweets.jsonl
+?? "\345\267\245\344\275\234\346\265\201.md"
+?? "\346\250\241\346\235\277.md"
+```
+- 最近提交:
+```
+28ecd90 1
+3971735 chore(twitter): remove public nitter instance references
+b79ff84 feat(market): integrate Yahoo Finance global stock overview
+44e502c feat(report): sanitize AI preambles and auto-checkpoint report runs
+b2ae0c4 docs(process): checkpoint after adding local workflow commands
+207a292 feat(process): add local.sh commands for checkpoint and auto-commit
+ebee66e docs(process): checkpoint after auto-commit safety update
+1128610 fix(process): make auto-commit require explicit include by default
+```
+

@@ -25,6 +25,7 @@ import sqlite3
 import sys
 import logging
 import re
+import threading
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -43,12 +44,165 @@ CONFIG_FILE = PROJECT_ROOT / "config" / "config.yaml"
 OUTPUT_MARKET = PROJECT_ROOT / "output" / "market"
 OUTPUT_NEWS = PROJECT_ROOT / "output" / "news"
 OUTPUT_REPORT = PROJECT_ROOT / "output" / "report"
+OUTPUT_DEBUG = PROJECT_ROOT / "output" / "debug"
 OUTPUT_TWITTER_USED = PROJECT_ROOT / "output" / "twitter" / "report_used_tweets.jsonl"
+OUTPUT_STATE = PROJECT_ROOT / "output" / "state"
+REPORT_DEDUP_DB = OUTPUT_STATE / "report_dedup.sqlite3"
+REPORT_NEXT_TRACK_FILE = OUTPUT_REPORT / "next_track_state.json"
+REPORT_NEXT_TRACK_LOG = OUTPUT_REPORT / "next_track_history.jsonl"
 
 DEFAULT_DEEPSEEK_BASE = "https://api.deepseek.com"
 DEFAULT_DEEPSEEK_MODEL = "deepseek-chat"
 DEFAULT_WEB_SEARCH_ENDPOINT = "https://news.google.com/rss/search"
 BEIJING_TZ = ZoneInfo("Asia/Shanghai")
+
+FLOW_TRACE_LOCK = threading.Lock()
+FLOW_TRACE_STATE = {
+    "enabled": False,
+    "run_id": "",
+    "date_str": "",
+    "report_type": "",
+    "args": {},
+    "timeline": [],
+    "raw_material": {},
+    "deepseek_calls": [],
+    "outputs": {},
+    "deepseek_call_seq": 0,
+}
+
+
+def _json_safe(value):
+    """尽量将对象转换为可 JSON 序列化结构。"""
+    try:
+        return json.loads(json.dumps(value, ensure_ascii=False, default=str))
+    except Exception:
+        return str(value)
+
+
+def init_flow_trace(enabled: bool, date_str: str, report_type: str, args_payload: dict | None = None) -> None:
+    """初始化单次报告的链路追踪状态。"""
+    run_id = now_beijing().strftime("%Y%m%d_%H%M%S")
+    payload = {
+        "enabled": bool(enabled),
+        "run_id": run_id,
+        "date_str": date_str,
+        "report_type": report_type,
+        "args": _json_safe(args_payload or {}),
+        "timeline": [],
+        "raw_material": {},
+        "deepseek_calls": [],
+        "outputs": {},
+        "deepseek_call_seq": 0,
+    }
+    with FLOW_TRACE_LOCK:
+        FLOW_TRACE_STATE.clear()
+        FLOW_TRACE_STATE.update(payload)
+    if enabled:
+        flow_trace_event(
+            "trace_initialized",
+            {
+                "run_id": run_id,
+                "date_str": date_str,
+                "report_type": report_type,
+            },
+        )
+
+
+def flow_trace_enabled() -> bool:
+    with FLOW_TRACE_LOCK:
+        return bool(FLOW_TRACE_STATE.get("enabled"))
+
+
+def flow_trace_event(stage: str, payload: dict | None = None) -> None:
+    """记录流程时间线。"""
+    if not flow_trace_enabled():
+        return
+    event = {
+        "timestamp": now_beijing().isoformat(),
+        "stage": str(stage).strip(),
+        "payload": _json_safe(payload or {}),
+    }
+    with FLOW_TRACE_LOCK:
+        FLOW_TRACE_STATE.setdefault("timeline", []).append(event)
+
+
+def flow_trace_set_raw_material(key: str, payload) -> None:
+    """记录原始素材快照。"""
+    if not flow_trace_enabled():
+        return
+    key = str(key or "").strip()
+    if not key:
+        return
+    with FLOW_TRACE_LOCK:
+        raw = FLOW_TRACE_STATE.setdefault("raw_material", {})
+        raw[key] = _json_safe(payload)
+
+
+def flow_trace_set_output(key: str, payload) -> None:
+    """记录最终产物相关信息。"""
+    if not flow_trace_enabled():
+        return
+    key = str(key or "").strip()
+    if not key:
+        return
+    with FLOW_TRACE_LOCK:
+        outputs = FLOW_TRACE_STATE.setdefault("outputs", {})
+        outputs[key] = _json_safe(payload)
+
+
+def flow_trace_next_call_id() -> int:
+    if not flow_trace_enabled():
+        return 0
+    with FLOW_TRACE_LOCK:
+        seq = int(FLOW_TRACE_STATE.get("deepseek_call_seq", 0) or 0) + 1
+        FLOW_TRACE_STATE["deepseek_call_seq"] = seq
+    return seq
+
+
+def flow_trace_append_deepseek_call(payload: dict) -> None:
+    """追加一条 DeepSeek 调用 I/O 记录。"""
+    if not flow_trace_enabled():
+        return
+    with FLOW_TRACE_LOCK:
+        FLOW_TRACE_STATE.setdefault("deepseek_calls", []).append(_json_safe(payload))
+
+
+def dump_flow_trace(output_path: Path | None = None) -> Path | None:
+    """将本次 trace 写入 output/debug。"""
+    if not flow_trace_enabled():
+        return None
+
+    with FLOW_TRACE_LOCK:
+        payload = deepcopy(FLOW_TRACE_STATE)
+
+    calls = payload.get("deepseek_calls", [])
+    payload["summary"] = {
+        "deepseek_call_count": len(calls),
+        "timeline_events": len(payload.get("timeline", [])),
+        "raw_material_keys": sorted((payload.get("raw_material", {}) or {}).keys()),
+        "output_keys": sorted((payload.get("outputs", {}) or {}).keys()),
+    }
+    if calls:
+        first_call = calls[0]
+        payload["sample_prompt"] = {
+            "call_id": first_call.get("call_id"),
+            "system_prompt": first_call.get("system_prompt", ""),
+            "user_prompt": first_call.get("user_prompt", ""),
+        }
+
+    if output_path is None:
+        run_id = payload.get("run_id", now_beijing().strftime("%Y%m%d_%H%M%S"))
+        date_str = payload.get("date_str", now_beijing().strftime("%Y%m%d"))
+        report_type = payload.get("report_type", "auto")
+        output_path = OUTPUT_DEBUG / f"flow_{date_str}_{report_type}_{run_id}.json"
+
+    output_path = Path(output_path).expanduser().resolve()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    return output_path
 
 
 def now_beijing() -> datetime:
@@ -193,81 +347,201 @@ def market_snapshot_filter(market: dict, date_str: str, report_type: str) -> tup
 
     notes: list[str] = []
     anchor = report_anchor_datetime(date_str, report_type)
-    trade_day = is_trading_day(date_str)
-    is_morning = report_type == "morning"
+    strict_market_age_hours = max(1, int(os.environ.get("REPORT_STRICT_MARKET_MAX_AGE_HOURS", "12") or 12))
+    future_skew_hours = max(
+        0.1,
+        float(os.environ.get("REPORT_MARKET_FUTURE_SKEW_MINUTES", "30") or 30) / 60.0,
+    )
+    max_change_pct_abs = max(5.0, float(os.environ.get("REPORT_MAX_CHANGE_PCT_ABS", "40") or 40))
+    had_yahoo_stock = isinstance(data.get("yahoo_stock"), dict) and bool(data.get("yahoo_stock"))
+    had_us_stock = isinstance(data.get("us_stock"), dict) and bool(data.get("us_stock"))
 
     def _drop(key: str, reason: str) -> None:
         if key in data:
             data.pop(key, None)
             notes.append(reason)
 
+    def _as_float(raw) -> float | None:
+        try:
+            num = float(raw)
+        except (TypeError, ValueError):
+            return None
+        if math.isnan(num) or math.isinf(num):
+            return None
+        return num
+
+    def _sanitize_rows(rows: list[dict], *, price_key: str, change_key: str, label: str) -> tuple[list[dict], int]:
+        cleaned: list[dict] = []
+        removed = 0
+        for row in rows:
+            if not isinstance(row, dict):
+                removed += 1
+                continue
+            price = _as_float(row.get(price_key))
+            change_pct = _as_float(row.get(change_key))
+            # 数值异常：缺价格、价格<=0、涨跌幅绝对值异常过大
+            if price is None or price <= 0:
+                removed += 1
+                continue
+            if change_pct is None or abs(change_pct) > max_change_pct_abs:
+                removed += 1
+                continue
+            cleaned.append(row)
+        if removed > 0:
+            notes.append(f"{label}存在 {removed} 条数值异常记录，已从 AI 输入中剔除")
+        return cleaned, removed
+
+    def _is_stale_or_future(raw_ts: datetime | None, max_age_hours: int) -> tuple[bool, str]:
+        age = hours_ago(anchor, raw_ts)
+        if age < -future_skew_hours:
+            return True, f"快照晚于报告锚点（timestamp={raw_ts or 'N/A'}，疑似未来数据）"
+        if age > max_age_hours:
+            return True, f"快照超过 {max_age_hours}h 时效窗口（timestamp={raw_ts or 'N/A'}，{age:.1f}h）"
+        return False, ""
+
+    def _is_future_snapshot(raw_ts: datetime | None) -> tuple[bool, str]:
+        age = hours_ago(anchor, raw_ts)
+        if age < -future_skew_hours:
+            return True, f"快照晚于报告锚点（timestamp={raw_ts or 'N/A'}，疑似未来数据）"
+        return False, ""
+
     stock = data.get("stock_cn")
     stock_ts = parse_iso_datetime(stock.get("timestamp")) if isinstance(stock, dict) else None
-    stock_age = hours_ago(anchor, stock_ts)
-    if is_morning:
-        _drop("stock_cn", "早报阶段不纳入 A 股盘面，避免使用非交易时段快照")
-    elif not trade_day:
-        _drop("stock_cn", "非交易日，不纳入 A 股盘面")
-    else:
-        stock_day_ok = bool(stock_ts and stock_ts.date() == anchor.date())
-        stock_time_ok = bool(stock_ts and stock_ts.hour >= 14)
-        if not stock_day_ok or not stock_time_ok or stock_age > 12:
-            _drop(
-                "stock_cn",
-                f"A 股快照时效不足（timestamp={stock_ts or 'N/A'}，距锚点约 {stock_age:.1f}h）",
-            )
+    if isinstance(stock, dict):
+        invalid, reason = _is_stale_or_future(stock_ts, strict_market_age_hours)
+        if invalid:
+            _drop("stock_cn", f"A 股{reason}")
+        else:
+            indices = [i for i in stock.get("indices", []) if isinstance(i, dict)]
+            indices, _ = _sanitize_rows(indices, price_key="price", change_key="change_pct", label="A股指数")
+            stock["indices"] = indices
+            sectors = [s for s in stock.get("sectors", []) if isinstance(s, dict)]
+            # 板块涨跌幅采用同一异常阈值
+            sectors_cleaned: list[dict] = []
+            removed_sector = 0
+            for row in sectors:
+                pct = _as_float(row.get("change_pct"))
+                if pct is None or abs(pct) > max_change_pct_abs:
+                    removed_sector += 1
+                    continue
+                sectors_cleaned.append(row)
+            if removed_sector:
+                notes.append(f"A股板块存在 {removed_sector} 条数值异常记录，已从 AI 输入中剔除")
+            stock["sectors"] = sectors_cleaned
+            north_flow = stock.get("north_flow")
+            if is_north_flow_zero_snapshot(north_flow if isinstance(north_flow, dict) else {}):
+                stock.pop("north_flow", None)
+                notes.append("北向资金快照三项全0（疑似未更新），已从 AI 输入中剔除")
+            if not stock.get("indices") and not stock.get("sectors"):
+                _drop("stock_cn", "A 股快照缺少有效指数/板块数据")
 
     futures = data.get("futures")
     if isinstance(futures, dict):
         futures_ts = parse_iso_datetime(futures.get("timestamp"))
-        futures_age = hours_ago(anchor, futures_ts)
-        if is_morning:
-            # 早报仅保留国际期货，移除日盘主导的国内/股指期货
-            futures.pop("commodity", None)
-            futures.pop("index_futures", None)
-            if not futures.get("international"):
-                futures.pop("international", None)
-            if not futures.get("international"):
-                _drop("futures", "早报时段无可用国际期货快照")
-            elif futures_age > 16:
-                _drop("futures", f"国际期货快照过旧（timestamp={futures_ts or 'N/A'}，{futures_age:.1f}h）")
+        invalid, reason = _is_stale_or_future(futures_ts, strict_market_age_hours)
+        if invalid:
+            _drop("futures", f"期货{reason}")
         else:
-            if futures_age > 14:
-                _drop("futures", f"期货快照过旧（timestamp={futures_ts or 'N/A'}，{futures_age:.1f}h）")
+            has_items = False
+            for cat in ("commodity", "international", "index_futures"):
+                rows = [r for r in futures.get(cat, []) if isinstance(r, dict)]
+                rows, _ = _sanitize_rows(rows, price_key="price", change_key="change_pct", label=f"期货({cat})")
+                futures[cat] = rows
+                if rows:
+                    has_items = True
+            if not has_items:
+                _drop("futures", "期货快照缺少有效合约数据")
 
     pm = data.get("precious_metal")
     if isinstance(pm, dict):
         pm_ts = parse_iso_datetime(pm.get("timestamp"))
-        pm_age = hours_ago(anchor, pm_ts)
-        if pm_age > 16:
-            _drop("precious_metal", f"贵金属快照过旧（timestamp={pm_ts or 'N/A'}，{pm_age:.1f}h）")
+        invalid, reason = _is_stale_or_future(pm_ts, strict_market_age_hours)
+        if invalid:
+            _drop("precious_metal", f"贵金属{reason}")
+        else:
+            rows = pm.get("metals")
+            metal_rows = []
+            if isinstance(rows, list):
+                metal_rows = [r for r in rows if isinstance(r, dict)]
+            elif isinstance(rows, dict):
+                metal_rows = [r for r in rows.values() if isinstance(r, dict)]
+            metal_rows, _ = _sanitize_rows(metal_rows, price_key="price", change_key="change_pct", label="贵金属")
+            if isinstance(rows, list):
+                pm["metals"] = metal_rows
+            elif isinstance(rows, dict):
+                pm["metals"] = {str(i): row for i, row in enumerate(metal_rows, start=1)}
+            if not metal_rows:
+                _drop("precious_metal", "贵金属快照缺少有效品种数据")
 
     crypto = data.get("crypto")
     if isinstance(crypto, dict):
         crypto_ts = parse_iso_datetime(crypto.get("timestamp"))
-        crypto_age = hours_ago(anchor, crypto_ts)
-        if crypto_age > 10:
-            _drop("crypto", f"加密市场快照过旧（timestamp={crypto_ts or 'N/A'}，{crypto_age:.1f}h）")
+        invalid, reason = _is_future_snapshot(crypto_ts)
+        if invalid:
+            _drop("crypto", f"加密市场{reason}")
+        else:
+            coins = [c for c in crypto.get("coins", []) if isinstance(c, dict)]
+            cleaned: list[dict] = []
+            removed = 0
+            for coin in coins:
+                price = _as_float(coin.get("price"))
+                pct = _as_float(coin.get("change_24h"))
+                if price is None or price <= 0 or pct is None or abs(pct) > 80:
+                    removed += 1
+                    continue
+                cleaned.append(coin)
+            if removed:
+                notes.append(f"加密货币存在 {removed} 条数值异常记录，已从 AI 输入中剔除")
+            crypto["coins"] = cleaned
+            if not cleaned:
+                _drop("crypto", "加密快照缺少有效币种数据")
 
     github = data.get("github")
     if isinstance(github, dict):
         gh_ts = parse_iso_datetime(github.get("timestamp"))
         gh_age = hours_ago(anchor, gh_ts)
-        if gh_age > 72:
+        if gh_age < -1:
+            _drop("github", f"GitHub 快照晚于报告锚点（timestamp={gh_ts or 'N/A'}，疑似未来数据）")
+        elif gh_age > 72:
             _drop("github", f"GitHub 趋势快照过旧（timestamp={gh_ts or 'N/A'}，{gh_age:.1f}h）")
 
     yahoo_stock = data.get("yahoo_stock")
     if isinstance(yahoo_stock, dict):
         ys_ts = parse_iso_datetime(yahoo_stock.get("timestamp"))
-        ys_age = hours_ago(anchor, ys_ts)
-        max_age = 22 if is_morning else 36
-        if ys_age > max_age:
-            _drop("yahoo_stock", f"Yahoo Finance 股票快照过旧（timestamp={ys_ts or 'N/A'}，{ys_age:.1f}h）")
-        elif not yahoo_stock.get("markets"):
-            _drop("yahoo_stock", "Yahoo Finance 股票快照为空")
+        invalid, reason = _is_stale_or_future(ys_ts, strict_market_age_hours)
+        if invalid:
+            _drop("yahoo_stock", f"Yahoo Finance 股票{reason}")
+        else:
+            markets = [m for m in yahoo_stock.get("markets", []) if isinstance(m, dict)]
+            markets, _ = _sanitize_rows(markets, price_key="price", change_key="change_pct", label="Yahoo 股票")
+            yahoo_stock["markets"] = markets
+            if not markets:
+                _drop("yahoo_stock", "Yahoo Finance 股票快照为空")
+
+    stock_overview = data.get("stock_overview")
+    if isinstance(stock_overview, dict):
+        ov_ts = parse_iso_datetime(stock_overview.get("timestamp"))
+        invalid, reason = _is_stale_or_future(ov_ts, strict_market_age_hours)
+        if invalid:
+            _drop("stock_overview", f"股票总览{reason}")
+        else:
+            # 若底层 A 股和 Yahoo 都不可用，总览也不应进入 AI 输入，避免语义不一致
+            if "stock_cn" not in data and "yahoo_stock" not in data:
+                _drop("stock_overview", "股票总览缺少底层行情支撑（A股/Yahoo 已被过滤）")
 
     if "us_stock" not in data and "yahoo_stock" not in data:
-        notes.append("当前无可用美股直连行情源；美股解读仅来自 Twitter/热榜/联网检索文本证据")
+        if had_yahoo_stock or had_us_stock:
+            notes.append("美股直连行情源存在但已因时效/可用性过滤被移除；当前美股解读仅来自文本证据")
+        else:
+            notes.append("当前无可用美股直连行情源；美股解读仅来自 Twitter/热榜/联网检索文本证据")
+
+    notes.insert(
+        0,
+        (
+            f"严格时效模式：非加密市场仅保留过去 {strict_market_age_hours}h 数据；"
+            "加密市场不做过旧时效过滤，仅剔除未来时间异常与数值异常数据。"
+        ),
+    )
 
     # 清理空壳字段
     for key in list(data.keys()):
@@ -299,13 +573,113 @@ def load_config():
         return yaml.safe_load(f)
 
 
-def load_market_data(date_str: str) -> dict:
-    """读取最新市场数据 (每30分钟更新的那个)"""
+def load_market_data(date_str: str, report_type: str = "morning") -> dict:
+    """读取市场数据，并在重跑时避免误用锚点之后的“未来快照”造成前视偏差。"""
+
+    def _read_json(path: Path) -> dict:
+        if not path.exists():
+            return {}
+        try:
+            with open(path, encoding="utf-8") as f:
+                payload = json.load(f)
+            return payload if isinstance(payload, dict) else {}
+        except Exception:
+            return {}
+
+    def _previous_trading_day(day_str: str) -> str:
+        day = datetime.strptime(day_str, "%Y%m%d") - timedelta(days=1)
+        while day.weekday() >= 5:
+            day -= timedelta(days=1)
+        return day.strftime("%Y%m%d")
+
+    def _previous_calendar_day(day_str: str) -> str:
+        day = datetime.strptime(day_str, "%Y%m%d") - timedelta(days=1)
+        return day.strftime("%Y%m%d")
+
     path = OUTPUT_MARKET / f"market_data_{date_str}.json"
-    if path.exists():
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
-    return {}
+    payload = _read_json(path)
+    # 早报固定采用“前一交易日 A 股收盘快照”，避免误用当日盘中/未来快照。
+    if report_type == "morning":
+        prev_day = _previous_trading_day(date_str)
+        prev_path = OUTPUT_MARKET / f"market_data_{prev_day}.json"
+        prev_payload = _read_json(prev_path)
+        prev_stock = (
+            (((prev_payload.get("data") or {}).get("stock_cn")) if isinstance(prev_payload, dict) else None)
+            if prev_payload else None
+        )
+        if not payload and prev_payload:
+            payload = prev_payload
+            logger.info("🌅 早报未找到当日市场快照，改用前一交易日文件: %s", prev_path.name)
+        elif payload and isinstance(prev_stock, dict) and prev_stock:
+            data = payload.get("data", {})
+            if not isinstance(data, dict):
+                data = {}
+                payload["data"] = data
+            data["stock_cn"] = deepcopy(prev_stock)
+            logger.info(
+                "🌅 早报A股固定使用前一交易日收盘快照: %s (stock_ts=%s)",
+                prev_path.name,
+                prev_stock.get("timestamp", "N/A"),
+            )
+        elif payload:
+            logger.warning("⚠️ 早报未找到可替换的前一交易日A股快照: %s", prev_path.name)
+
+    if not payload:
+        return {}
+
+    anchor = report_anchor_datetime(date_str, report_type)
+    ts_candidates = [
+        parse_iso_datetime(payload.get("timestamp")),
+        parse_iso_datetime(((payload.get("data") or {}).get("stock_cn") or {}).get("timestamp")),
+        parse_iso_datetime(((payload.get("data") or {}).get("yahoo_stock") or {}).get("timestamp")),
+    ]
+    ts_candidates = [dt for dt in ts_candidates if dt is not None]
+    newest_ts = max(ts_candidates) if ts_candidates else None
+
+    # 若快照明显晚于报告锚点（例如重跑早报时拿到10:30快照），回退到前一日收盘文件
+    if newest_ts and newest_ts > anchor + timedelta(minutes=30):
+        if report_type == "morning":
+            # 早报优先回退到“前一自然日”以保留更近的海外/加密快照，
+            # 但 A 股指数仍固定使用前一交易日收盘快照，避免前视偏差。
+            prev_calendar = _previous_calendar_day(date_str)
+            prev_calendar_path = OUTPUT_MARKET / f"market_data_{prev_calendar}.json"
+            prev_calendar_payload = _read_json(prev_calendar_path)
+            if prev_calendar_payload:
+                prev_trade_day = _previous_trading_day(date_str)
+                prev_trade_path = OUTPUT_MARKET / f"market_data_{prev_trade_day}.json"
+                prev_trade_payload = _read_json(prev_trade_path)
+                prev_stock = (
+                    (((prev_trade_payload.get("data") or {}).get("stock_cn")) if isinstance(prev_trade_payload, dict) else None)
+                    if prev_trade_payload else None
+                )
+                if isinstance(prev_stock, dict) and prev_stock:
+                    data = prev_calendar_payload.get("data", {})
+                    if not isinstance(data, dict):
+                        data = {}
+                        prev_calendar_payload["data"] = data
+                    data["stock_cn"] = deepcopy(prev_stock)
+                logger.info(
+                    "⏪ 检测到未来市场快照(%s > anchor %s)，早报回退使用 %s（A股沿用 %s）",
+                    newest_ts.isoformat(),
+                    anchor.isoformat(),
+                    prev_calendar_path.name,
+                    prev_trade_path.name,
+                )
+                return prev_calendar_payload
+
+        prev_day = _previous_calendar_day(date_str)
+        prev_path = OUTPUT_MARKET / f"market_data_{prev_day}.json"
+        prev_payload = _read_json(prev_path)
+        if prev_payload:
+            logger.info(
+                "⏪ 检测到未来市场快照(%s > anchor %s)，回退使用 %s",
+                newest_ts.isoformat(),
+                anchor.isoformat(),
+                prev_path.name,
+            )
+            return prev_payload
+
+    return payload
 
 
 def load_social_data(date_str: str, report_type: str = None) -> dict:
@@ -538,7 +912,7 @@ def choose_market_queries(market: dict, iso_date: str, include_a_share: bool = T
 
     pm = data.get("precious_metal", {}) if isinstance(data, dict) else {}
     if isinstance(pm, dict):
-        metals = [m for m in pm.get("metals", []) if isinstance(m, dict)]
+        metals = get_precious_metal_rows(pm)
         if metals:
             top_metal = sorted(metals, key=lambda x: abs(float(x.get("change_pct", 0) or 0)), reverse=True)[0]
             name = normalize_plain_text(top_metal.get("name", "黄金"))
@@ -577,8 +951,7 @@ def build_web_search_queries(
     if custom_keywords:
         return list(dict.fromkeys(custom_keywords))
 
-    is_morning_report = report_type == "morning"
-    queries = choose_market_queries(market, iso_date, include_a_share=not is_morning_report)
+    queries = choose_market_queries(market, iso_date, include_a_share=True)
     queries.extend(choose_news_queries(news))
     return list(dict.fromkeys([q for q in queries if q]))[:8]
 
@@ -651,10 +1024,10 @@ def fetch_google_news_rss(
 def list_previous_report_paths(
     date_str: str,
     report_type: str,
-    lookback_days: int = 2,
-    max_reports: int = 3,
+    lookback_days: int = 3,
+    max_reports: int = 6,
 ) -> list[Path]:
-    """定位历史报告路径，覆盖前 1-2 天上下文（按时间由近到远）。"""
+    """定位历史报告路径，覆盖最近 3 天最多 6 期上下文（按时间由近到远）。"""
     report_day = datetime.strptime(date_str, "%Y%m%d")
     candidates: list[Path] = []
 
@@ -681,6 +1054,32 @@ def list_previous_report_paths(
     return existed
 
 
+def get_precious_metal_rows(pm_data: dict) -> list[dict]:
+    """统一贵金属结构为列表，兼容 list/dict 两种存储形态。"""
+    if not isinstance(pm_data, dict):
+        return []
+    metals = pm_data.get("metals")
+    if isinstance(metals, list):
+        return [m for m in metals if isinstance(m, dict)]
+    if isinstance(metals, dict):
+        return [m for m in metals.values() if isinstance(m, dict)]
+    return []
+
+
+def is_north_flow_zero_snapshot(north_flow: dict) -> bool:
+    """判断北向资金是否为“全0快照”（兼容历史快照缺少标记字段）。"""
+    if not isinstance(north_flow, dict) or not north_flow:
+        return False
+    if bool(north_flow.get("is_zero_snapshot")):
+        return True
+    values = [
+        safe_float(north_flow.get("net_flow"), 0.0),
+        safe_float(north_flow.get("hu_net_flow"), 0.0),
+        safe_float(north_flow.get("shen_net_flow"), 0.0),
+    ]
+    return all(abs(v) < 1e-9 for v in values)
+
+
 def extract_markdown_section(content: str, heading: str) -> str:
     """提取 Markdown 二级标题下的正文。"""
     pattern = rf"{re.escape(heading)}\s*(.*?)(?=\n##\s+|\Z)"
@@ -699,12 +1098,12 @@ def truncate_text_preserve_lines(text: str, max_chars: int) -> str:
 
 
 def load_previous_report_context(date_str: str, report_type: str, max_chars: int = 3600) -> str:
-    """读取前 1-2 天多期摘要，增强连续性并减少重复。"""
+    """读取最近 3 天多期报告的“摘要 + 跟踪/增量认知”上下文。"""
     paths = list_previous_report_paths(
         date_str=date_str,
         report_type=report_type,
-        lookback_days=int(os.environ.get("REPORT_CONTEXT_LOOKBACK_DAYS", "2")),
-        max_reports=int(os.environ.get("REPORT_CONTEXT_MAX_REPORTS", "3")),
+        lookback_days=int(os.environ.get("REPORT_CONTEXT_LOOKBACK_DAYS", "3")),
+        max_reports=int(os.environ.get("REPORT_CONTEXT_MAX_REPORTS", "6")),
     )
     if not paths:
         return ""
@@ -718,12 +1117,19 @@ def load_previous_report_context(date_str: str, report_type: str, max_chars: int
         except OSError:
             continue
 
-        match = re.search(r"#\s+🤖\s+AI 分析摘要\s*(.*?)\n#\s+📋\s+原始数据", content, flags=re.S)
+        match = re.search(
+            r"#\s+🤖\s+(?:AI 分析摘要|详细 AI 分析)\s*(.*?)\n#\s+📋\s+原始数据",
+            content,
+            flags=re.S,
+        )
         excerpt = match.group(1).strip() if match else content
         excerpt = re.sub(r"<details>.*?</details>", "", excerpt, flags=re.S).strip()
 
         summary_section = extract_markdown_section(excerpt, "## 一、摘要")
-        tracking_section = extract_markdown_section(excerpt, "## 三、明日跟踪清单")
+        tracking_section = (
+            extract_markdown_section(excerpt, "## 六、增量认知与下期博弈锚点")
+            or extract_markdown_section(excerpt, "## 三、明日跟踪清单")
+        )
         report_block = [f"历史报告 {idx}: {path.name}"]
         if summary_section:
             report_block.append(
@@ -732,7 +1138,7 @@ def load_previous_report_context(date_str: str, report_type: str, max_chars: int
             )
         if tracking_section:
             report_block.append(
-                "【跟踪清单】\n"
+                "【增量认知/跟踪】\n"
                 + truncate_text_preserve_lines(tracking_section, max_chars=max_chars_each)
             )
         if len(report_block) == 1:
@@ -745,6 +1151,858 @@ def load_previous_report_context(date_str: str, report_type: str, max_chars: int
         return ""
     merged = "\n\n".join(parts).strip()
     return truncate_text_preserve_lines(merged, max_chars=max_chars)
+
+
+def init_report_dedup_db() -> sqlite3.Connection:
+    """初始化跨次推送去重库（SQLite）。"""
+    OUTPUT_STATE.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(REPORT_DEDUP_DB))
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS report_used_items (
+            source TEXT NOT NULL,
+            dedup_key TEXT NOT NULL,
+            anchor_at TEXT,
+            report_date TEXT,
+            report_type TEXT,
+            title TEXT,
+            url TEXT,
+            payload TEXT,
+            created_at TEXT NOT NULL,
+            PRIMARY KEY (source, dedup_key)
+        )
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_report_used_items_source ON report_used_items(source)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_report_used_items_created ON report_used_items(created_at)")
+    conn.commit()
+    return conn
+
+
+def cleanup_report_dedup(conn: sqlite3.Connection, retention_days: int) -> None:
+    """清理过期去重记录。"""
+    if retention_days <= 0:
+        return
+    cutoff = now_beijing() - timedelta(days=retention_days)
+    conn.execute("DELETE FROM report_used_items WHERE created_at < ?", (cutoff.isoformat(),))
+    conn.commit()
+
+
+def load_recent_report_dedup_keys(
+    conn: sqlite3.Connection,
+    source: str,
+    anchor: datetime,
+    lookback_hours: int,
+) -> set[str]:
+    """加载回看窗口内的已使用 key。"""
+    if lookback_hours <= 0:
+        return set()
+    cutoff = anchor - timedelta(hours=lookback_hours)
+    rows = conn.execute(
+        "SELECT dedup_key, created_at FROM report_used_items WHERE source = ?",
+        (source,),
+    ).fetchall()
+    keys: set[str] = set()
+    for dedup_key, created_at in rows:
+        dt = _parse_report_used_dt(created_at)
+        if dt and dt < cutoff:
+            continue
+        key = str(dedup_key or "").strip()
+        if key:
+            keys.add(key)
+    return keys
+
+
+def build_news_dedup_key(item: dict) -> str:
+    """News 去重 key。"""
+    title = normalize_plain_text(item.get("title", "")).lower()
+    platform = normalize_plain_text(item.get("platform", "")).lower()
+    if title or platform:
+        return f"{platform}::{title}"
+    return ""
+
+
+def build_wechat_dedup_key(item: dict) -> str:
+    """公众号文章去重 key。"""
+    url = clean_external_url(item.get("url"))
+    if url:
+        return f"url:{url}"
+    account = normalize_plain_text(item.get("account_name", "")).lower()
+    title = normalize_plain_text(item.get("title", "")).lower()
+    pub = str(item.get("publish_time", "") or "").strip()
+    key = f"{account}::{title}::{pub}"
+    return key.strip(":")
+
+
+def build_github_dedup_key(item: dict) -> str:
+    """GitHub 项目去重 key。"""
+    full_name = normalize_plain_text(item.get("full_name", "")).lower()
+    if full_name:
+        return f"repo:{full_name}"
+    url = clean_external_url(item.get("url"))
+    if url:
+        return f"url:{url}"
+    name = normalize_plain_text(item.get("name", "")).lower()
+    return f"name:{name}" if name else ""
+
+
+def build_web_dedup_key(item: dict) -> str:
+    """联网检索条目去重 key。"""
+    url = clean_external_url(item.get("link"))
+    if url:
+        return f"url:{url}"
+    title = normalize_plain_text(item.get("title", "")).lower()
+    source = normalize_plain_text(item.get("source", "")).lower()
+    if title or source:
+        return f"{source}::{title}"
+    return ""
+
+
+def dedup_incremental_items(
+    conn: sqlite3.Connection,
+    source: str,
+    items: list[dict],
+    anchor: datetime,
+    lookback_hours: int,
+    key_builder,
+) -> tuple[list[dict], int, list[dict]]:
+    """基于 SQLite 去重，返回（增量条目、命中过滤数量、待记录条目）。"""
+    recent_keys = load_recent_report_dedup_keys(conn, source, anchor, lookback_hours)
+    selected: list[dict] = []
+    removed = 0
+    to_record: list[dict] = []
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        dedup_key = str(key_builder(item) or "").strip()
+        if dedup_key and dedup_key in recent_keys:
+            removed += 1
+            continue
+        selected.append(item)
+        if dedup_key:
+            recent_keys.add(dedup_key)
+            to_record.append(
+                {
+                    "source": source,
+                    "dedup_key": dedup_key,
+                    "title": normalize_plain_text(
+                        item.get("title")
+                        or item.get("text")
+                        or item.get("full_name")
+                        or item.get("name")
+                        or ""
+                    ),
+                    "url": clean_external_url(
+                        item.get("url")
+                        or item.get("link")
+                        or item.get("nitter_url")
+                    ),
+                    "payload": item,
+                }
+            )
+    return selected, removed, to_record
+
+
+def persist_report_used_records(
+    records: list[dict],
+    date_str: str,
+    report_type: str,
+    anchor: datetime,
+) -> None:
+    """落盘本次已推送条目，供下次 12H 增量去重。"""
+    if not records:
+        return
+    conn = init_report_dedup_db()
+    retention_days = max(1, int(os.environ.get("REPORT_DEDUP_RETENTION_DAYS", "14") or 14))
+    cleanup_report_dedup(conn, retention_days=retention_days)
+    now_iso = now_beijing().isoformat()
+    unique_records: dict[tuple[str, str], dict] = {}
+    for row in records:
+        source = str(row.get("source", "") or "").strip()
+        key = str(row.get("dedup_key", "") or "").strip()
+        if not source or not key:
+            continue
+        unique_records[(source, key)] = row
+
+    for (source, key), row in unique_records.items():
+        conn.execute(
+            """
+            INSERT INTO report_used_items
+            (source, dedup_key, anchor_at, report_date, report_type, title, url, payload, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(source, dedup_key) DO UPDATE SET
+                anchor_at=excluded.anchor_at,
+                report_date=excluded.report_date,
+                report_type=excluded.report_type,
+                title=excluded.title,
+                url=excluded.url,
+                payload=excluded.payload,
+                created_at=excluded.created_at
+            """,
+            (
+                source,
+                key,
+                anchor.isoformat(),
+                date_str,
+                report_type,
+                normalize_plain_text(row.get("title", "")),
+                clean_external_url(row.get("url")),
+                json.dumps(row.get("payload", {}), ensure_ascii=False),
+                now_iso,
+            ),
+        )
+    conn.commit()
+    conn.close()
+
+
+def apply_cross_source_incremental_dedup(
+    market: dict,
+    social: dict,
+    news: list,
+    web_context: dict,
+    date_str: str,
+    report_type: str,
+) -> tuple[dict, dict, list[dict], dict, dict, list[dict]]:
+    """
+    12H 跨次增量去重：
+    - 晚报默认不重复早报已推送内容（可配置）。
+    - 返回去重后的数据、统计信息和待持久化记录。
+    """
+    lookback_hours = max(1, int(os.environ.get("REPORT_DEDUP_LOOKBACK_HOURS", "12") or 12))
+    strict_delta = parse_bool(os.environ.get("REPORT_STRICT_DELTA", "1"), True)
+    github_floor_count = max(0, int(os.environ.get("REPORT_GITHUB_FLOOR_COUNT", "5") or 5))
+    dedup_twitter_enabled = parse_bool(os.environ.get("REPORT_DEDUP_TWITTER_ENABLED", "0"), False)
+    dedup_wechat_enabled = parse_bool(os.environ.get("REPORT_DEDUP_WECHAT_ENABLED", "0"), False)
+    dedup_news_enabled = parse_bool(os.environ.get("REPORT_DEDUP_NEWS_ENABLED", "0"), False)
+    dedup_github_enabled = parse_bool(os.environ.get("REPORT_DEDUP_GITHUB_ENABLED", "1"), True)
+    dedup_web_enabled = parse_bool(os.environ.get("REPORT_DEDUP_WEB_ENABLED", "1"), True)
+    anchor = report_anchor_datetime(date_str, report_type)
+
+    filtered_market = deepcopy(market) if isinstance(market, dict) else {}
+    filtered_social = deepcopy(social) if isinstance(social, dict) else {}
+    filtered_news = [n for n in (news or []) if isinstance(n, dict)]
+    filtered_web = deepcopy(web_context) if isinstance(web_context, dict) else {"queries": [], "items": [], "errors": []}
+
+    conn = init_report_dedup_db()
+    cleanup_report_dedup(conn, retention_days=max(1, int(os.environ.get("REPORT_DEDUP_RETENTION_DAYS", "14") or 14)))
+
+    dedup_records: list[dict] = []
+    stats = {
+        "mode": "strict" if strict_delta else "fallback",
+        "lookback_hours": lookback_hours,
+        "twitter_removed": 0,
+        "wechat_removed": 0,
+        "news_removed": 0,
+        "github_removed": 0,
+        "github_floor_added": 0,
+        "web_removed": 0,
+        "twitter_dedup_enabled": bool(dedup_twitter_enabled),
+        "wechat_dedup_enabled": bool(dedup_wechat_enabled),
+        "news_dedup_enabled": bool(dedup_news_enabled),
+        "github_dedup_enabled": bool(dedup_github_enabled),
+        "web_dedup_enabled": bool(dedup_web_enabled),
+    }
+
+    twitter_data = get_social_section(filtered_social, "twitter")
+    tweets = [t for t in twitter_data.get("tweets", []) if isinstance(t, dict)]
+    if dedup_twitter_enabled:
+        tw_selected, tw_removed, tw_records = dedup_incremental_items(
+            conn=conn,
+            source="twitter",
+            items=tweets,
+            anchor=anchor,
+            lookback_hours=lookback_hours,
+            key_builder=twitter_item_dedup_key,
+        )
+        if tweets and not tw_selected and not strict_delta:
+            tw_selected = tweets[:]
+            tw_removed = 0
+            tw_records = []
+    else:
+        tw_selected, tw_removed, tw_records = tweets[:], 0, []
+    twitter_data["tweets"] = tw_selected
+    stats["twitter_removed"] = tw_removed
+    dedup_records.extend(tw_records)
+
+    if isinstance(filtered_social.get("data"), dict):
+        filtered_social["data"]["twitter"] = twitter_data
+    elif isinstance(filtered_social, dict):
+        filtered_social["twitter"] = twitter_data
+
+    wechat_data = get_social_section(filtered_social, "wechat")
+    articles = [a for a in wechat_data.get("articles", []) if isinstance(a, dict)]
+    if dedup_wechat_enabled:
+        wc_selected, wc_removed, wc_records = dedup_incremental_items(
+            conn=conn,
+            source="wechat",
+            items=articles,
+            anchor=anchor,
+            lookback_hours=lookback_hours,
+            key_builder=build_wechat_dedup_key,
+        )
+        if articles and not wc_selected and not strict_delta:
+            wc_selected = articles[:]
+            wc_removed = 0
+            wc_records = []
+    else:
+        wc_selected, wc_removed, wc_records = articles[:], 0, []
+    wechat_data["articles"] = wc_selected
+    stats["wechat_removed"] = wc_removed
+    dedup_records.extend(wc_records)
+
+    if isinstance(filtered_social.get("data"), dict):
+        filtered_social["data"]["wechat"] = wechat_data
+    elif isinstance(filtered_social, dict):
+        filtered_social["wechat"] = wechat_data
+
+    if dedup_news_enabled:
+        ns_selected, ns_removed, ns_records = dedup_incremental_items(
+            conn=conn,
+            source="news",
+            items=filtered_news,
+            anchor=anchor,
+            lookback_hours=lookback_hours,
+            key_builder=build_news_dedup_key,
+        )
+        if filtered_news and not ns_selected and not strict_delta:
+            ns_selected = filtered_news[:]
+            ns_removed = 0
+            ns_records = []
+    else:
+        ns_selected, ns_removed, ns_records = filtered_news[:], 0, []
+    filtered_news = ns_selected
+    stats["news_removed"] = ns_removed
+    dedup_records.extend(ns_records)
+
+    github_data = ((filtered_market.get("data", {}) or {}).get("github", {}) if isinstance(filtered_market, dict) else {})
+    if isinstance(github_data, dict):
+        gh_removed = 0
+        gh_floor_added = 0
+        gh_records_all: list[dict] = []
+
+        def _repo_rank_key(repo: dict) -> tuple[float, str]:
+            try:
+                stars = float(repo.get("stars", 0) or 0)
+            except (TypeError, ValueError):
+                stars = 0.0
+            updated_at = str(repo.get("updated_at", "") or "")
+            return stars, updated_at
+
+        for key in ("trending", "ai_trending", "fintech_trending", "quant_trending", "web3_trending", "interesting_trending"):
+            repos = [r for r in github_data.get(key, []) if isinstance(r, dict)]
+            if dedup_github_enabled:
+                selected, removed, records = dedup_incremental_items(
+                    conn=conn,
+                    source="github",
+                    items=repos,
+                    anchor=anchor,
+                    lookback_hours=lookback_hours,
+                    key_builder=build_github_dedup_key,
+                )
+            else:
+                selected, removed, records = repos[:], 0, []
+            if repos and not selected and not strict_delta:
+                selected = repos[:]
+                removed = 0
+                records = []
+            # 增量+保底：严格增量下也保持最少项目数，避免 GitHub 只剩 0/1 条
+            if repos and strict_delta and github_floor_count > 0:
+                floor_target = min(github_floor_count, len(repos))
+                if len(selected) < floor_target:
+                    selected_keys = {
+                        build_github_dedup_key(r)
+                        for r in selected
+                        if isinstance(r, dict) and build_github_dedup_key(r)
+                    }
+                    supplement: list[dict] = []
+                    for repo in sorted(repos, key=_repo_rank_key, reverse=True):
+                        repo_key = build_github_dedup_key(repo)
+                        if repo_key and repo_key in selected_keys:
+                            continue
+                        supplement.append(repo)
+                        if repo_key:
+                            selected_keys.add(repo_key)
+                        if len(selected) + len(supplement) >= floor_target:
+                            break
+                    if supplement:
+                        selected = selected + supplement
+                        removed = max(0, removed - len(supplement))
+                        gh_floor_added += len(supplement)
+            github_data[key] = selected
+            gh_removed += removed
+            gh_records_all.extend(records)
+        stats["github_removed"] = gh_removed
+        stats["github_floor_added"] = gh_floor_added
+        dedup_records.extend(gh_records_all)
+
+    web_items = [w for w in (filtered_web.get("items", []) if isinstance(filtered_web, dict) else []) if isinstance(w, dict)]
+    if dedup_web_enabled:
+        wb_selected, wb_removed, wb_records = dedup_incremental_items(
+            conn=conn,
+            source="web",
+            items=web_items,
+            anchor=anchor,
+            lookback_hours=lookback_hours,
+            key_builder=build_web_dedup_key,
+        )
+        if web_items and not wb_selected and not strict_delta:
+            wb_selected = web_items[:]
+            wb_removed = 0
+            wb_records = []
+    else:
+        wb_selected, wb_removed, wb_records = web_items[:], 0, []
+    if isinstance(filtered_web, dict):
+        filtered_web["items"] = wb_selected
+    stats["web_removed"] = wb_removed
+    dedup_records.extend(wb_records)
+
+    conn.close()
+    return filtered_market, filtered_social, filtered_news, filtered_web, stats, dedup_records
+
+
+def parse_next_track_items(text: str, max_items: int = 6) -> list[str]:
+    """从报告文本中提取“下一次建议跟踪/明日跟踪清单”条目。"""
+    content = str(text or "")
+    section = ""
+    for heading in (
+        "## 🧭 下一次建议跟踪",
+        "## 六、增量认知与下期博弈锚点",
+        "## 三、明日跟踪清单",
+        "## 6. 下一次建议跟踪",
+    ):
+        section = extract_markdown_section(content, heading)
+        if section:
+            break
+    if not section:
+        return []
+
+    items: list[str] = []
+    for raw in section.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if line in {"---", "***"}:
+            break
+        if line.startswith("<details") or line.startswith("</details"):
+            break
+        if line.startswith("#"):
+            break
+        line = re.sub(r"^[-*]\s+", "", line)
+        line = re.sub(r"^\d+[.)]\s+", "", line)
+        line = normalize_plain_text(line)
+        if not line:
+            continue
+        if line not in items:
+            items.append(line)
+        if len(items) >= max_items:
+            break
+    return items
+
+
+def save_next_track_state(date_str: str, report_type: str, items: list[str]) -> None:
+    """保存本期建议跟踪，供下期注入。"""
+    if not items:
+        return
+    payload = {
+        "date_str": date_str,
+        "report_type": report_type,
+        "anchor_at": report_anchor_datetime(date_str, report_type).isoformat(),
+        "recorded_at": now_beijing().isoformat(),
+        "items": items,
+    }
+    OUTPUT_REPORT.mkdir(parents=True, exist_ok=True)
+    REPORT_NEXT_TRACK_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    with open(REPORT_NEXT_TRACK_LOG, "a", encoding="utf-8") as f:
+        f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+
+def load_previous_next_track_context(date_str: str, report_type: str, max_chars: int = 1200) -> str:
+    """读取上一轮建议跟踪（优先独立状态文件，不再依赖整篇历史报告）。"""
+    anchor = report_anchor_datetime(date_str, report_type)
+    rows: list[dict] = []
+
+    if REPORT_NEXT_TRACK_LOG.exists():
+        try:
+            with open(REPORT_NEXT_TRACK_LOG, encoding="utf-8") as f:
+                for raw in f:
+                    line = raw.strip()
+                    if not line:
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    row_anchor = _parse_report_used_dt(row.get("anchor_at") or row.get("recorded_at"))
+                    if not row_anchor or row_anchor >= anchor:
+                        continue
+                    items = row.get("items", [])
+                    if isinstance(items, list) and items:
+                        rows.append(
+                            {
+                                "anchor_at": row_anchor,
+                                "date_str": row.get("date_str", ""),
+                                "report_type": row.get("report_type", ""),
+                                "items": [normalize_plain_text(x) for x in items if normalize_plain_text(x)],
+                            }
+                        )
+        except Exception as e:
+            logger.warning("⚠️ 读取 next_track_history 失败: %s", e)
+
+    if not rows and REPORT_NEXT_TRACK_FILE.exists():
+        try:
+            row = json.loads(REPORT_NEXT_TRACK_FILE.read_text(encoding="utf-8"))
+            items = row.get("items", [])
+            row_anchor = _parse_report_used_dt(row.get("anchor_at") or row.get("recorded_at"))
+            if row_anchor and row_anchor < anchor and isinstance(items, list) and items:
+                rows.append(
+                    {
+                        "anchor_at": row_anchor,
+                        "date_str": row.get("date_str", ""),
+                        "report_type": row.get("report_type", ""),
+                        "items": [normalize_plain_text(x) for x in items if normalize_plain_text(x)],
+                    }
+                )
+        except Exception as e:
+            logger.warning("⚠️ 读取 next_track_state 失败: %s", e)
+
+    if not rows:
+        return ""
+
+    rows_sorted = sorted(rows, key=lambda x: x["anchor_at"], reverse=True)[:2]
+    parts: list[str] = []
+    for idx, row in enumerate(rows_sorted, start=1):
+        header = f"上一轮跟踪 {idx}: {row.get('date_str','')} {row.get('report_type','')}"
+        lines = [header]
+        for j, item in enumerate(row.get("items", [])[:5], start=1):
+            lines.append(f"{j}. {item}")
+        parts.append("\n".join(lines))
+    return truncate_text_preserve_lines("\n\n".join(parts), max_chars=max_chars)
+
+
+def safe_float(value, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def format_pct(value) -> str:
+    pct = safe_float(value, 0.0)
+    return f"{pct:+.2f}%"
+
+
+def format_price(value, decimals: int = 2) -> str:
+    num = safe_float(value, 0.0)
+    return f"{num:,.{decimals}f}"
+
+
+def load_rss_deep_reads(date_str: str, report_type: str, max_items: int = 2) -> list[dict]:
+    """读取 12H 窗口内阮一峰 RSS。"""
+    start_dt, end_dt = get_report_window(date_str, report_type)
+    report_day = datetime.strptime(date_str, "%Y%m%d")
+    days_to_scan = [report_day]
+    if report_type == "morning":
+        days_to_scan.insert(0, report_day - timedelta(days=1))
+
+    selected: list[dict] = []
+    for day in days_to_scan:
+        db_path = PROJECT_ROOT / "output" / "rss" / f"{day.strftime('%Y-%m-%d')}.db"
+        if not db_path.exists():
+            continue
+        conn = sqlite3.connect(str(db_path))
+        rows = conn.execute(
+            """
+            SELECT i.feed_id, i.title, i.url, i.summary, i.published_at, i.last_crawl_time
+            FROM rss_items i
+            WHERE i.feed_id = 'ruanyifeng'
+            ORDER BY i.last_crawl_time DESC
+            LIMIT 40
+            """
+        ).fetchall()
+        conn.close()
+
+        for feed_id, title, url, summary, published_at, last_crawl_time in rows:
+            pub_dt = parse_datetime_flex(published_at) or parse_datetime_flex(last_crawl_time)
+            if pub_dt is None:
+                continue
+            if not (start_dt <= pub_dt < end_dt):
+                continue
+            selected.append(
+                {
+                    "feed_id": feed_id,
+                    "title": normalize_plain_text(title),
+                    "url": clean_external_url(url),
+                    "summary": normalize_plain_text(summary),
+                    "published_at": pub_dt.strftime("%Y-%m-%d %H:%M"),
+                }
+            )
+            if len(selected) >= max_items:
+                return selected
+    return selected
+
+
+def generate_tldr_3_sentences(
+    ai_summary: str,
+    api_key: str,
+    api_base: str,
+    model: str,
+    iso_date: str,
+    report_label: str,
+) -> str:
+    """生成三句 TL;DR。"""
+    fallback = (
+        f"{iso_date}{report_label}主要变化集中在市场波动、政策新闻与科技信号三条主线。"
+        "本期内容已按12小时窗口做增量筛选，优先保留新出现的重要事件。"
+        "建议先读宏观要闻和科技前沿，再结合跟踪清单执行下一轮观察。"
+    )
+    if not api_key or is_ai_failure(ai_summary):
+        return fallback
+
+    try:
+        prompt = truncate_text_preserve_lines(ai_summary, max_chars=2800)
+        text = call_deepseek(
+            system_prompt=(
+                "你是宏观科技日报编辑。请将输入内容压缩为严格3句话中文 TL;DR：\n"
+                "1) 第一句写最关键的市场/政策变化；\n"
+                "2) 第二句写科技/产业前沿信号；\n"
+                "3) 第三句写可执行的跟踪重点。\n"
+                "禁止编号、禁止空话、禁止超过3句。"
+            ),
+            user_prompt=f"{iso_date} {report_label} 详细分析：\n\n{prompt}",
+            api_key=api_key,
+            api_base=api_base,
+            model=model,
+            max_tokens=320,
+            temperature=0.3,
+        )
+        cleaned = normalize_plain_text(text)
+        if cleaned:
+            return cleaned
+    except Exception:
+        pass
+    return fallback
+
+
+def generate_panorama_brief_section(
+    iso_date: str,
+    report_label: str,
+    time_range: str,
+    generated_at: datetime,
+    market: dict,
+    social: dict,
+    news: list,
+    web_context: dict,
+    tldr: str,
+    next_track_items: list[str],
+    dedup_stats: dict,
+    report_type: str,
+) -> str:
+    """生成 12H 全景简报头部（你指定的固定模板）。"""
+    data = market.get("data", {}) if isinstance(market, dict) else {}
+    stock_cn = data.get("stock_cn", {}) if isinstance(data, dict) else {}
+    yahoo = data.get("yahoo_stock", {}) if isinstance(data, dict) else {}
+    crypto = data.get("crypto", {}) if isinstance(data, dict) else {}
+    metals = data.get("precious_metal", {}) if isinstance(data, dict) else {}
+    futures = data.get("futures", {}) if isinstance(data, dict) else {}
+    github = data.get("github", {}) if isinstance(data, dict) else {}
+    twitter = get_social_section(social, "twitter")
+    wechat = get_social_section(social, "wechat")
+
+    def _pick_price(row: dict) -> float:
+        for key in ("price", "current", "close", "last", "value"):
+            if key not in row:
+                continue
+            try:
+                value = float(row.get(key, 0) or 0)
+            except (TypeError, ValueError):
+                continue
+            if value != 0:
+                return value
+        return 0.0
+
+    a_indices = [i for i in stock_cn.get("indices", []) if isinstance(i, dict)]
+    a_indices = sorted(a_indices, key=lambda x: abs(safe_float(x.get("change_pct"), 0.0)), reverse=True)[:2]
+    a_line = " | ".join(
+        f"{normalize_plain_text(i.get('name','A股指数'))} {format_price(_pick_price(i))} ({format_pct(i.get('change_pct', 0))})"
+        for i in a_indices
+    ) if a_indices else "数据不足"
+
+    y_indices = [i for i in yahoo.get("markets", []) if isinstance(i, dict)]
+    y_indices = sorted(y_indices, key=lambda x: abs(safe_float(x.get("change_pct"), 0.0)), reverse=True)[:3]
+    y_line = " | ".join(
+        f"{normalize_plain_text(i.get('name', i.get('symbol', 'Global')))} {format_pct(i.get('change_pct', 0))}"
+        for i in y_indices
+    ) if y_indices else "数据不足"
+
+    coins = [c for c in crypto.get("coins", []) if isinstance(c, dict)]
+    btc = next((c for c in coins if str(c.get("symbol", "")).upper() == "BTC"), {})
+    eth = next((c for c in coins if str(c.get("symbol", "")).upper() == "ETH"), {})
+    high_beta = sorted(
+        [c for c in coins if str(c.get("symbol", "")).upper() not in {"BTC", "ETH"}],
+        key=lambda x: abs(safe_float(x.get("change_24h"), 0.0)),
+        reverse=True,
+    )[:2]
+    high_beta_line = "、".join(
+        f"{str(c.get('symbol', '?')).upper()} {format_pct(c.get('change_24h', 0))}" for c in high_beta
+    ) if high_beta else "暂无明显高波币种"
+
+    metals_rows = get_precious_metal_rows(metals if isinstance(metals, dict) else {})
+    gold = next(
+        (
+            m for m in metals_rows
+            if any(
+                key in str(m.get("symbol", "")).lower() or key in str(m.get("name", "")).lower()
+                for key in ("gold", "黄金", "xau")
+            )
+        ),
+        {},
+    )
+    futures_rows: list[dict] = []
+    for key in ("international", "commodity", "index_futures"):
+        futures_rows.extend([x for x in futures.get(key, []) if isinstance(x, dict)])
+    futures_top = sorted(futures_rows, key=lambda x: abs(safe_float(x.get("change_pct"), 0.0)), reverse=True)[:2]
+    futures_line = " | ".join(
+        f"{normalize_plain_text(x.get('name', x.get('symbol', '期货')))} {format_pct(x.get('change_pct', 0))}"
+        for x in futures_top
+    ) if futures_top else "数据不足"
+
+    finance_news = [n for n in news if isinstance(n, dict)]
+    finance_news = sorted(finance_news, key=lambda x: int(x.get("rank", 999) or 999))
+    top_news = finance_news[:2]
+
+    web_items = [w for w in web_context.get("items", []) if isinstance(w, dict)] if isinstance(web_context, dict) else []
+    world_view = web_items[0] if web_items else {}
+
+    tech_news = [
+        n for n in finance_news
+        if any(k in normalize_plain_text(n.get("title", "")).lower() for k in ("ai", "芯片", "模型", "算力", "机器人", "openai", "gpt"))
+    ]
+    wechat_articles = [a for a in wechat.get("articles", []) if isinstance(a, dict)]
+    wechat_sorted = sorted(wechat_articles, key=wechat_article_score, reverse=True)
+    tech_focus = tech_news[0] if tech_news else ({"title": wechat_sorted[0].get("title", ""), "platform": wechat_sorted[0].get("account_name", "")} if wechat_sorted else {})
+
+    gh_repos = collect_github_source_repos(market)
+    gh_top = sorted(gh_repos, key=lambda x: safe_float(x.get("stars"), 0.0), reverse=True)[:1]
+    gh_item = gh_top[0] if gh_top else {}
+
+    tweets = [t for t in twitter.get("tweets", []) if isinstance(t, dict)]
+    tweets_sorted = sorted(tweets, key=lambda t: (tweet_engagement(t), str(t.get("created_at", ""))), reverse=True)
+    top_tweets = tweets_sorted[:30]
+    top_tweet_text = " ".join(normalize_plain_text(t.get("text", "")) for t in top_tweets)
+    crypto_signal = "未识别明显链上叙事"
+    if any(k in top_tweet_text.lower() for k in ("bitcoin", "btc", "ethereum", "eth", "defi", "stablecoin", "etf", "token")):
+        crypto_signal = "高互动推文集中在 BTC/ETH、ETF 与链上流动性叙事"
+    elif top_tweet_text:
+        crypto_signal = "本窗口链上叙事热度一般，以宏观/政策讨论为主"
+
+    topic_tokens = []
+    for token in ("AI", "Fed/利率", "关税/贸易", "地缘政治", "芯片算力", "加密资产"):
+        key_map = {
+            "AI": ("ai", "openai", "model", "agent", "llm"),
+            "Fed/利率": ("fed", "rate", "yield", "inflation"),
+            "关税/贸易": ("tariff", "trade", "关税"),
+            "地缘政治": ("ukraine", "iran", "russia", "israel"),
+            "芯片算力": ("nvidia", "amd", "chip", "semiconductor", "算力", "芯片"),
+            "加密资产": ("btc", "bitcoin", "eth", "crypto", "defi"),
+        }
+        if any(k.lower() in top_tweet_text.lower() for k in key_map[token]):
+            topic_tokens.append(token)
+    topic_line = "、".join(topic_tokens[:2]) if topic_tokens else "宏观与市场情绪分化"
+
+    social_platforms = {"今日头条", "百度热搜", "澎湃新闻", "bilibili 热搜", "凤凰网", "贴吧", "微博", "抖音", "知乎"}
+    social_news = [n for n in finance_news if normalize_plain_text(n.get("platform", "")) in social_platforms]
+    social_top = social_news[0] if social_news else {}
+    zhihu_bili = [n for n in social_news if normalize_plain_text(n.get("platform", "")) in {"知乎", "bilibili 热搜"}]
+    deep_topic = zhihu_bili[0] if zhihu_bili else {}
+    fun_news = [n for n in social_news if normalize_plain_text(n.get("platform", "")) in {"贴吧", "抖音", "微博"}]
+    fun_topic = fun_news[0] if fun_news else {}
+
+    rss_reads = load_rss_deep_reads(iso_date.replace("-", ""), report_type, max_items=1)
+    deep_reads: list[dict] = []
+    if wechat_sorted:
+        deep_reads.extend(wechat_sorted[:2])
+    if rss_reads:
+        deep_reads.append(rss_reads[0])
+
+    delta_note = ""
+    if isinstance(dedup_stats, dict):
+        github_note = f"-{dedup_stats.get('github_removed',0)}"
+        github_floor = int(dedup_stats.get("github_floor_added", 0) or 0)
+        if github_floor > 0:
+            github_note += f"（保底+{github_floor}）"
+        delta_note = (
+            f"增量去重：Twitter -{dedup_stats.get('twitter_removed',0)} | "
+            f"微信 -{dedup_stats.get('wechat_removed',0)} | "
+            f"热榜 -{dedup_stats.get('news_removed',0)} | "
+            f"GitHub {github_note} | "
+            f"联网 -{dedup_stats.get('web_removed',0)}"
+        )
+
+    lines = [
+        f"# 🌍 {iso_date} 12H 个人全景简报 ({'早报' if report_type == 'morning' else '晚报'})",
+        f"**生成时间:** {generated_at.strftime('%Y-%m-%d %H:%M')}  |  **时间窗口:** 过去 12 小时（{time_range}）",
+    ]
+    if delta_note:
+        lines.append(f"**Δ 增量过滤:** {delta_note}")
+    lines.extend(
+        [
+            "",
+            f"**💡 AI 导读 (TL;DR):** {tldr}",
+            "",
+            "---",
+            "",
+            "### 📊 1. 市场行情雷达 (Market Monitor)",
+            f"* **股市盘点:** A股 {a_line} | 全球核心异动 {y_line}",
+            f"* **加密货币:** BTC {format_price(btc.get('price', 0))} ({format_pct(btc.get('change_24h', 0))}) | ETH {format_price(eth.get('price', 0))} ({format_pct(eth.get('change_24h', 0))}) | 其他高波币种: {high_beta_line}",
+            f"* **大宗贵金属:** 黄金 {format_price(_pick_price(gold))} | 核心期货异动 {futures_line}",
+            "",
+            "### 📰 2. 宏观财经与全网要闻 (Macro & Top News)",
+            f"* **🔴 财经焦点:** {normalize_plain_text(top_news[0].get('title', '数据不足'))} - *{normalize_plain_text(top_news[0].get('platform', '来源待补'))}* （12小时内高频传播）" if top_news else "* **🔴 财经焦点:** 数据不足",
+            f"* **🔴 财经焦点:** {normalize_plain_text(top_news[1].get('title', '数据不足'))} - *{normalize_plain_text(top_news[1].get('platform', '来源待补'))}*" if len(top_news) > 1 else "* **🔴 财经焦点:** 数据不足",
+            f"* **🌍 国际视点:** {normalize_plain_text(world_view.get('title', '暂无联网检索国际事件'))}",
+            "",
+            "### 🚀 3. 科技、加密与开源前沿 (Tech & Crypto Pulse)",
+            f"* **🔥 科技热点:** {normalize_plain_text(tech_focus.get('title', '暂无科技热点样本'))}",
+            f"* **💻 开发者:** {normalize_plain_text(gh_item.get('full_name', '暂无 GitHub 项目'))} - {normalize_plain_text(gh_item.get('description', ''))}",
+            f"* **⛓️ 链上风向:** {crypto_signal}",
+            f"* **🐦 推特大V:** 过去12小时高频讨论主题：{topic_line}",
+            "",
+            "### 🗣️ 4. 国内社交与舆情吃瓜 (Social Chatter)",
+            f"* **🔥 热搜第一:** {normalize_plain_text(social_top.get('title', '暂无'))}",
+            f"* **💡 深度热议:** {normalize_plain_text(deep_topic.get('title', '暂无'))} - *当前讨论以观点分歧与政策影响评估为主*",
+            f"* **🎮 娱乐/次文化:** {normalize_plain_text(fun_topic.get('title', '暂无'))}",
+            "",
+            "### 📚 5. 深度精读推荐 (Deep Reads)",
+        ]
+    )
+
+    if deep_reads:
+        for item in deep_reads[:3]:
+            if item.get("feed_id") == "ruanyifeng":
+                title = normalize_plain_text(item.get("title", ""))
+                source = "阮一峰"
+                summary = normalize_plain_text(item.get("summary", ""))[:90] or "可用于补充技术与行业趋势背景。"
+                lines.append(f"* 📖 [{title}]({clean_external_url(item.get('url'))}) - *{source}* （{summary}）")
+            else:
+                title = normalize_plain_text(item.get("title", ""))
+                source = normalize_plain_text(item.get("account_name", "公众号"))
+                digest = normalize_plain_text(item.get("digest", ""))[:90] or "建议关注其对资产定价与策略框架的启发。"
+                lines.append(f"* 📖 [{title}]({clean_external_url(item.get('url'))}) - *{source}* （{digest}）")
+    else:
+        lines.append("* 📖 暂无可用深度精读样本")
+
+    lines.extend(["", "## 🧭 下一次建议跟踪"])
+    if next_track_items:
+        for idx, item in enumerate(next_track_items[:5], start=1):
+            lines.append(f"{idx}. {item}")
+    else:
+        lines.append("1. 跟踪本窗口内最强政策变量在下一交易时段的落地进展。")
+        lines.append("2. 跟踪高波动资产（加密/期货）是否出现方向反转。")
+        lines.append("3. 跟踪 AI 与开源项目从话题热度到真实采用的转化。")
+
+    lines.append("")
+    return "\n".join(lines)
 
 
 def run_web_context_search(
@@ -774,10 +2032,11 @@ def run_web_context_search(
         custom_keywords=keywords or None,
     )[:max_queries]
     if not queries:
-        return {"queries": [], "items": [], "errors": []}
+        return {"queries": [], "items": [], "errors": [], "raw_material_downloads": []}
 
     results: list[dict] = []
     errors: list[str] = []
+    raw_material_downloads: list[dict] = []
     workers = min(max(1, len(queries)), 4)
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
@@ -798,11 +2057,26 @@ def run_web_context_search(
             try:
                 rows = future.result()
                 logger.info(f"🌐 联网检索 [{query}] 命中 {len(rows)} 条")
+                raw_material_downloads.append(
+                    {
+                        "query": query,
+                        "fetched_count": len(rows),
+                        "items": rows,
+                    }
+                )
                 results.extend(rows)
             except Exception as e:  # pragma: no cover - network dependent
                 err = f"{query}: {e}"
                 logger.warning(f"⚠️ 联网检索失败: {err}")
                 errors.append(err)
+                raw_material_downloads.append(
+                    {
+                        "query": query,
+                        "fetched_count": 0,
+                        "items": [],
+                        "error": str(e),
+                    }
+                )
 
     now_ts = now_beijing().timestamp()
     dedup_map: dict[tuple[str, str], dict] = {}
@@ -827,6 +2101,7 @@ def run_web_context_search(
         "queries": queries,
         "items": dedup_items[:max_items_total],
         "errors": errors,
+        "raw_material_downloads": raw_material_downloads,
     }
 
 
@@ -985,9 +2260,11 @@ def format_market_for_ai(market: dict, include_a_share: bool = True) -> str:
         north = stock.get("north_flow", {}) if stock else {}
         if north:
             lines.append("【北向资金】")
-            for k, v in north.items():
-                if isinstance(v, (int, float)):
-                    lines.append(f"  {k}: {v:.2f}亿")
+            for key in ("net_flow", "hu_net_flow", "shen_net_flow"):
+                if key in north:
+                    lines.append(f"  {key}: {safe_float(north.get(key), 0.0):+.2f}亿")
+            if is_north_flow_zero_snapshot(north):
+                lines.append("  提示: 当前快照三项全为0，可能为数据源未更新，避免直接推断资金方向。")
 
         mstats = stock.get("market_stats", {}) if stock else {}
         if mstats:
@@ -1026,11 +2303,11 @@ def format_market_for_ai(market: dict, include_a_share: bool = True) -> str:
     
     # 贵金属
     pm = data.get("precious_metal", {})
-    if pm and pm.get("metals"):
+    metals_rows = get_precious_metal_rows(pm if isinstance(pm, dict) else {})
+    if metals_rows:
         lines.append("【贵金属】")
-        for metal in pm["metals"]:
-            if isinstance(metal, dict):
-                lines.append(f"  {metal.get('name','')}: ${metal.get('price',0):.2f} ({metal.get('change_pct',0):+.2f}%)")
+        for metal in metals_rows:
+            lines.append(f"  {metal.get('name','')}: ${metal.get('price',0):.2f} ({metal.get('change_pct',0):+.2f}%)")
     
     # 加密货币
     crypto = data.get("crypto", {})
@@ -1055,6 +2332,109 @@ def format_market_for_ai(market: dict, include_a_share: bool = True) -> str:
                         lines.append(f"  {item.get('name','')}: {item.get('price',0)} ({item.get('change_pct',0):+.2f}%)")
     
     return "\n".join(lines) if lines else "暂无市场数据"
+
+
+def format_market_indices_watch_for_ai(market: dict) -> str:
+    """提取摘要可直接引用的关键指数与异动指数。"""
+    data = market.get("data", {}) if isinstance(market, dict) else {}
+    lines: list[str] = []
+    has_a_share_index_block = False
+
+    stock = data.get("stock_cn", {}) if isinstance(data, dict) else {}
+    if isinstance(stock, dict):
+        indices = [i for i in stock.get("indices", []) if isinstance(i, dict)]
+        if indices:
+            watch_order = ["上证指数", "深证成指", "沪深300", "创业板指", "科创50", "中证500"]
+            name_map = {normalize_plain_text(i.get("name", "")): i for i in indices}
+            picked = [name_map[n] for n in watch_order if n in name_map]
+            if picked:
+                lines.append("【A股关键指数】")
+                has_a_share_index_block = True
+                for idx in picked:
+                    lines.append(
+                        f"  {idx.get('name','')}: {safe_float(idx.get('price'), 0.0):,.2f} ({safe_float(idx.get('change_pct'), 0.0):+.2f}%)"
+                    )
+            outlier = sorted(indices, key=lambda x: abs(safe_float(x.get("change_pct"), 0.0)), reverse=True)[0]
+            lines.append(
+                f"【A股异动指数】{outlier.get('name','未知')}: {safe_float(outlier.get('change_pct'), 0.0):+.2f}%"
+            )
+
+        north_flow = stock.get("north_flow", {})
+        if isinstance(north_flow, dict) and north_flow:
+            net_flow = safe_float(north_flow.get("net_flow"), 0.0)
+            hu_flow = safe_float(north_flow.get("hu_net_flow"), 0.0)
+            shen_flow = safe_float(north_flow.get("shen_net_flow"), 0.0)
+            lines.append(
+                f"【北向资金】净流入={net_flow:+.2f}亿 | 沪股通={hu_flow:+.2f}亿 | 深股通={shen_flow:+.2f}亿"
+            )
+            if is_north_flow_zero_snapshot(north_flow):
+                lines.append("【北向资金提示】数据源当期返回全0，可能尚未更新，避免过度解读方向。")
+
+    yahoo_stock = data.get("yahoo_stock", {}) if isinstance(data, dict) else {}
+    if isinstance(yahoo_stock, dict):
+        markets = [m for m in yahoo_stock.get("markets", []) if isinstance(m, dict)]
+        if markets:
+            if not has_a_share_index_block:
+                shanghai = next(
+                    (
+                        item for item in markets
+                        if str(item.get("symbol", "")).upper() == "000001.SS"
+                        or "上证" in normalize_plain_text(item.get("name", ""))
+                    ),
+                    None,
+                )
+                if isinstance(shanghai, dict):
+                    lines.append("【A股关键指数（Yahoo兜底）】")
+                    lines.append(
+                        f"  上证指数: {safe_float(shanghai.get('price'), 0.0):,.2f} ({safe_float(shanghai.get('change_pct'), 0.0):+.2f}%)"
+                    )
+            major = sorted(markets, key=lambda x: abs(safe_float(x.get("change_pct"), 0.0)), reverse=True)[:8]
+            lines.append("【全球关键指数】")
+            for item in major:
+                name = normalize_plain_text(item.get("name", item.get("symbol", "Global")))
+                lines.append(f"  {name}: {safe_float(item.get('change_pct'), 0.0):+.2f}%")
+            outlier = major[0]
+            lines.append(
+                f"【全球异动指数】{normalize_plain_text(outlier.get('name', outlier.get('symbol', 'Global')))}: {safe_float(outlier.get('change_pct'), 0.0):+.2f}%"
+            )
+
+    return "\n".join(lines) if lines else "关键指数样本不足。"
+
+
+def format_sector_structure_for_ai(market: dict) -> str:
+    """提取 A 股板块强弱结构，便于盘面段落展开。"""
+    data = market.get("data", {}) if isinstance(market, dict) else {}
+    stock = data.get("stock_cn", {}) if isinstance(data, dict) else {}
+    if not isinstance(stock, dict):
+        return "A股行业板块数据：未提供。"
+    sectors = [s for s in stock.get("sectors", []) if isinstance(s, dict) and s.get("change_pct") is not None]
+    if not sectors:
+        return "A股行业板块数据：当前窗口未抓取到有效板块涨跌（数据不足/抓取失败），请在正文显式标注。"
+
+    sorted_rows = sorted(sectors, key=lambda x: safe_float(x.get("change_pct"), 0.0), reverse=True)
+    gainers = sorted_rows[:10]
+    losers = sorted_rows[-10:]
+
+    lines = ["【A股板块结构】"]
+    lines.append("板块涨幅前10：")
+    for row in gainers:
+        turnover = safe_float(row.get("turnover"), 0.0)
+        leader = normalize_plain_text(row.get("leading_stock", ""))
+        suffix = f" | 换手{turnover:.2f}%" if turnover else ""
+        if leader:
+            suffix += f" | 领涨{leader}"
+        lines.append(f"  - {normalize_plain_text(row.get('name', '未知板块'))}: {safe_float(row.get('change_pct'), 0.0):+.2f}%{suffix}")
+
+    lines.append("板块跌幅前10：")
+    for row in losers:
+        turnover = safe_float(row.get("turnover"), 0.0)
+        leader = normalize_plain_text(row.get("leading_stock", ""))
+        suffix = f" | 换手{turnover:.2f}%" if turnover else ""
+        if leader:
+            suffix += f" | 领跌{leader}"
+        lines.append(f"  - {normalize_plain_text(row.get('name', '未知板块'))}: {safe_float(row.get('change_pct'), 0.0):+.2f}%{suffix}")
+
+    return "\n".join(lines)
 
 
 def format_twitter_for_ai(social: dict) -> str:
@@ -1265,7 +2645,7 @@ def collect_github_source_repos(market: dict) -> list[dict]:
         return []
     merged = []
     seen = set()
-    for key in ("trending", "ai_trending", "fintech_trending", "web3_trending"):
+    for key in ("trending", "ai_trending", "fintech_trending", "quant_trending", "web3_trending", "interesting_trending"):
         rows = github_data.get(key, []) or []
         for repo in rows:
             if not isinstance(repo, dict):
@@ -1559,11 +2939,102 @@ def normalize_source_label_to_key(label: str) -> str | None:
         return "news"
     if "github" in text:
         return "github"
-    if "联网" in text or "搜索" in text or "web" in text:
+    if "联网" in text or "搜索" in text:
+        return "web"
+    if text in {"web", "websearch", "web-search", "web_search"}:
         return "web"
     if "市场" in text:
         return "market"
     return None
+
+
+def normalize_inline_source_id_links(ai_text: str) -> str:
+    """
+    将模型直接输出的 [MK01](url) / [GH2](url) 标准化为 [来源ID: MK01]。
+    这样后续统一走来源ID映射，减少格式漂移和错链风险。
+    """
+    text = str(ai_text or "")
+    if not text:
+        return text
+
+    pattern = re.compile(
+        r"\[(TW|WC|NW|GH|MK|WB)\s*[-_]?(\d{1,3})\]\((https?://[^)\s]+)\)",
+        flags=re.IGNORECASE,
+    )
+
+    def _repl(match: re.Match) -> str:
+        token = normalize_source_id_token(f"{match.group(1)}{match.group(2)}")
+        if not token:
+            return match.group(0)
+        return f"[来源ID: {token}]"
+
+    return pattern.sub(_repl, text)
+
+
+def sanitize_source_id_tags(ai_text: str) -> str:
+    """
+    清洗 [来源ID: ...] 中的非法占位内容（如“未提供”），仅保留合法来源ID。
+    """
+    text = str(ai_text or "")
+    if not text:
+        return text
+
+    pattern = re.compile(r"\[来源ID:\s*([^\]]+)\]", flags=re.IGNORECASE)
+    valid_id_pattern = re.compile(r"^(TW|WC|NW|GH|MK|WB)\d{2,3}$")
+
+    def _repl(match: re.Match) -> str:
+        raw = str(match.group(1) or "")
+        parts = [p for p in re.split(r"[，,、/|;+；\s]+", raw) if p.strip()]
+        valid_tokens: list[str] = []
+        for part in parts:
+            token = normalize_source_id_token(part)
+            if token and valid_id_pattern.match(token):
+                valid_tokens.append(token)
+        if not valid_tokens:
+            return ""
+        uniq = list(dict.fromkeys(valid_tokens))
+        return f"[来源ID: {', '.join(uniq)}]"
+
+    cleaned = pattern.sub(_repl, text)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned
+
+
+def canonicalize_source_id_markdown_links(ai_text: str, ref_records: list[dict]) -> str:
+    """
+    将残留的 [MK01](url) / [GH02](url) 统一替换为角标链接，确保正文引用风格一致。
+    """
+    text = str(ai_text or "")
+    if not text or not ref_records:
+        return text
+
+    source_to_ref: dict[str, dict] = {}
+    for row in ref_records:
+        if not isinstance(row, dict):
+            continue
+        source_id = normalize_source_id_token(row.get("source_id", ""))
+        url = clean_external_url(row.get("url", ""))
+        idx = int(row.get("idx", 0) or 0)
+        if not source_id or not url or idx <= 0:
+            continue
+        source_to_ref[source_id] = {"idx": idx, "url": url}
+
+    if not source_to_ref:
+        return text
+
+    pattern = re.compile(
+        r"\[(TW|WC|NW|GH|MK|WB)\s*[-_]?(\d{1,3})\]\((https?://[^)\s]+)\)",
+        flags=re.IGNORECASE,
+    )
+
+    def _repl(match: re.Match) -> str:
+        token = normalize_source_id_token(f"{match.group(1)}{match.group(2)}")
+        ref = source_to_ref.get(token)
+        if not ref:
+            return match.group(0)
+        return f"[{to_superscript(int(ref['idx']))}]({ref['url']})"
+
+    return pattern.sub(_repl, text)
 
 
 def convert_ai_source_tags_to_clickable_refs(
@@ -1574,7 +3045,7 @@ def convert_ai_source_tags_to_clickable_refs(
     web_context: dict | None = None,
 ) -> tuple[str, str, list[dict]]:
     """
-    将 AI 输出中的 [来源: xxx] 转成可点击角标链接，如 [¹](url)。
+    将 AI 输出中的 [来源: xxx] / [来源ID: xx] 转成可点击引用链接（优先显示来源ID）。
     并返回“引用脚注”区块。
     """
     if not ai_text:
@@ -1592,6 +3063,7 @@ def convert_ai_source_tags_to_clickable_refs(
         pools=pools,
     )
     source_id_map = {}
+    url_to_source_id_map: dict[str, str] = {}
     first_source_row_map: dict[str, dict] = {}
     for row in catalog:
         if not isinstance(row, dict):
@@ -1599,6 +3071,9 @@ def convert_ai_source_tags_to_clickable_refs(
         source_id = normalize_source_id_token(row.get("source_id", ""))
         if source_id:
             source_id_map[source_id] = row
+            url = clean_external_url(row.get("url", ""))
+            if url:
+                url_to_source_id_map[url] = source_id
         source_key = str(row.get("source_key", "")).strip()
         if source_key and source_key not in first_source_row_map:
             first_source_row_map[source_key] = row
@@ -1613,7 +3088,7 @@ def convert_ai_source_tags_to_clickable_refs(
         safe_url = clean_external_url(url)
         if not safe_url:
             return None
-        safe_source_id = normalize_source_id_token(source_id)
+        safe_source_id = normalize_source_id_token(source_id) or normalize_source_id_token(url_to_source_id_map.get(safe_url, ""))
         if safe_url in url_to_idx:
             idx = url_to_idx[safe_url]
             record = ref_records[idx - 1]
@@ -1642,6 +3117,21 @@ def convert_ai_source_tags_to_clickable_refs(
         }
         ref_records.append(record)
         return record
+
+    def _render_inline_ref(ref: dict) -> str:
+        """正文内引用渲染：优先显示来源ID，保证“来源明确可点开”。"""
+        if not isinstance(ref, dict):
+            return ""
+        url = clean_external_url(ref.get("url", ""))
+        if not url:
+            return ""
+        source_id = normalize_source_id_token(ref.get("source_id", ""))
+        if source_id:
+            return f"[{source_id}]({url})"
+        idx = int(ref.get("idx", 0) or 0)
+        if idx <= 0:
+            return ""
+        return f"[{to_superscript(idx)}]({url})"
 
     def register_default_source_ref(source_key: str) -> dict | None:
         row = first_source_row_map.get(source_key)
@@ -1813,7 +3303,9 @@ def convert_ai_source_tags_to_clickable_refs(
             if idx in seen_idx:
                 continue
             seen_idx.add(idx)
-            refs.append(f"[{to_superscript(idx)}]({ref['url']})")
+            token_text = _render_inline_ref(ref)
+            if token_text:
+                refs.append(token_text)
         if not refs:
             return match.group(0)
         return "".join(refs)
@@ -1856,12 +3348,12 @@ def convert_ai_source_tags_to_clickable_refs(
                     ref_records[idx - 1]["score"] = max(int(ref_records[idx - 1].get("score", 0) or 0), 40)
                 ref["score"] = max(int(ref.get("score", 0) or 0), 40)
             idx = int(ref["idx"])
-            url = str(ref["url"])
             if idx in seen_token:
                 continue
             seen_token.add(idx)
-            sup = to_superscript(idx)
-            tokens.append(f"[{sup}]({url})")
+            token_text = _render_inline_ref(ref)
+            if token_text:
+                tokens.append(token_text)
         if not tokens:
             return match.group(0)
         return "".join(tokens)
@@ -1947,7 +3439,9 @@ def convert_ai_source_tags_to_clickable_refs(
             if idx in seen_idx:
                 continue
             seen_idx.add(idx)
-            refs.append(f"[{to_superscript(idx)}]({ref['url']})")
+            token_text = _render_inline_ref(ref)
+            if token_text:
+                refs.append(token_text)
 
         if not recognized_any or not refs:
             return match.group(0)
@@ -2395,13 +3889,17 @@ def format_twitter_focus_for_ai(social: dict) -> str:
     tweets = sorted(tweets, key=tweet_engagement, reverse=True)
     en_tweets = [t for t in tweets if is_mostly_english(t.get("text", ""))]
     zh_tweets = [t for t in tweets if not is_mostly_english(t.get("text", ""))]
+    max_en = int(os.environ.get("TWITTER_FOCUS_MAX_EN", "0") or 0)
+    max_other = int(os.environ.get("TWITTER_FOCUS_MAX_OTHER", "0") or 0)
+    selected_en = en_tweets if max_en <= 0 else en_tweets[:max_en]
+    selected_other = zh_tweets if max_other <= 0 else zh_tweets[:max_other]
 
     lines = [
         f"Twitter 高互动样本：英文 {len(en_tweets)} 条，非英文 {len(zh_tweets)} 条（按互动排序）"
     ]
 
     lines.append("\n英文重点（请在最终报告中翻译成中文并保留关键信号）：")
-    for idx, t in enumerate(en_tweets[:20], start=1):
+    for idx, t in enumerate(selected_en, start=1):
         text = normalize_plain_text(t.get("text", ""))[:280]
         lines.append(
             f"{idx}. @{t.get('username','unknown')} | {tweet_engagement(t)} 互动 | "
@@ -2409,7 +3907,7 @@ def format_twitter_focus_for_ai(social: dict) -> str:
         )
 
     lines.append("\n中文/其他语种补充：")
-    for idx, t in enumerate(zh_tweets[:12], start=1):
+    for idx, t in enumerate(selected_other, start=1):
         text = normalize_plain_text(t.get("text", ""))[:220]
         lines.append(
             f"{idx}. @{t.get('username','unknown')} | {tweet_engagement(t)} 互动 | "
@@ -2417,6 +3915,196 @@ def format_twitter_focus_for_ai(social: dict) -> str:
         )
 
     return "\n".join(lines)
+
+
+DEFAULT_TWITTER_RELEVANCE_POSITIVE_KEYWORDS = (
+    "fed", "fomc", "powell", "rate", "rates", "yield", "treasury", "bond", "inflation",
+    "cpi", "pmi", "gdp", "recession", "liquidity", "usd", "dollar", "fx", "carry",
+    "stock", "stocks", "equity", "earnings", "guidance", "ipo", "valuation", "etf",
+    "option", "gamma", "volatility", "vix", "sector", "market", "macro", "policy",
+    "bitcoin", "btc", "ethereum", "eth", "sol", "crypto", "defi", "stablecoin", "onchain",
+    "ai", "llm", "agent", "model", "openai", "anthropic", "nvidia", "chip", "semiconductor",
+    "fintech", "payment", "lending", "credit", "risk", "saas", "medtech", "biotech",
+    "关税", "降息", "加息", "通胀", "利率", "收益率", "汇率", "就业", "非农", "政策",
+    "财报", "估值", "资金流", "期权", "波动率", "比特币", "以太坊", "加密", "芯片", "算力",
+)
+
+DEFAULT_TWITTER_RELEVANCE_NEGATIVE_KEYWORDS = (
+    "giveaway", "airdrop", "nsfw", "porn", "nude", "escort", "dating", "idol", "fan cam",
+    "meme", "lol", "lmao", "hahaha", "suicidar", "kill", "sex", "gossip", "celebrity",
+    "中奖", "抽奖", "福利视频", "裸照", "八卦", "追星", "饭圈", "搞笑", "段子", "娱乐圈",
+)
+
+
+def build_twitter_relevance_runtime() -> dict:
+    """构建 Twitter 相关性过滤配置（配置文件 + 环境变量）。"""
+    twitter_cfg = {}
+    try:
+        cfg = load_config()
+        if isinstance(cfg, dict):
+            twitter_cfg = cfg.get("twitter", {}) if isinstance(cfg.get("twitter"), dict) else {}
+    except Exception:
+        twitter_cfg = {}
+
+    enabled_default = bool(twitter_cfg.get("relevance_filter_enabled", True))
+    enabled = parse_bool(os.environ.get("TWITTER_RELEVANCE_FILTER_ENABLED"), enabled_default)
+
+    min_score_default = int(twitter_cfg.get("relevance_min_score", 2) or 2)
+    try:
+        min_score = int(os.environ.get("TWITTER_RELEVANCE_MIN_SCORE", str(min_score_default)) or min_score_default)
+    except ValueError:
+        min_score = min_score_default
+
+    floor_default = int(os.environ.get("TWITTER_RELEVANCE_FLOOR_COUNT", "20") or 20)
+    floor_count = max(0, floor_default)
+
+    cfg_positive = twitter_cfg.get("relevance_positive_keywords", [])
+    cfg_negative = twitter_cfg.get("relevance_negative_keywords", [])
+    if not isinstance(cfg_positive, list):
+        cfg_positive = []
+    if not isinstance(cfg_negative, list):
+        cfg_negative = []
+
+    env_positive = parse_keywords_arg(os.environ.get("TWITTER_RELEVANCE_POSITIVE_KEYWORDS", ""))
+    env_negative = parse_keywords_arg(os.environ.get("TWITTER_RELEVANCE_NEGATIVE_KEYWORDS", ""))
+
+    positive_keywords = [normalize_plain_text(x).lower() for x in (cfg_positive or []) if normalize_plain_text(x)]
+    negative_keywords = [normalize_plain_text(x).lower() for x in (cfg_negative or []) if normalize_plain_text(x)]
+    if not positive_keywords:
+        positive_keywords = list(DEFAULT_TWITTER_RELEVANCE_POSITIVE_KEYWORDS)
+    if not negative_keywords:
+        negative_keywords = list(DEFAULT_TWITTER_RELEVANCE_NEGATIVE_KEYWORDS)
+    if env_positive:
+        positive_keywords = [normalize_plain_text(x).lower() for x in env_positive if normalize_plain_text(x)]
+    if env_negative:
+        negative_keywords = [normalize_plain_text(x).lower() for x in env_negative if normalize_plain_text(x)]
+
+    return {
+        "enabled": bool(enabled),
+        "min_score": max(-20, min(50, int(min_score))),
+        "floor_count": floor_count,
+        "positive_keywords": list(dict.fromkeys([x for x in positive_keywords if x])),
+        "negative_keywords": list(dict.fromkeys([x for x in negative_keywords if x])),
+    }
+
+
+def twitter_relevance_score(tweet: dict, runtime: dict) -> int:
+    """计算推文相关性评分（财经/科技导向）。"""
+    text = normalize_plain_text(tweet.get("text", "") or "")
+    username = normalize_plain_text(tweet.get("username", "") or "")
+    keyword = normalize_plain_text(tweet.get("keyword", "") or "")
+    source = normalize_plain_text(tweet.get("source", "") or "")
+    joined = f"{text} {username} {keyword} {source}".lower()
+
+    positive_keywords = runtime.get("positive_keywords", []) if isinstance(runtime, dict) else []
+    negative_keywords = runtime.get("negative_keywords", []) if isinstance(runtime, dict) else []
+    min_score = int(runtime.get("min_score", 2) or 2) if isinstance(runtime, dict) else 2
+    _ = min_score
+
+    pos_hits = 0
+    for kw in positive_keywords:
+        if kw and kw in joined:
+            pos_hits += 1
+
+    neg_hits = 0
+    for kw in negative_keywords:
+        if kw and kw in joined:
+            neg_hits += 1
+
+    signal_bonus = 0
+    if re.search(r"(\$[A-Za-z]{1,6}|\b\d+(\.\d+)?%|\b\d+bp\b)", joined):
+        signal_bonus += 1
+    if re.search(r"\b(qoq|yoy|guidance|earnings|etf|cpi|pmi|fomc|yield|inflation)\b", joined):
+        signal_bonus += 1
+    if tweet.get("is_trending"):
+        signal_bonus += 1
+    else:
+        signal_bonus += 2
+    if tweet_engagement(tweet) >= 500:
+        signal_bonus += 1
+
+    score = pos_hits * 2 + signal_bonus - neg_hits * 3
+    return int(score)
+
+
+def filter_social_twitter_for_report(social: dict) -> tuple[dict, dict]:
+    """
+    对社交数据中的 Twitter 推文做相关性过滤。
+    返回: (filtered_social, stats)
+    """
+    filtered_social = deepcopy(social) if isinstance(social, dict) else {}
+    twitter_data = get_social_section(filtered_social, "twitter")
+    tweets = [t for t in twitter_data.get("tweets", []) if isinstance(t, dict)]
+    runtime = build_twitter_relevance_runtime()
+
+    stats = {
+        "enabled": bool(runtime.get("enabled", True)),
+        "before": len(tweets),
+        "after": len(tweets),
+        "removed": 0,
+        "min_score": int(runtime.get("min_score", 2) or 2),
+        "floor_count": int(runtime.get("floor_count", 0) or 0),
+        "floor_applied": 0,
+    }
+    if not tweets or not runtime.get("enabled", True):
+        return filtered_social, stats
+
+    scored_rows = []
+    for tweet in tweets:
+        row = dict(tweet)
+        score = twitter_relevance_score(row, runtime)
+        row["_relevance_score"] = score
+        scored_rows.append(row)
+
+    scored_rows.sort(
+        key=lambda x: (
+            int(x.get("_relevance_score", 0) or 0),
+            tweet_engagement(x),
+            str(x.get("created_at", "")),
+        ),
+        reverse=True,
+    )
+
+    min_score = int(runtime.get("min_score", 2) or 2)
+    selected = [row for row in scored_rows if int(row.get("_relevance_score", 0) or 0) >= min_score]
+
+    floor_count = max(0, int(runtime.get("floor_count", 0) or 0))
+    if floor_count > 0 and len(selected) < floor_count and scored_rows:
+        selected_map = {twitter_item_dedup_key(x): x for x in selected}
+        for row in scored_rows:
+            key = twitter_item_dedup_key(row)
+            if key in selected_map:
+                continue
+            selected.append(row)
+            selected_map[key] = row
+            if len(selected) >= floor_count:
+                break
+        stats["floor_applied"] = max(0, len(selected) - len([r for r in scored_rows if int(r.get("_relevance_score", 0) or 0) >= min_score]))
+
+    selected.sort(
+        key=lambda x: (
+            int(x.get("_relevance_score", 0) or 0),
+            tweet_engagement(x),
+            str(x.get("created_at", "")),
+        ),
+        reverse=True,
+    )
+
+    twitter_data["tweets"] = selected
+    twitter_data["relevance_filter_enabled"] = True
+    twitter_data["relevance_min_score"] = min_score
+    twitter_data["relevance_removed_count"] = max(0, len(tweets) - len(selected))
+    twitter_data["follow_tweets_count"] = sum(1 for t in selected if not t.get("is_trending"))
+    twitter_data["trending_tweets_count"] = sum(1 for t in selected if t.get("is_trending"))
+
+    if isinstance(filtered_social.get("data"), dict):
+        filtered_social["data"]["twitter"] = twitter_data
+    else:
+        filtered_social["twitter"] = twitter_data
+
+    stats["after"] = len(selected)
+    stats["removed"] = max(0, len(tweets) - len(selected))
+    return filtered_social, stats
 
 
 REPO_THEME_KEYWORDS = {
@@ -2707,11 +4395,13 @@ def build_twitter_items_for_individual_summary(
         key=lambda t: (tweet_engagement(t), str(t.get("created_at", ""))),
         reverse=True,
     )
+    unlimited = int(max_items or 0) <= 0
 
     lookback_hours = max(0, int(os.environ.get("TWITTER_REPORT_DEDUP_LOOKBACK_HOURS", "36") or 36))
+    strict_mode = parse_bool(os.environ.get("TWITTER_REPORT_DEDUP_STRICT", "1"), True)
     recent_used_keys = _load_recent_report_used_twitter_keys(date_str, report_type, lookback_hours)
     if not recent_used_keys:
-        return tweets_sorted[:max_items]
+        return tweets_sorted[:] if unlimited else tweets_sorted[:max_items]
 
     selected: list[dict] = []
     skipped: list[dict] = []
@@ -2721,20 +4411,23 @@ def build_twitter_items_for_individual_summary(
             skipped.append(tweet)
             continue
         selected.append(tweet)
-        if len(selected) >= max_items:
+        if (not unlimited) and len(selected) >= max_items:
             break
 
-    if len(selected) < max_items and skipped:
-        selected.extend(skipped[: max_items - len(selected)])
+    if (not strict_mode) and skipped:
+        if unlimited:
+            selected.extend(skipped)
+        elif len(selected) < max_items:
+            selected.extend(skipped[: max_items - len(selected)])
 
     logger.info(
         "🐦 Twitter 日报去重: 回看%s小时，已用key=%s，命中过滤=%s，最终=%s",
         lookback_hours,
         len(recent_used_keys),
         len(skipped),
-        len(selected[:max_items]),
+        len(selected if unlimited else selected[:max_items]),
     )
-    return selected[:max_items]
+    return selected if unlimited else selected[:max_items]
 
 
 def build_wechat_items_for_individual_summary(social: dict, max_items: int) -> list[dict]:
@@ -2748,6 +4441,8 @@ def build_wechat_items_for_individual_summary(social: dict, max_items: int) -> l
         key=lambda a: (wechat_article_score(a), str(a.get("publish_time", ""))),
         reverse=True,
     )
+    if int(max_items or 0) <= 0:
+        return articles_sorted
     return articles_sorted[:max_items]
 
 
@@ -2936,7 +4631,10 @@ def format_twitter_individual_briefs(
     report_type: str = "",
 ) -> str:
     """生成 Twitter 逐条简介（每条独立调用 AI）。"""
-    max_items = int(os.environ.get("TWITTER_AI_ITEM_MAX", "12"))
+    try:
+        max_items = int(os.environ.get("TWITTER_AI_ITEM_MAX", "0") or 0)
+    except ValueError:
+        max_items = 0
     selected = build_twitter_items_for_individual_summary(
         social,
         max_items=max_items,
@@ -3000,7 +4698,10 @@ def format_wechat_individual_briefs(
     grounding_rules: str,
 ) -> str:
     """生成公众号逐篇简介（每篇独立调用 AI）。"""
-    max_items = int(os.environ.get("WECHAT_AI_ITEM_MAX", "12"))
+    try:
+        max_items = int(os.environ.get("WECHAT_AI_ITEM_MAX", "0") or 0)
+    except ValueError:
+        max_items = 0
     selected = build_wechat_items_for_individual_summary(social, max_items=max_items)
     if not selected:
         return "暂无微信公众号文章"
@@ -3122,6 +4823,8 @@ def call_deepseek(system_prompt: str, user_prompt: str, api_key: str,
                   api_base: str, model: str,
                   max_tokens: int = 4000, temperature: float = 0.7) -> str:
     """调用 DeepSeek API"""
+    call_id = flow_trace_next_call_id()
+    call_started_at = now_beijing().isoformat()
     url = f"{api_base.rstrip('/')}/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -3142,6 +4845,28 @@ def call_deepseek(system_prompt: str, user_prompt: str, api_key: str,
     retries = int(os.environ.get("DEEPSEEK_API_RETRIES", "2"))
     retry_sleep = float(os.environ.get("DEEPSEEK_API_RETRY_SLEEP", "1.5"))
     retries = max(1, retries)
+    attempt_logs: list[dict] = []
+
+    def _finalize(status: str, output_text: str) -> str:
+        flow_trace_append_deepseek_call(
+            {
+                "call_id": call_id,
+                "started_at": call_started_at,
+                "finished_at": now_beijing().isoformat(),
+                "status": status,
+                "api_base": api_base,
+                "model": model,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+                "system_prompt_len": len(str(system_prompt or "")),
+                "user_prompt_len": len(str(user_prompt or "")),
+                "system_prompt": system_prompt,
+                "user_prompt": user_prompt,
+                "attempts": attempt_logs,
+                "output": output_text,
+            }
+        )
+        return output_text
 
     for attempt in range(1, retries + 1):
         resp = None
@@ -3150,20 +4875,31 @@ def call_deepseek(system_prompt: str, user_prompt: str, api_key: str,
             resp.raise_for_status()
             result = resp.json()
             content = result["choices"][0]["message"].get("content", "")
+            usage = result.get("usage", {})
+            attempt_info = {
+                "attempt": attempt,
+                "status": "ok",
+                "http_status": resp.status_code if resp is not None else None,
+                "usage": usage,
+                "raw_output": content,
+            }
             if not str(content or "").strip():
                 logger.error("❌ DeepSeek 返回空内容")
+                attempt_info["status"] = "empty_response"
+                attempt_logs.append(attempt_info)
                 if attempt < retries:
                     sleep_seconds = retry_sleep * attempt
                     logger.warning(f"⏳ DeepSeek 空响应重试 ({attempt}/{retries})，{sleep_seconds:.1f}s 后继续")
                     time.sleep(sleep_seconds)
                     continue
-                return "AI 分析失败: empty response"
-            usage = result.get("usage", {})
+                return _finalize("failed", "AI 分析失败: empty response")
             logger.info(f"✅ 完成 (prompt_tokens={usage.get('prompt_tokens',0)}, completion_tokens={usage.get('completion_tokens',0)})")
             cleaned_content = sanitize_ai_response_text(content)
+            attempt_info["cleaned_output"] = cleaned_content
+            attempt_logs.append(attempt_info)
             if cleaned_content != content:
                 logger.info("🧹 已清洗 AI 输出前缀")
-            return cleaned_content
+            return _finalize("ok", cleaned_content)
         except requests.exceptions.HTTPError as e:
             status_code = resp.status_code if resp is not None else None
             logger.error(f"❌ DeepSeek API 错误: {e}")
@@ -3171,22 +4907,229 @@ def call_deepseek(system_prompt: str, user_prompt: str, api_key: str,
                 logger.error(f"   响应: {resp.text[:500]}")
             except Exception:
                 pass
+            attempt_logs.append(
+                {
+                    "attempt": attempt,
+                    "status": "http_error",
+                    "http_status": status_code,
+                    "error": str(e),
+                    "response_text": (resp.text[:2000] if resp is not None and resp.text else ""),
+                }
+            )
             can_retry = status_code in (429, 500, 502, 503, 504) and attempt < retries
             if can_retry:
                 sleep_seconds = retry_sleep * attempt
                 logger.warning(f"⏳ DeepSeek 将重试 ({attempt}/{retries})，{sleep_seconds:.1f}s 后继续")
                 time.sleep(sleep_seconds)
                 continue
-            return f"AI 分析失败: {e}"
+            return _finalize("failed", f"AI 分析失败: {e}")
         except Exception as e:
             logger.error(f"❌ DeepSeek API 调用异常: {e}")
+            attempt_logs.append(
+                {
+                    "attempt": attempt,
+                    "status": "exception",
+                    "error": str(e),
+                }
+            )
             if attempt < retries:
                 sleep_seconds = retry_sleep * attempt
                 logger.warning(f"⏳ DeepSeek 调用异常重试 ({attempt}/{retries})，{sleep_seconds:.1f}s 后继续")
                 time.sleep(sleep_seconds)
                 continue
-            return f"AI 分析失败: {e}"
-    return "AI 分析失败: exhausted retries"
+            return _finalize("failed", f"AI 分析失败: {e}")
+    return _finalize("failed", "AI 分析失败: exhausted retries")
+
+
+def summarize_twitter_detailed(
+    social: dict,
+    date_context: str,
+    api_key: str,
+    api_base: str,
+    model: str,
+    grounding_rules: str,
+    parallelism: int,
+) -> str:
+    """Twitter 单次详细汇总（分片并行 + 汇总合并）。"""
+    try:
+        max_parts = int(os.environ.get("TWITTER_AI_CHUNK_PARTS", "6") or 6)
+    except ValueError:
+        max_parts = 6
+    max_parts = max(1, max_parts)
+
+    chunks = build_twitter_chunks(social, min(parallelism, max_parts))
+    if not chunks:
+        return "暂无 Twitter 数据"
+
+    chunk_summaries = parallel_chunk_analysis(
+        section_name="Twitter-Summary",
+        chunks=chunks,
+        system_prompt=(
+            "你是跨市场信号分析师。请只分析当前 Twitter 分片，输出 4-6 条中文要点。\n"
+            "每条必须包含：发生了什么 + 为什么重要 + [来源ID: TWxx]。\n"
+            "格式固定为无序列表，禁止编造输入外信息。\n\n"
+            f"{grounding_rules}"
+        ),
+        user_prompt_builder=lambda chunk, idx, total: (
+            f"以下是 {date_context} 的 Twitter 分片，请只总结当前分片：\n\n"
+            f"{format_twitter_chunk_for_ai(chunk, idx, total)}"
+        ),
+        api_key=api_key,
+        api_base=api_base,
+        model=model,
+        max_tokens=1100,
+        temperature=0.35,
+        fallback_system_prompt=(
+            "你是跨市场信号分析师。请基于精简 Twitter 分片输出 3-4 条要点，"
+            "每条末尾附 [来源ID: TWxx]。\n\n"
+            f"{grounding_rules}"
+        ),
+        fallback_user_prompt_builder=lambda chunk, idx, total: (
+            f"以下是 {date_context} 的 Twitter 精简分片，请只总结当前分片：\n\n"
+            f"{format_twitter_chunk_for_ai_compact(chunk, idx, total)}"
+        ),
+    )
+    valid_summaries = [s for s in chunk_summaries if not is_ai_failure(s)]
+
+    if valid_summaries:
+        merged_prompt = "以下是 Twitter 各分片摘要，请去重并合并为详细汇总：\n\n"
+        for idx, text in enumerate(valid_summaries, start=1):
+            merged_prompt += f"### 分片{idx}\n{text}\n\n"
+
+        summary = call_deepseek(
+            system_prompt=(
+                "你是跨市场情报分析师。请输出“Twitter 详细汇总”，结构如下：\n"
+                "1) 主线与情绪（3-4条）\n"
+                "2) 金融市场线索（3-5条）\n"
+                "3) 科技/AI/Web3 线索（3-5条）\n"
+                "4) 噪音与误导风险（2-3条）\n"
+                "每条都要附 [来源ID: TWxx]，不要输出额外客套话。\n\n"
+                f"{grounding_rules}"
+            ),
+            user_prompt=merged_prompt,
+            api_key=api_key,
+            api_base=api_base,
+            model=model,
+            max_tokens=1800,
+            temperature=0.35,
+        )
+        if not is_ai_failure(summary):
+            return summary
+
+    fallback_text = format_twitter_for_ai_compact(social)
+    if fallback_text == "暂无 Twitter 数据":
+        return fallback_text
+    fallback_summary = call_deepseek(
+        system_prompt=(
+            "你是跨市场情报分析师。请把输入的 Twitter 样本整理为详细汇总，"
+            "每条要点附 [来源ID: TWxx]。\n\n"
+            f"{grounding_rules}"
+        ),
+        user_prompt=f"{date_context} Twitter 样本：\n\n{fallback_text}",
+        api_key=api_key,
+        api_base=api_base,
+        model=model,
+        max_tokens=1500,
+        temperature=0.35,
+    )
+    if is_ai_failure(fallback_summary):
+        return "暂无可用 Twitter 汇总"
+    return fallback_summary
+
+
+def summarize_wechat_detailed(
+    social: dict,
+    date_context: str,
+    api_key: str,
+    api_base: str,
+    model: str,
+    grounding_rules: str,
+    parallelism: int,
+) -> str:
+    """微信公众号单次详细汇总（分片并行 + 汇总合并）。"""
+    try:
+        max_parts = int(os.environ.get("WECHAT_AI_CHUNK_PARTS", "6") or 6)
+    except ValueError:
+        max_parts = 6
+    max_parts = max(1, max_parts)
+
+    chunks = build_wechat_chunks(social, min(parallelism, max_parts))
+    if not chunks:
+        return "暂无微信公众号文章"
+
+    chunk_summaries = parallel_chunk_analysis(
+        section_name="WeChat-Summary",
+        chunks=chunks,
+        system_prompt=(
+            "你是中文财经编辑。请只分析当前微信公众号分片，输出 4-6 条中文要点。\n"
+            "每条必须包含：文章在讲什么 + 市场/产业信号 + [来源ID: WCxx]。\n"
+            "格式固定为无序列表，禁止编造输入外信息。\n\n"
+            f"{grounding_rules}"
+        ),
+        user_prompt_builder=lambda chunk, idx, total: (
+            f"以下是 {date_context} 的微信公众号分片，请只总结当前分片：\n\n"
+            f"{format_wechat_chunk_for_ai(chunk, idx, total)}"
+        ),
+        api_key=api_key,
+        api_base=api_base,
+        model=model,
+        max_tokens=1200,
+        temperature=0.35,
+        fallback_system_prompt=(
+            "你是中文财经编辑。请基于精简微信公众号分片输出 3-4 条要点，"
+            "每条末尾附 [来源ID: WCxx]。\n\n"
+            f"{grounding_rules}"
+        ),
+        fallback_user_prompt_builder=lambda chunk, idx, total: (
+            f"以下是 {date_context} 的微信公众号精简分片，请只总结当前分片：\n\n"
+            f"{format_wechat_chunk_for_ai_compact(chunk, idx, total)}"
+        ),
+    )
+    valid_summaries = [s for s in chunk_summaries if not is_ai_failure(s)]
+
+    if valid_summaries:
+        merged_prompt = "以下是微信公众号各分片摘要，请去重并合并为详细汇总：\n\n"
+        for idx, text in enumerate(valid_summaries, start=1):
+            merged_prompt += f"### 分片{idx}\n{text}\n\n"
+
+        summary = call_deepseek(
+            system_prompt=(
+                "你是中文财经总编。请输出“微信公众号详细汇总”，结构如下：\n"
+                "1) 高频共识主线（3-4条）\n"
+                "2) 市场/行业增量线索（4-6条）\n"
+                "3) 可能的弱信号与待验证点（2-3条）\n"
+                "每条都要附 [来源ID: WCxx]，不要输出额外客套话。\n\n"
+                f"{grounding_rules}"
+            ),
+            user_prompt=merged_prompt,
+            api_key=api_key,
+            api_base=api_base,
+            model=model,
+            max_tokens=1900,
+            temperature=0.35,
+        )
+        if not is_ai_failure(summary):
+            return summary
+
+    fallback_text = format_wechat_for_ai_compact(social)
+    if fallback_text == "暂无微信公众号文章":
+        return fallback_text
+    fallback_summary = call_deepseek(
+        system_prompt=(
+            "你是中文财经总编。请把输入的公众号样本整理为详细汇总，"
+            "每条要点附 [来源ID: WCxx]。\n\n"
+            f"{grounding_rules}"
+        ),
+        user_prompt=f"{date_context} 微信公众号样本：\n\n{fallback_text}",
+        api_key=api_key,
+        api_base=api_base,
+        model=model,
+        max_tokens=1600,
+        temperature=0.35,
+    )
+    if is_ai_failure(fallback_summary):
+        return "暂无可用微信公众号汇总"
+    return fallback_summary
 
 
 def run_ai_analysis(market: dict, social: dict, news: list,
@@ -3197,12 +5140,12 @@ def run_ai_analysis(market: dict, social: dict, news: list,
                     previous_context: str = "") -> str:
     """
     分批调用 DeepSeek，每个数据源独立分析，最后综合汇总。
-    
+
     步骤:
-      1. 市场+板块数据 → 市场分析
-      2. Twitter 逐条独立分析 → 逐条简介
-      3. 微信公众号逐篇独立分析 → 逐篇简介
-      4. 热榜全量      → 热榜分析
+      1. 市场+板块数据 → 市场分析（早报/晚报均纳入 A 股）
+      2. Twitter 详细汇总（分片并行 + 合并）
+      3. 微信公众号详细汇总（分片并行 + 合并）
+      4. 热榜全量 → 热榜分析
       5. 注入联网检索+上期上下文 → 综合结构化报告
     """
     date_context = f"{iso_date} {report_label}（覆盖时段: {time_range}）"
@@ -3215,33 +5158,36 @@ def run_ai_analysis(market: dict, social: dict, news: list,
         "3) 禁止把猜测写成事实，禁止杜撰“交叉验证”；\n"
         "4) 结论必须可追溯到输入内容。"
     )
-    is_morning_report = report_type == "morning"
-    a_share_rule = (
-        "早报特殊规则：不要分析 A 股盘面数据（指数、板块、北向资金），仅可分析非 A 股市场。"
-        if is_morning_report else
-        "可正常分析 A 股与其他市场。"
-    )
+    a_share_rule = "早报与晚报都要纳入 A 股盘面（指数、板块、北向资金）及其他市场。"
     logger.info(f"⚙️ DeepSeek 并发上限: {parallelism} 路")
 
     filtered_market, market_filter_notes = market_snapshot_filter(market, date_str, report_type)
     market_filter_note_text = format_market_filter_notes(market_filter_notes)
-    wechat_consensus_text = build_wechat_consensus_and_signal_text(social)
-    twitter_focus_text = format_twitter_focus_for_ai(social)
     github_focus_text = format_github_focus_for_ai(filtered_market, previous_context=previous_context)
-    logger.info("🧪 市场时效过滤后可用模块: %s", ",".join((filtered_market.get("data", {}) or {}).keys()))
+    filtered_market_data = filtered_market.get("data", {}) if isinstance(filtered_market, dict) else {}
+    logger.info("🧪 市场时效过滤后可用模块: %s", ",".join((filtered_market_data or {}).keys()))
+    has_non_crypto_market_data = any(
+        key in filtered_market_data
+        for key in ("stock_cn", "yahoo_stock", "futures", "precious_metal", "stock_overview")
+    )
+    has_crypto_market_data = bool(
+        isinstance(filtered_market_data.get("crypto"), dict)
+        and (filtered_market_data.get("crypto", {}) or {}).get("coins")
+    )
 
     # ─── 第1步: 市场数据分析 ────────────────────────
-    logger.info("🔍 [1/5] 分析市场数据...")
-    market_text = format_market_for_ai(filtered_market, include_a_share=not is_morning_report)
-    if market_text != "暂无市场数据":
+    logger.info("🔍 [1/5] 分析市场数据（含 A 股）...")
+    market_text = format_market_for_ai(filtered_market, include_a_share=True)
+    if market_text != "暂无市场数据" and has_non_crypto_market_data:
         summary = call_deepseek(
             system_prompt=(
                 "你是资深金融市场分析师。请对以下市场数据进行专业分析，包括：\n"
                 "1. 主要市场走势判断\n"
                 "2. 关键资产轮动分析：哪些方向在领涨/领跌，反映什么资金偏好\n"
                 "3. 加密货币和商品期货的关键变化\n"
+                "4. A 股指数、板块与北向资金传导关系\n"
                 "5. 涨跌驱动链条：请明确“事件/政策/情绪 -> 资金行为 -> 价格表现”的因果路径，并标注证据强弱\n\n"
-                "用中文，Markdown格式，重要数据**加粗**，600-900字。\n\n"
+                "用中文，Markdown 格式，重要数据**加粗**，650-950字。\n\n"
                 f"{grounding_rules}\n"
                 f"5) {a_share_rule}"
             ),
@@ -3249,86 +5195,44 @@ def run_ai_analysis(market: dict, social: dict, news: list,
             api_key=api_key,
             api_base=api_base,
             model=model,
-            max_tokens=2000
+            max_tokens=2200,
         )
         section_summaries["market"] = summary
-    
-    # ─── 第2步: Twitter 逐条简介 ────────────────────────
-    logger.info("🔍 [2/5] 生成 Twitter 逐条简介（逐条独立调用）...")
-    twitter_summary = format_twitter_individual_briefs(
+    else:
+        logger.info("ℹ️ 严格时效窗口下非加密市场数据不足，跳过市场盘面分析。")
+        section_summaries["market"] = (
+            "当前窗口非加密市场快照未通过严格时效校验（仅允许过去12小时内数据），"
+            "本期不输出市场盘面结论，转由资讯与社交叙事补充判断。"
+        )
+
+    # ─── 第2步: Twitter 详细汇总 ────────────────────────
+    logger.info("🔍 [2/5] 生成 Twitter 详细汇总（分片并行）...")
+    twitter_summary = summarize_twitter_detailed(
         social=social,
         date_context=date_context,
         api_key=api_key,
         api_base=api_base,
         model=model,
         grounding_rules=grounding_rules,
-        date_str=date_str,
-        report_type=report_type,
+        parallelism=parallelism,
     )
     if twitter_summary != "暂无 Twitter 数据":
         section_summaries["twitter"] = twitter_summary
 
-    # ─── 2.5: Twitter 海外英文信号补充 ─────────────────
-    if twitter_focus_text != "暂无 Twitter 数据":
-        logger.info("🔍 [2.5/5] 汇总 Twitter 英文信号...")
-        twitter_focus_summary = call_deepseek(
-            system_prompt=(
-                "你是跨市场情报分析师。请基于给定的 Twitter 高互动样本，输出中文汇报：\n"
-                "1) 海外英文信号主线（不要直译整段，提炼观点）；\n"
-                "2) 与金融科技/AI/Web3 相关的具体线索；\n"
-                "3) 可执行关注点与潜在误导噪音。\n\n"
-                "输出 Markdown，300-500字，不要添加来源标签（最终综合层统一引用）。\n\n"
-                f"{grounding_rules}"
-            ),
-            user_prompt=f"{date_context} 的 Twitter 英文信号样本：\n\n{twitter_focus_text}",
-            api_key=api_key,
-            api_base=api_base,
-            model=model,
-            max_tokens=1500,
-            temperature=0.4,
-        )
-        if not is_ai_failure(twitter_focus_summary):
-            section_summaries["twitter_focus"] = twitter_focus_summary
-        else:
-            section_summaries["twitter_focus"] = "暂无可用 Twitter 英文信号总结"
-    
-    # ─── 第3步: 微信公众号逐篇简介 ────────────────────────
-    logger.info("🔍 [3/5] 生成微信公众号逐篇简介（逐篇独立调用）...")
-    wechat_summary = format_wechat_individual_briefs(
+    # ─── 第3步: 微信公众号详细汇总 ────────────────────────
+    logger.info("🔍 [3/5] 生成微信公众号详细汇总（分片并行）...")
+    wechat_summary = summarize_wechat_detailed(
         social=social,
         date_context=date_context,
         api_key=api_key,
         api_base=api_base,
         model=model,
         grounding_rules=grounding_rules,
+        parallelism=parallelism,
     )
     if wechat_summary != "暂无微信公众号文章":
         section_summaries["wechat"] = wechat_summary
 
-    # ─── 3.5: 微信共识与弱信号 ────────────────────────
-    if wechat_consensus_text != "暂无微信公众号数据":
-        logger.info("🔍 [3.5/5] 提炼微信共识与弱信号...")
-        wechat_consensus_summary = call_deepseek(
-            system_prompt=(
-                "你是中文财经信息架构师。请基于输入的“跨公众号共识议题+弱信号候选”输出简洁汇报：\n"
-                "1) 先写跨公众号共识（最多4点，强调哪些公众号反复提及）；\n"
-                "2) 再写弱信号（最多3点，强调为什么值得提前关注）；\n"
-                "3) 全文禁止空话，保持可执行。\n\n"
-                "输出 Markdown，280-480字，不要添加来源标签（最终综合层统一引用）。\n\n"
-                f"{grounding_rules}"
-            ),
-            user_prompt=f"{date_context} 微信共识与弱信号原始抽取：\n\n{wechat_consensus_text}",
-            api_key=api_key,
-            api_base=api_base,
-            model=model,
-            max_tokens=1400,
-            temperature=0.4,
-        )
-        if is_ai_failure(wechat_consensus_summary):
-            section_summaries["wechat_consensus"] = wechat_consensus_text
-        else:
-            section_summaries["wechat_consensus"] = wechat_consensus_summary
-    
     # ─── 第4步: 热榜分析 ────────────────────────
     logger.info("🔍 [4/5] 分析热榜新闻（分片并行）...")
     news_chunks = build_news_chunks(news, min(parallelism, 8))
@@ -3341,7 +5245,7 @@ def run_ai_analysis(market: dict, social: dict, news: list,
                 "1. 分片内最重要的3-5个事件\n"
                 "2. 与金融市场相关的新闻线索\n"
                 "3. 科技/AI 相关线索\n"
-                "4. 社会舆论焦点\n\n"
+                "4. 社会议题焦点\n\n"
                 "中文 Markdown，180-320字，禁止编造。\n\n"
                 f"{grounding_rules}"
             ),
@@ -3363,7 +5267,7 @@ def run_ai_analysis(market: dict, social: dict, news: list,
             fallback_user_prompt_builder=lambda chunk, idx, total: (
                 f"以下是 {date_context} 的 NewsNow 精简分片，请只总结当前分片：\n\n"
                 f"{format_news_chunk_for_ai_compact(chunk, idx, total)}"
-            )
+            ),
         )
         valid_summaries = [s for s in news_chunk_summaries if not is_ai_failure(s)]
         failed_count = len(news_chunk_summaries) - len(valid_summaries)
@@ -3378,7 +5282,7 @@ def run_ai_analysis(market: dict, social: dict, news: list,
                     "1. 跨平台共同关注的3-5个热点事件\n"
                     "2. 与金融市场相关的重要新闻\n"
                     "3. 科技/AI 相关热点\n"
-                    "4. 社会舆论焦点\n\n"
+                    "4. 社会议题焦点\n\n"
                     "中文 Markdown，300-500字。\n\n"
                     f"{grounding_rules}"
                 ),
@@ -3387,7 +5291,7 @@ def run_ai_analysis(market: dict, social: dict, news: list,
                 api_base=api_base,
                 model=model,
                 max_tokens=1500,
-                temperature=0.4
+                temperature=0.4,
             )
             if is_ai_failure(summary):
                 logger.warning("⚠️ 热榜分片汇总失败，回退到分片摘要拼接")
@@ -3428,10 +5332,9 @@ def run_ai_analysis(market: dict, social: dict, news: list,
         else:
             section_summaries["github"] = github_summary
 
-    # ─── 第5步: 综合汇总 ────────────────────────
-    logger.info("🔍 [5/5] 生成综合分析报告（含上下文增强）...")
+    # ─── 第5步: 综合汇总（分板块拼接，降低长上下文漂移） ───────────
+    logger.info("🔍 [5/5] 生成综合分析报告（分板块拼接）...")
 
-    # 检查是否为周末
     is_weekend_flag, _ = is_weekend(date_str)
     weekend_note = "【注意：今日为周末，A股休市，部分市场数据可能缺失】" if is_weekend_flag else ""
     web_context_text = format_web_context_for_ai(web_context or {})
@@ -3442,32 +5345,6 @@ def run_ai_analysis(market: dict, social: dict, news: list,
         web_context=web_context,
     )
 
-    synthesis_input = f"以下是 {date_context} 各数据源的分析结果，请进行最终综合汇总：{weekend_note}\n\n"
-    synthesis_input += f"## 市场时效过滤说明\n{market_filter_note_text}\n\n"
-    synthesis_input += f"## 可引用来源ID索引\n{citation_catalog_text}\n\n"
-
-    if previous_context:
-        synthesis_input += f"## 历史报告上下文（近1-2天）\n{previous_context}\n\n"
-
-    if "market" in section_summaries:
-        synthesis_input += f"## 市场数据分析\n{section_summaries['market']}\n\n"
-    if "wechat_consensus" in section_summaries:
-        synthesis_input += f"## 微信共识与弱信号\n{section_summaries['wechat_consensus']}\n\n"
-    if "twitter" in section_summaries:
-        synthesis_input += f"## Twitter 逐条简介\n{section_summaries['twitter']}\n\n"
-    if "twitter_focus" in section_summaries:
-        synthesis_input += f"## Twitter 英文信号补充\n{section_summaries['twitter_focus']}\n\n"
-    if "wechat" in section_summaries:
-        synthesis_input += f"## 微信公众号逐篇简介\n{section_summaries['wechat']}\n\n"
-    if "news" in section_summaries:
-        synthesis_input += f"## 热榜新闻分析\n{section_summaries['news']}\n\n"
-    if "github" in section_summaries:
-        synthesis_input += f"## GitHub 项目雷达\n{section_summaries['github']}\n\n"
-    if web_context_text != "暂无联网检索补充":
-        synthesis_input += f"## 联网检索补充\n{web_context_text}\n\n"
-    else:
-        synthesis_input += "## 联网检索补充\n暂无联网检索补充\n\n"
-
     if not section_summaries:
         logger.warning("⚠️ 各数据源均无可用原始数据，跳过综合 AI 生成。")
         return (
@@ -3476,126 +5353,609 @@ def run_ai_analysis(market: dict, social: dict, news: list,
             "- 经济：暂无可用数据。\n"
             "- 市场：暂无可用数据。\n"
             "- 科技：暂无可用数据。\n\n"
-            "## 二、分板块汇报\n"
-            "### 2.1 市场概况（仅有效交易时段数据）\n"
+            "## 📈 二、市场异动与定价逻辑 (Market Pricing)\n"
+            "### 2.1 权益与宏观市场\n"
             "暂无可用市场数据，无法形成有效盘面结论。\n\n"
-            "### 2.2 微信公众号共识与弱信号\n"
-            "暂无可用微信公众号数据。\n\n"
-            "### 2.3 GitHub 热门项目雷达（金融科技/AI/Web3）\n"
+            "### 2.2 加密与预测市场 (Crypto & Prediction Markets)\n"
+            "暂无可用加密与预测市场数据。\n\n"
+            "## 🛰️ 三、产业前沿与跨域叙事 (Industry & Tech Alpha)\n"
+            "### 3.1 叙事对撞：海外 Twitter vs 国内微信公号\n"
+            "暂无可用社交媒体数据。\n\n"
+            "### 3.2 极客雷达：GitHub 趋势与底层技术\n"
             "暂无可用 GitHub 趋势数据。\n\n"
-            "### 2.4 Twitter 海外信号（英文内容中文汇报）\n"
-            "暂无可用 Twitter 数据。\n\n"
-            "### 2.5 国内新闻与政策脉络\n"
+            "## 四、政策动向与社会核心议题 (Policy & Social Sentiment)\n"
             "暂无可用热榜数据。\n\n"
-            "## 三、明日跟踪清单\n"
-            "1. 检查定时任务触发时间。\n"
-            "2. 检查抓取服务状态（Nitter / 微信服务 / NewsNow）。\n"
+            "## 📖 五、硬核研报与长文拆解 (Deep Paper Breakdown)\n"
+            "### 5.1 推荐清单与重点拆解（10篇）\n"
+            "暂无可用长文样本。\n\n"
+            "## 🧭 六、增量认知与下期博弈锚点 (Next Watch)\n"
+            "本期认知增量：数据源缺失，暂无法形成可靠增量结论。\n"
+            "下期跟踪清单：\n"
+            "1. 检查抓取任务是否按预期执行。\n"
+            "2. 检查社交与热榜数据源可用性（Nitter / 微信 / NewsNow）。\n"
             "3. 补齐数据后重新生成报告。"
         )
-    
-    final_summary = call_deepseek(
-        system_prompt=(
-            "你是资深金融市场首席分析师，正在编写今日市场综合研报。\n"
-            "你将获得来自市场数据、Twitter、微信公众号、NewsNow、GitHub、联网检索的材料。\n"
-            "请产出“摘要 + 分板块汇报”，并优先覆盖金融科技、AI、Web3线索。\n\n"
-            "请严格按以下固定结构输出，不允许改一级/二级标题名称：\n\n"
-            "## 一、摘要\n"
-            "- 社会：\n"
-            "- 经济：\n"
-            "- 市场：\n"
-            "- 科技：\n\n"
-            "## 二、分板块汇报\n"
-            "### 2.1 市场概况（仅有效交易时段数据）\n"
-            + (
-                "早报阶段不得分析 A 股盘面；仅分析非 A 股市场与可验证数据。\n"
-                if is_morning_report else
-                "仅基于“市场时效过滤说明”里保留的数据，禁止使用被过滤掉的旧快照。\n"
-            ) +
-            "必须包含“发生了什么”“为什么会这样（证据强弱：高/中/低）”“下一步观察”。\n"
-            "首句必须写“较上期：...”，仅写增量变化；无变化写“较上期无显著新增”。\n\n"
-            "### 2.2 微信公众号共识与弱信号\n"
-            "先写跨公众号重复提及的共识议题，再写弱信号候选，并给出判断依据。\n"
-            "输入里含有“微信公众号逐篇简介”时，请优先引用逐篇信息，不要把多篇文章混成一句泛化结论。\n\n"
-            "### 2.3 GitHub 热门项目雷达（金融科技/AI/Web3）\n"
-            "挑出最值得关注的项目，说明应用场景、可落地价值、噪音风险。\n"
-            "首句必须写“较上期：...”。\n\n"
-            "### 2.4 Twitter 海外信号（英文内容中文汇报）\n"
-            "把英文高互动内容翻译并提炼成中文结论，不要整段直译。\n"
-            "输入里含有“Twitter 逐条简介”时，请基于逐条信息提炼，不要把多条推文混成一个笼统段落。\n"
-            "首句必须写“较上期：...”。\n\n"
-            "### 2.5 国内新闻与政策脉络\n"
-            "聚焦国内社会/经济/监管动态，并说明对市场和产业链的影响。\n"
-            "首句必须写“较上期：...”。\n\n"
-            "## 三、明日跟踪清单\n"
-            "1. ...\n2. ...\n3. ...\n\n"
-            "要求：\n"
-            "- 用中文，语言精炼专业\n"
-            "- Markdown 格式，每个版块用 ## 标题\n"
-            "- 重要数据用 **加粗**，关键判断要明确\n"
-            "- 去除重复信息，交叉引用不同来源，优先回答“为什么会这样”；同一事实不要在多个版块重复表述\n"
-            "- 若历史上下文已出现同一事实，除非有新增数据/反转，否则不要重复复述，改写为“延续无新增”\n"
-            "- 在关键结论句末必须标注来源ID，格式仅允许 [来源ID: TW01] 或 [来源ID: TW01, GH02]\n"
-            "- 只能使用“可引用来源ID索引”里给出的 ID；禁止输出 [来源: Twitter] 这类泛标签\n"
-            "- 若同一结论由多个来源支撑，必须把多个来源ID写进同一个标签\n"
-            "- 单节避免空话，尽量给出可验证事实；输入缺失时明确写“数据不足”\n"
-            "- 字数控制：摘要 180-260 字；2.1~2.5 每节 220-380 字；跟踪清单每条 25-50 字\n"
-            "- 当 2.1 缺少有效交易时段数据时，只写“数据不足 + 需补充信息”，禁止方向性推断\n"
-            "- 不要输出任何关于读者身份背景的信息\n"
-            "- 若提供“历史报告上下文”：先判断每节是“延续/新增/反转”；跟踪清单第1-2条必须承接历史事项（标注“延续跟进”或“收口复盘”），第3条写本期新增观察\n"
-            "- 总字数 1500-2600 字\n\n"
-            f"{grounding_rules}\n"
-            f"5) {a_share_rule}"
-        ),
-        user_prompt=synthesis_input,
-        api_key=api_key,
-        api_base=api_base,
-        model=model,
-        max_tokens=6000,
-        temperature=0.5
+
+    target_read_minutes = max(
+        8,
+        min(30, int(os.environ.get("REPORT_TARGET_READING_MINUTES", "15") or 15)),
     )
-    if is_ai_failure(final_summary):
-        logger.warning("⚠️ 综合分析失败，使用降级模板输出。")
-        final_summary = (
-            "## 一、摘要\n"
-            "- 社会：综合分析调用失败，请参考下方分板块内容。\n"
-            "- 经济：自动综合暂不可用。\n"
-            "- 市场：请优先查看市场与热榜详细分析。\n"
-            "- 科技：请优先查看 GitHub 与 Twitter 详细分析。\n\n"
-            "## 二、分板块汇报\n"
-            "### 2.1 市场概况（仅有效交易时段数据）\n"
-            "综合模型失败，已保留原始市场明细与分板块分析。\n\n"
-            "### 2.2 微信公众号共识与弱信号\n"
-            "请参考下方“微信公众号逐篇简介”。\n\n"
-            "### 2.3 GitHub 热门项目雷达（金融科技/AI/Web3）\n"
-            "请参考下方“GitHub 项目详细分析”。\n\n"
-            "### 2.4 Twitter 海外信号（英文内容中文汇报）\n"
-            "请参考下方“Twitter 逐条简介”和“Twitter 英文信号详细分析”。\n\n"
-            "### 2.5 国内新闻与政策脉络\n"
-            "请参考下方“热榜详细分析”。\n\n"
-            "## 三、明日跟踪清单\n"
-            "1. 核查数据抓取任务是否完整。\n"
-            "2. 对照联网检索补充核验关键事件。\n"
-            "3. 重新生成报告并比对结论差异。"
+    long_form = target_read_minutes >= 15
+    default_section_input_chars = "6200" if long_form else "4200"
+    section_input_limit = max(
+        1600,
+        int(os.environ.get("REPORT_SECTION_INPUT_MAX_CHARS", default_section_input_chars) or default_section_input_chars),
+    )
+
+    def _section_input(section_name: str, blocks: list[tuple[str, str]]) -> str:
+        lines = [
+            f"报告上下文: {date_context}",
+            f"当前板块: {section_name}",
+            f"周末提示: {weekend_note or '无'}",
+            f"市场时效过滤说明:\n{market_filter_note_text}",
+            f"可引用来源ID索引:\n{citation_catalog_text}",
+        ]
+        if previous_context:
+            lines.append(
+                "上一轮建议跟踪事项:\n"
+                + truncate_text_preserve_lines(previous_context, max_chars=1600)
+            )
+        for title, text in blocks:
+            if not text:
+                continue
+            lines.append(
+                f"## {title}\n"
+                + truncate_text_preserve_lines(str(text), max_chars=section_input_limit)
+            )
+        return "\n\n".join(lines)
+
+    def _strip_section_headings(text: str) -> str:
+        cleaned = sanitize_ai_response_text(text)
+        lines = cleaned.splitlines()
+        # 仅剥离最前面的总标题，保留小标题用于可读性分段
+        while lines and lines[0].strip().startswith("#"):
+            lines.pop(0)
+            while lines and not lines[0].strip():
+                lines.pop(0)
+        cleaned = "\n".join(lines)
+        cleaned = re.sub(r"\n{3,}", "\n\n", cleaned).strip()
+        return cleaned
+
+    def _polish_section_markdown(text: str) -> str:
+        """提升可读性：修复强调样式并拆分过长段落。"""
+        cleaned = str(text or "").replace("\r\n", "\n").strip()
+        if not cleaned:
+            return ""
+
+        def _italic_to_bold(match: re.Match) -> str:
+            inner = match.group(1)
+            if not inner or inner != inner.strip():
+                return match.group(0)
+            token = inner.strip()
+            if len(token) < 2:
+                return match.group(0)
+            return f"**{token}**"
+
+        # 统一单星号强调为双星号，降低“看起来像漏写粗体”的情况
+        cleaned = re.sub(r"(?<!\*)\*([^*\n]{2,80})\*(?!\*)", _italic_to_bold, cleaned)
+
+        out_lines: list[str] = []
+        for raw in cleaned.splitlines():
+            line = raw.rstrip()
+            stripped = line.strip()
+            if not stripped:
+                if out_lines and out_lines[-1] != "":
+                    out_lines.append("")
+                continue
+
+            is_structured_line = bool(
+                re.match(r"^(#{1,6}\s+|[-*]\s+|\d+[.)、]\s+|>\s+|\|)", stripped)
+            ) or stripped.startswith("```")
+            if is_structured_line:
+                out_lines.append(stripped if stripped.startswith("|") else line.strip())
+                continue
+
+            plain = normalize_plain_text(stripped)
+            if len(plain) < 180 or ("。" not in plain and "；" not in plain):
+                out_lines.append(plain)
+                continue
+
+            segments = re.split(r"(?<=[。！？；])", plain)
+            bucket: list[str] = []
+            sentence_count = 0
+            for seg in segments:
+                piece = seg.strip()
+                if not piece:
+                    continue
+                bucket.append(piece)
+                sentence_count += 1
+                if sentence_count >= 3:
+                    out_lines.append("".join(bucket))
+                    out_lines.append("")
+                    bucket = []
+                    sentence_count = 0
+            if bucket:
+                out_lines.append("".join(bucket))
+
+        normalized: list[str] = []
+        for line in out_lines:
+            if line == "" and (not normalized or normalized[-1] == ""):
+                continue
+            normalized.append(line)
+        return "\n".join(normalized).strip()
+
+    def _call_section(
+        section_name: str,
+        system_prompt: str,
+        blocks: list[tuple[str, str]],
+        max_tokens: int | None = None,
+        temperature: float = 0.4,
+        fallback: str = "数据不足",
+    ) -> str:
+        if max_tokens is None:
+            max_tokens = 1800 if long_form else 1400
+        user_prompt = _section_input(section_name, blocks)
+        output = call_deepseek(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            api_key=api_key,
+            api_base=api_base,
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
         )
-    
-    # 组装完整 AI 分析输出
+        if is_ai_failure(output):
+            logger.warning("⚠️ 板块生成失败: %s", section_name)
+            return fallback
+        body = _neutralize_north_flow_zero_inference(
+            _polish_section_markdown(_strip_section_headings(output))
+        )
+        return body or fallback
+
+    def _tok(long_value: int, short_value: int) -> int:
+        return long_value if long_form else short_value
+
+    def _normalize_summary_block(text: str) -> str:
+        def _strip_summary_links(raw: str) -> str:
+            val = str(raw or "")
+            # 摘要不保留任何来源标注，便于快速阅读
+            val = re.sub(r"\[来源ID:\s*[^\]]+\]", "", val, flags=re.IGNORECASE)
+            val = re.sub(r"\[[^\]]+\]\(https?://[^)]+\)", "", val)
+            val = re.sub(r"\s{2,}", " ", val)
+            return normalize_plain_text(val)
+
+        values = {"社会": "", "经济": "", "市场": "", "科技": ""}
+        for raw in str(text or "").splitlines():
+            line = normalize_plain_text(raw)
+            if not line:
+                continue
+            m = re.match(r"^[-*]?\s*(社会|经济|市场|科技)\s*[：:]\s*(.+)$", line)
+            if not m:
+                continue
+            key, value = m.group(1), _strip_summary_links(m.group(2))
+            if value:
+                values[key] = value
+        defaults = {
+            "社会": "暂无显著新增社会叙事，需继续观察舆情扩散链条。",
+            "经济": "宏观增量信息不足，需结合下一窗口政策与数据确认方向。",
+            "市场": "盘面新增信号有限，先以风险控制与增量验证为主。",
+            "科技": "科技主线以延续为主，需跟踪是否出现真实落地催化。",
+        }
+
+        def _find_cn_index_change(index_name: str) -> float | None:
+            data = filtered_market.get("data", {}) if isinstance(filtered_market, dict) else {}
+            stock = data.get("stock_cn", {}) if isinstance(data, dict) else {}
+            indices = stock.get("indices", []) if isinstance(stock, dict) else []
+            for item in indices:
+                if not isinstance(item, dict):
+                    continue
+                name = str(item.get("name", "") or "").strip()
+                if index_name in name:
+                    try:
+                        return float(item.get("change_pct", 0) or 0)
+                    except (TypeError, ValueError):
+                        return None
+            return None
+
+        market_line = values["市场"] or defaults["市场"]
+        market_appendix: list[str] = []
+        sh_change = _find_cn_index_change("上证")
+        if sh_change is not None and ("上证指数" not in market_line and "上证综指" not in market_line):
+            market_appendix.append(f"上证指数{sh_change:+.2f}%")
+        hs300_change = _find_cn_index_change("沪深300")
+        if hs300_change is not None and "沪深300" not in market_line:
+            market_appendix.append(f"沪深300{hs300_change:+.2f}%")
+        if market_appendix:
+            market_line = market_line.rstrip("。") + "；A股跟踪：" + "、".join(market_appendix) + "。"
+        values["市场"] = market_line
+
+        lines = []
+        for key in ("社会", "经济", "市场", "科技"):
+            lines.append(f"- {key}：{values[key] or defaults[key]}")
+        return "\n".join(lines)
+
+    def _normalize_next_watch_block(text: str) -> str:
+        increment = ""
+        items: list[str] = []
+        for raw in str(text or "").splitlines():
+            line = normalize_plain_text(raw)
+            if not line:
+                continue
+            if not increment:
+                m_inc = re.match(r"^本期认知增量\s*[：:]\s*(.+)$", line)
+                if m_inc and normalize_plain_text(m_inc.group(1)):
+                    increment = normalize_plain_text(m_inc.group(1))
+                    continue
+            m_item = re.match(r"^\d+[.)、]\s*(.+)$", line)
+            if m_item:
+                item = normalize_plain_text(m_item.group(1))
+                if item and item not in items:
+                    items.append(item)
+                continue
+            if line.startswith("下期跟踪清单"):
+                continue
+            if (not increment) and len(line) >= 10:
+                increment = line
+
+        if not increment:
+            increment = "市场交易主线从事件脉冲转向“兑现强度验证”，需要用跨市场联动来确认趋势真伪。"
+        defaults = [
+            "延续跟进：盯住政策/监管变量是否从“表态”进入“落地执行”。",
+            "收口复盘：复核高波动资产是否出现量价背离或趋势再确认。",
+            "新增观察：跟踪 GitHub 高热项目在真实采用场景中的验证信号。",
+        ]
+        while len(items) < 3:
+            items.append(defaults[len(items)])
+        return "\n".join(
+            [
+                f"本期认知增量：{increment}",
+                "下期跟踪清单：",
+                *(f"{idx}. {item}" for idx, item in enumerate(items[:3], start=1)),
+            ]
+        )
+
+    def _north_flow_zero_snapshot() -> bool:
+        data = filtered_market.get("data", {}) if isinstance(filtered_market, dict) else {}
+        stock = data.get("stock_cn", {}) if isinstance(data, dict) else {}
+        north = stock.get("north_flow", {}) if isinstance(stock, dict) else {}
+        return is_north_flow_zero_snapshot(north if isinstance(north, dict) else {})
+
+    north_flow_zero_snapshot = _north_flow_zero_snapshot()
+
+    def _neutralize_north_flow_zero_inference(text: str) -> str:
+        if not north_flow_zero_snapshot:
+            return text
+        cleaned = str(text or "")
+        rules = [
+            (
+                r"北向资金[^。\n；]{0,120}(?:\*{0,2}\+?0(?:\.0+)?亿元\*{0,2}|零流入)"
+                r"[^。\n；]{0,120}(?:绝对观望|观望状态|观望态度|中性观望|中性态度|外资观望)[^。\n；]{0,40}",
+                "北向资金净流入显示为+0.00亿元（全0快照），可能是源端未更新，暂不据此判断外资态度",
+            ),
+            (
+                r"北向资金[^。\n；]{0,120}(?:绝对观望|观望状态|观望态度|中性观望|中性态度|外资观望)",
+                "北向资金快照可能未更新，暂不据此判断外资态度",
+            ),
+        ]
+        for pattern, repl in rules:
+            cleaned = re.sub(pattern, repl, cleaned)
+        return cleaned
+
+    index_watch_text = format_market_indices_watch_for_ai(filtered_market)
+    sector_structure_text = format_sector_structure_for_ai(filtered_market)
+
+    summary_raw = _call_section(
+        section_name="一、摘要",
+        system_prompt=(
+            "你是金融研究总编。请只输出4行要点，不要标题、不要解释：\n"
+            "- 社会：...\n- 经济：...\n- 市场：...\n- 科技：...\n"
+            "每行80-160字，必须体现“新增/延续/反转”之一；"
+            "其中“市场”这一行必须同时覆盖：\n"
+            "1) 至少2个关键指数（优先上证指数/沪深300/纳斯达克/标普/恒生）；\n"
+            "2) 至少1个异动最明显指数（按绝对涨跌幅）；\n"
+            "3) 若北向资金存在全0快照，要显式提示“可能未更新”。\n"
+            "只有当该行有明确事实时才在句末标注 [来源ID: ...]，"
+            "数据不足行禁止写 [来源ID: 未提供]。\n\n"
+            f"目标阅读时长约 {target_read_minutes} 分钟，请给出有信息密度的提要。\n\n"
+            f"{grounding_rules}"
+        ),
+        blocks=[
+            ("市场关键指数与异动快照", index_watch_text),
+            ("市场数据分析", section_summaries.get("market", "")),
+            ("Twitter 详细汇总", section_summaries.get("twitter", "")),
+            ("微信公众号详细汇总", section_summaries.get("wechat", "")),
+            ("热榜新闻分析", section_summaries.get("news", "")),
+            ("GitHub 项目雷达", section_summaries.get("github", "")),
+            ("联网检索补充", web_context_text),
+        ],
+        max_tokens=_tok(1500, 1100),
+        temperature=0.35,
+        fallback=(
+            "- 社会：社会层面暂无显著新增变量。\n"
+            "- 经济：宏观经济增量信息有限，需等待下一窗口确认。\n"
+            "- 市场：市场主线以存量博弈为主，关注风险偏好再定价。\n"
+            "- 科技：科技与开源信号延续，关注落地节奏。"
+        ),
+    )
+    summary_block = _normalize_summary_block(summary_raw)
+
+    if has_non_crypto_market_data:
+        section_21 = _call_section(
+            section_name="2.1 全球大类资产与风险水位",
+            system_prompt=(
+                "你是全球宏观与资产配置分析师。仅输出该板块正文，不要标题。\n"
+                "内容结构固定两段，并使用三级小标题分段：\n"
+                "### 风险偏好图谱\n"
+                "横向对比中美权益、港股、加密货币、贵金属与大宗商品的相对强弱，"
+                "提炼资金在风险资产与避险资产间的迁移方向（Risk-On / Risk-Off）。\n"
+                "### 宏观定价锚点\n"
+                "从宏观热榜与社交信号中提取当前被定价权重最高的宏观因子，并解释其与资产轮动的对应关系。\n"
+                "写作要求：每段2-4句，段间空行；尽量使用 **加粗**，不要使用单星号斜体。\n"
+                "关键判断附 [来源ID: ...]。\n\n"
+                f"目标阅读时长约 {target_read_minutes} 分钟，本板块写成中长文（约650-1000字）。\n\n"
+                f"{grounding_rules}"
+            ),
+            blocks=[
+                ("市场关键指数与异动快照", index_watch_text),
+                ("市场数据分析", section_summaries.get("market", "")),
+                ("Twitter 详细汇总", section_summaries.get("twitter", "")),
+                ("热榜新闻分析", section_summaries.get("news", "")),
+                ("联网检索补充", web_context_text),
+            ],
+            max_tokens=_tok(2400, 1400),
+            temperature=0.35,
+            fallback="全球大类资产仍呈结构分化，风险偏好方向待后续宏观变量验证。",
+        )
+
+        section_22 = _call_section(
+            section_name="2.2 中美权益结构与主线验证",
+            system_prompt=(
+                "你是中美权益策略研究员。仅输出该板块正文，不要标题。\n"
+                "内容结构固定两段，并使用三级小标题分段：\n"
+                "### A/H股盘面与逻辑映射\n"
+                "提炼A/H股最强与最弱板块（若缺板块数据须明确“板块数据不足/未提供”），"
+                "并强制关联国内财经热榜或微信投研共识进行验证。\n"
+                "### 美股科技与海外映射\n"
+                "提炼美股核心指数与科技主线波动特征，结合海外社交/外媒叙事提取驱动逻辑。\n"
+                "必须覆盖A股结构与跨市场映射；对北向资金“全0”快照禁止直接当作方向结论。\n"
+                "写作要求：每段2-4句，段间空行；关键判断附 [来源ID: ...]。\n\n"
+                f"目标阅读时长约 {target_read_minutes} 分钟，本板块写成中长文（约650-1000字）。\n\n"
+                f"{grounding_rules}\n"
+                f"{a_share_rule}"
+            ),
+            blocks=[
+                ("市场关键指数与异动快照", index_watch_text),
+                ("A股板块结构快照", sector_structure_text),
+                ("市场数据分析", section_summaries.get("market", "")),
+                ("微信公众号详细汇总", section_summaries.get("wechat", "")),
+                ("Twitter 详细汇总", section_summaries.get("twitter", "")),
+                ("热榜新闻分析", section_summaries.get("news", "")),
+                ("联网检索补充", web_context_text),
+            ],
+            max_tokens=_tok(2500, 1450),
+            temperature=0.35,
+            fallback="中美权益主线仍以结构分化为主，关键叙事的价格验证强度偏弱。",
+        )
+    else:
+        section_21 = "当前窗口非加密市场数据不足（严格12小时时效校验未通过），本期不输出大类资产盘面结论。"
+        section_22 = "当前窗口非加密市场数据不足（严格12小时时效校验未通过），本期不输出中美权益结构结论。"
+
+    if has_crypto_market_data:
+        section_23 = _call_section(
+            section_name="2.3 另类资产与博弈前沿",
+            system_prompt=(
+                "你是加密与另类资产研究员。仅输出该板块正文，不要标题。\n"
+                "内容结构固定两段，并使用三级小标题分段：\n"
+                "### 主流加密与链上叙事\n"
+                "提炼BTC/ETH及异动币种的涨跌态势，并给出社交文本中最强解释链条。\n"
+                "### 焦点事件与预测博弈\n"
+                "提炼讨论热度最高且分歧最大的待落地事件，说明多空双方押注逻辑与潜在影响。\n"
+                "若样本不足必须明确“数据不足/未提供”。关键判断附 [来源ID: ...]。\n\n"
+                f"目标阅读时长约 {target_read_minutes} 分钟，本板块写成中长文（约500-900字）。\n\n"
+                f"{grounding_rules}"
+            ),
+            blocks=[
+                ("市场数据分析", section_summaries.get("market", "")),
+                ("Twitter 详细汇总", section_summaries.get("twitter", "")),
+                ("热榜新闻分析", section_summaries.get("news", "")),
+                ("微信公众号详细汇总", section_summaries.get("wechat", "")),
+                ("联网检索补充", web_context_text),
+            ],
+            max_tokens=_tok(2200, 1300),
+            temperature=0.35,
+            fallback="加密与另类资产仍处于事件驱动博弈阶段，待新增链上与资金面数据确认。",
+        )
+    else:
+        section_23 = "当前窗口加密市场数据不足（时间异常或数值校验未通过），本期不输出加密盘面结论。"
+
+    section_31 = _call_section(
+        section_name="3.1 叙事对撞：海外 Twitter vs 国内微信公号",
+        system_prompt=(
+            "你是产业研究负责人。仅输出该板块正文，不要标题。\n"
+            "必须先写“海外焦点叙事（Bull/Bear）”，再写“国内投研共识”，最后写“预期差评估”。\n"
+            "重点比较同一主题在海外与国内信息源的分歧与共识，结论尽量附 [来源ID: ...]。\n\n"
+            f"目标阅读时长约 {target_read_minutes} 分钟，本板块写成中长文（约650-1100字）。\n\n"
+            f"{grounding_rules}"
+        ),
+        blocks=[
+            ("Twitter 详细汇总", section_summaries.get("twitter", "")),
+            ("微信公众号详细汇总", section_summaries.get("wechat", "")),
+            ("联网检索补充", web_context_text),
+        ],
+        max_tokens=_tok(2400, 1300),
+        temperature=0.35,
+        fallback="海外与国内叙事暂无明确反转，当前更像“共识延续 + 局部分歧”，需后续催化验证。",
+    )
+
+    section_32 = _call_section(
+        section_name="3.2 极客雷达：GitHub 趋势与底层技术",
+        system_prompt=(
+            "你是技术趋势研究员。仅输出该板块正文，不要标题。\n"
+            "围绕 GitHub trending 做项目雷达：\n"
+            "1) 挑出最值得关注的项目并说明“为何值得看”；\n"
+            "2) 解释底层技术痛点与可能落地路径；\n"
+            "3) 提醒重复叙事/泡沫噪音；\n"
+            "4) 避免每次都写成同一批项目，优先强调本期增量。\n"
+            "关键判断尽量附 [来源ID: ...]。\n\n"
+            f"目标阅读时长约 {target_read_minutes} 分钟，本板块写成中长文（约600-1000字）。\n\n"
+            f"{grounding_rules}"
+        ),
+        blocks=[
+            ("GitHub 项目雷达", section_summaries.get("github", "")),
+            ("Twitter 详细汇总", section_summaries.get("twitter", "")),
+            ("微信公众号详细汇总", section_summaries.get("wechat", "")),
+            ("联网检索补充", web_context_text),
+        ],
+        max_tokens=_tok(2200, 1300),
+        temperature=0.35,
+        fallback="GitHub 热门项目以延续性主题为主，短期内需观察是否出现真实采用与二次扩散。",
+    )
+
+    section_4 = _call_section(
+        section_name="四、政策动向与社会核心议题",
+        system_prompt=(
+            "你是政策与社会舆情研究员。仅输出该板块正文，不要标题。\n"
+            "内容必须拆成两段：\n"
+            "1) 政策灰线与产业映射（监管/补贴/贸易规则及产业传导）；\n"
+            "2) 值得关注的社会议题（跨平台共鸣议题及其经济含义）。\n"
+            "需要明确“事件 -> 产业/预期 -> 价格/行为”链条，尽量附 [来源ID: ...]。\n\n"
+            f"目标阅读时长约 {target_read_minutes} 分钟，本板块写成中长文（约600-1000字）。\n\n"
+            f"{grounding_rules}"
+        ),
+        blocks=[
+            ("热榜新闻分析", section_summaries.get("news", "")),
+            ("微信公众号详细汇总", section_summaries.get("wechat", "")),
+            ("联网检索补充", web_context_text),
+        ],
+        max_tokens=_tok(2200, 1300),
+        temperature=0.35,
+        fallback="政策与社会议题暂无确定性反转，建议继续跟踪“监管落地节奏 + 社会情绪扩散链条”。",
+    )
+
+    section_51 = _call_section(
+        section_name="5.1 硬核研报与长文拆解",
+        system_prompt=(
+            "你是投研方法论编辑。仅输出该板块正文，不要标题。\n"
+            "输出结构固定为两部分，并使用对应小标题：\n"
+            "### 推荐阅读清单（10篇）\n"
+            "必须列出10篇，格式为“1. [标题](链接) | 来源 | 主题标签 | 推荐理由（1句）”。\n"
+            "主题覆盖要求：\n"
+            "- 投资/宏观/产业研究 >= 4篇\n"
+            "- 科技/AI/开源技术 >= 3篇\n"
+            "- 社会高关注议题、公共政策或深度调查 >= 3篇\n"
+            "### 重点拆解（2-3篇）\n"
+            "每篇按“研究假设与立论点 / 数据基础与方法论 / 推演结论与实操启示”三段展开。\n"
+            "不要复述口号，结论尽量附 [来源ID: ...]。\n"
+            "写作要求：段间空行，优先 **加粗**，不要使用单星号斜体。\n\n"
+            f"目标阅读时长约 {target_read_minutes} 分钟，本板块写成中长文（约500-900字）。\n\n"
+            f"{grounding_rules}"
+        ),
+        blocks=[
+            ("微信公众号详细汇总", section_summaries.get("wechat", "")),
+            ("Twitter 详细汇总", section_summaries.get("twitter", "")),
+            ("热榜新闻分析", section_summaries.get("news", "")),
+            ("联网检索补充", web_context_text),
+        ],
+        max_tokens=_tok(3000, 1700),
+        temperature=0.35,
+        fallback=(
+            "### 推荐阅读清单（10篇）\n"
+            "1. 暂无足够长文样本（数据不足/未提供）\n"
+            "2. 暂无足够长文样本（数据不足/未提供）\n"
+            "3. 暂无足够长文样本（数据不足/未提供）\n"
+            "4. 暂无足够长文样本（数据不足/未提供）\n"
+            "5. 暂无足够长文样本（数据不足/未提供）\n"
+            "6. 暂无足够长文样本（数据不足/未提供）\n"
+            "7. 暂无足够长文样本（数据不足/未提供）\n"
+            "8. 暂无足够长文样本（数据不足/未提供）\n"
+            "9. 暂无足够长文样本（数据不足/未提供）\n"
+            "10. 暂无足够长文样本（数据不足/未提供）\n\n"
+            "### 重点拆解（2-3篇）\n"
+            "当前窗口长文样本不足，建议下期补充高质量研报与社会调查后再进行深拆。"
+        ),
+    )
+
+    next_watch_raw = _call_section(
+        section_name="六、增量认知与下期博弈锚点",
+        system_prompt=(
+            "你是策略研究总编。仅输出该板块正文，不要标题，格式必须严格为：\n"
+            "本期认知增量：...\n"
+            "下期跟踪清单：\n"
+            "1. ...\n2. ...\n3. ...\n"
+            "要求：\n"
+            "- “本期认知增量”必须是一句话总结本期底层逻辑变化；\n"
+            "- 跟踪清单的前两条尽量承接最近三天六期的历史跟踪（延续或收口），第三条写本期新增变量；\n"
+            "- 每条25-70字，可附 [来源ID: ...]。\n\n"
+            f"目标阅读时长约 {target_read_minutes} 分钟。\n\n"
+            f"{grounding_rules}"
+        ),
+        blocks=[
+            ("最近三天六期摘要与跟踪", previous_context),
+            ("2.1 全球大类资产与风险水位", section_21),
+            ("2.2 中美权益结构与主线验证", section_22),
+            ("2.3 另类资产与博弈前沿", section_23),
+            ("3.1 叙事对撞", section_31),
+            ("3.2 极客雷达", section_32),
+            ("四、政策动向与社会核心议题", section_4),
+            ("5.1 硬核研报与长文拆解", section_51),
+        ],
+        max_tokens=_tok(1600, 900),
+        temperature=0.35,
+        fallback=(
+            "本期认知增量：市场主线从“事件驱动冲击”转向“兑现强度验证”，需看跨市场联动是否确认。\n"
+            "下期跟踪清单：\n"
+            "1. 延续跟进：核查政策变量在下一窗口是否出现落地验证。\n"
+            "2. 收口复盘：复核高波动资产是否出现趋势确认或反转。\n"
+            "3. 新增观察：跟踪科技主线从讨论热度到实际采用的转化。"
+        ),
+    )
+    next_watch_block = _normalize_next_watch_block(next_watch_raw)
+
+    final_summary = "\n".join(
+        [
+            "## 一、摘要",
+            summary_block,
+            "",
+            "## 📈 二、市场异动与定价逻辑 (Market Pricing)",
+            "### 2.1 全球大类资产与风险水位 (Global Risk Sentiment)",
+            section_21,
+            "",
+            "### 2.2 中美权益结构与主线验证 (Equity Narratives Validation)",
+            section_22,
+            "",
+            "### 2.3 另类资产与博弈前沿 (Crypto & Alternative Bets)",
+            section_23,
+            "",
+            "## 🛰️ 三、产业前沿与跨域叙事 (Industry & Tech Alpha)",
+            "### 3.1 叙事对撞：海外 Twitter vs 国内微信公号",
+            section_31,
+            "",
+            "### 3.2 极客雷达：GitHub 趋势与底层技术",
+            section_32,
+            "",
+            "## 四、政策动向与社会核心议题 (Policy & Social Sentiment)",
+            section_4,
+            "",
+            "## 📖 五、硬核研报与长文拆解 (Deep Paper Breakdown)",
+            "### 5.1 推荐清单与重点拆解（10篇）",
+            section_51,
+            "",
+            "## 🧭 六、增量认知与下期博弈锚点 (Next Watch)",
+            next_watch_block,
+        ]
+    )
+
     result_parts = [final_summary]
-    
-    # 附上各板块详细分析（折叠展示）
     result_parts.append("\n\n---\n")
     result_parts.append("<details><summary>📑 点击展开各板块详细分析</summary>\n")
-    
+
     if "market" in section_summaries:
         result_parts.append(f"### 📊 市场数据详细分析\n\n{section_summaries['market']}\n")
     result_parts.append(f"### ⏱ 市场时效过滤说明\n\n{market_filter_note_text}\n")
     if "twitter" in section_summaries:
-        result_parts.append(f"### 🐦 Twitter 逐条简介\n\n{section_summaries['twitter']}\n")
-    if "twitter_focus" in section_summaries:
-        result_parts.append(f"### 🌐 Twitter 英文信号详细分析\n\n{section_summaries['twitter_focus']}\n")
+        result_parts.append(f"### 🐦 Twitter 详细汇总\n\n{section_summaries['twitter']}\n")
     if "wechat" in section_summaries:
-        result_parts.append(f"### 📱 微信公众号逐篇简介\n\n{section_summaries['wechat']}\n")
-    if "wechat_consensus" in section_summaries:
-        result_parts.append(f"### 🛰 微信共识与弱信号\n\n{section_summaries['wechat_consensus']}\n")
+        result_parts.append(f"### 📱 微信公众号详细汇总\n\n{section_summaries['wechat']}\n")
     if "news" in section_summaries:
         result_parts.append(f"### 📰 热榜详细分析\n\n{section_summaries['news']}\n")
     if "github" in section_summaries:
@@ -3604,7 +5964,6 @@ def run_ai_analysis(market: dict, social: dict, news: list,
         result_parts.append(f"### 🌐 联网检索摘要\n\n{format_web_context_for_ai(web_context)}\n")
 
     result_parts.append("</details>\n")
-    
     return "\n".join(result_parts)
 
 
@@ -3690,10 +6049,13 @@ def generate_raw_market_section(market: dict) -> str:
         lines.append("### 💰 北向资金\n")
         lines.append("| 项目 | 金额(亿元) |")
         lines.append("|------|------------|")
-        for k, v in north.items():
-            if isinstance(v, (int, float)):
-                icon = "🟢" if v >= 0 else "🔴"
-                lines.append(f"| {k} | {icon} {v:.2f} |")
+        for key in ("net_flow", "hu_net_flow", "shen_net_flow"):
+            value = safe_float(north.get(key), 0.0)
+            icon = "🟢" if value >= 0 else "🔴"
+            lines.append(f"| {key} | {icon} {value:.2f} |")
+        if is_north_flow_zero_snapshot(north):
+            lines.append("")
+            lines.append("> 注：北向资金当期快照为全0，可能是源端未更新，不宜过度解读。")
         lines.append("")
 
     # Yahoo Finance 全球股票概览
@@ -3732,14 +6094,14 @@ def generate_raw_market_section(market: dict) -> str:
 
     # 贵金属
     pm = data.get("precious_metal", {})
-    if pm and pm.get("metals"):
+    metals_rows = get_precious_metal_rows(pm if isinstance(pm, dict) else {})
+    if metals_rows:
         lines.append("### 🥇 贵金属\n")
         lines.append("| 品种 | 价格 | 涨跌幅 |")
         lines.append("|------|------|--------|")
-        for metal in pm["metals"]:
-            if isinstance(metal, dict):
-                icon = "🟢" if metal.get("change_pct", 0) >= 0 else "🔴"
-                lines.append(f"| {metal.get('name','')} | ${metal.get('price',0):.2f} | {icon} {metal.get('change_pct',0):+.2f}% |")
+        for metal in metals_rows:
+            icon = "🟢" if metal.get("change_pct", 0) >= 0 else "🔴"
+            lines.append(f"| {metal.get('name','')} | ${metal.get('price',0):.2f} | {icon} {metal.get('change_pct',0):+.2f}% |")
         lines.append("")
     
     # 加密货币
@@ -4348,6 +6710,10 @@ def main():
                         help="禁用联网检索补充")
     parser.add_argument("--output", default=None,
                         help="输出文件路径 (默认 output/report/daily_YYYYMMDD.md)")
+    parser.add_argument("--trace-flow", action="store_true",
+                        help="记录 sys/user prompt、模型输出和 raw_material 全链路")
+    parser.add_argument("--trace-output", default=None,
+                        help="链路追踪输出文件路径 (默认 output/debug/flow_*.json)")
     args = parser.parse_args()
     
     date_str = args.date
@@ -4394,13 +6760,45 @@ def main():
     
     report_label = "🌅 早报" if report_type == "morning" else "🌇 晚报"
     time_range = "昨日20:00 → 今日08:00" if report_type == "morning" else "今日08:00 → 20:00"
+
+    trace_enabled = bool(args.trace_flow)
+    env_trace_flag = os.environ.get("REPORT_TRACE_FLOW")
+    if env_trace_flag is not None:
+        trace_enabled = parse_bool(env_trace_flag, trace_enabled)
+    trace_output_arg = args.trace_output or os.environ.get("REPORT_TRACE_OUTPUT", "")
+    trace_output_path = Path(trace_output_arg).expanduser().resolve() if trace_output_arg else None
+    init_flow_trace(
+        enabled=trace_enabled,
+        date_str=date_str,
+        report_type=report_type,
+        args_payload={
+            "date": date_str,
+            "type": report_type,
+            "no_ai": bool(args.no_ai),
+            "keywords": args.keywords,
+            "no_web_context": bool(args.no_web_context),
+            "output": args.output or "",
+            "trace_output": str(trace_output_path) if trace_output_path else "",
+            "model": model,
+            "api_base": api_base,
+        },
+    )
+    flow_trace_event(
+        "report_parameters_resolved",
+        {
+            "iso_date": iso_date,
+            "report_label": report_label,
+            "time_range": time_range,
+            "trace_enabled": trace_enabled,
+        },
+    )
     
     logger.info(f"📅 生成 {iso_date} {report_label}")
     logger.info(f"🤖 DeepSeek 配置: model={model}, base={api_base}")
     
     # ── 读取数据 ──────────────────────────────────
     logger.info("📥 读取市场数据...")
-    market = load_market_data(date_str)
+    market = load_market_data(date_str, report_type=report_type)
     
     logger.info(f"📥 读取社交媒体数据 ({report_type})...")
     social = load_social_data(date_str, report_type)
@@ -4415,14 +6813,24 @@ def main():
         loaded_type = social.get("report_type")
         if loaded_type and loaded_type != report_type:
             logger.warning(f"⚠️ 社交数据类型不匹配: 期望 {report_type}，实际读取到 {loaded_type}")
+    flow_trace_set_raw_material(
+        "loaded_sources",
+        {
+            "market": market,
+            "social": social,
+            "news": news,
+        },
+    )
+    flow_trace_event(
+        "base_data_loaded",
+        {
+            "market_loaded": bool(market),
+            "social_loaded": bool(social),
+            "news_count": len(news) if isinstance(news, list) else 0,
+        },
+    )
 
-    # ── 上下文增强（上期 + 联网检索）────────────────────
-    previous_context = load_previous_report_context(date_str, report_type)
-    if previous_context:
-        logger.info("🧩 已加载前 1-2 天历史报告上下文")
-    else:
-        logger.info("🧩 未找到可用历史报告，跳过上下文衔接")
-
+    # ── 联网检索补充 ─────────────────────
     config_keywords = web_cfg.get("keywords", []) if isinstance(web_cfg, dict) else []
     if not isinstance(config_keywords, list):
         config_keywords = []
@@ -4433,14 +6841,18 @@ def main():
     )
     custom_keywords = parse_keywords_arg(raw_keywords)
 
+    force_web_context = parse_bool(os.environ.get("REPORT_FORCE_WEB_CONTEXT", "1"), True)
     web_context_enabled = not args.no_web_context
-    if "enabled" in web_cfg:
-        web_context_enabled = bool(web_cfg.get("enabled")) and web_context_enabled
+    if not force_web_context:
+        if "enabled" in web_cfg:
+            web_context_enabled = bool(web_cfg.get("enabled")) and web_context_enabled
+    elif isinstance(web_cfg, dict) and (web_cfg.get("enabled") is False) and web_context_enabled:
+        logger.info("🌐 已忽略 report.web_context.enabled=false，按 REPORT_FORCE_WEB_CONTEXT=1 强制联网检索")
     env_web_flag = os.environ.get("WEB_CONTEXT_ENABLED")
     if env_web_flag is not None:
         web_context_enabled = parse_bool(env_web_flag, web_context_enabled)
 
-    web_context = {"queries": [], "items": [], "errors": []}
+    web_context = {"queries": [], "items": [], "errors": [], "raw_material_downloads": []}
     if web_context_enabled:
         logger.info("🌐 开始联网检索补充上下文...")
         web_context = run_web_context_search(
@@ -4457,6 +6869,79 @@ def main():
         )
     else:
         logger.info("🌐 已禁用联网检索补充")
+    flow_trace_set_raw_material(
+        "web_raw_material_downloads",
+        web_context.get("raw_material_downloads", []),
+    )
+    flow_trace_set_raw_material(
+        "web_context_filtered",
+        {
+            "queries": web_context.get("queries", []),
+            "items": web_context.get("items", []),
+            "errors": web_context.get("errors", []),
+        },
+    )
+    flow_trace_event(
+        "web_context_ready",
+        {
+            "enabled": web_context_enabled,
+            "query_count": len(web_context.get("queries", []) or []),
+            "item_count": len(web_context.get("items", []) or []),
+            "error_count": len(web_context.get("errors", []) or []),
+        },
+    )
+
+    # ── 12H 增量去重（跨次）─────────────────────
+    market, social, news, web_context, dedup_stats, dedup_records = apply_cross_source_incremental_dedup(
+        market=market,
+        social=social,
+        news=news,
+        web_context=web_context,
+        date_str=date_str,
+        report_type=report_type,
+    )
+    logger.info(
+        "🧹 增量去重完成: Twitter -%s | 微信 -%s | 热榜 -%s | GitHub -%s（保底+%s） | 联网 -%s",
+        dedup_stats.get("twitter_removed", 0),
+        dedup_stats.get("wechat_removed", 0),
+        dedup_stats.get("news_removed", 0),
+        dedup_stats.get("github_removed", 0),
+        dedup_stats.get("github_floor_added", 0),
+        dedup_stats.get("web_removed", 0),
+    )
+    flow_trace_set_output("dedup_stats", dedup_stats)
+    flow_trace_event("dedup_completed", dedup_stats)
+
+    # ── Twitter 相关性过滤已关闭：直接使用抓取阶段（12h窗口）结果────────────
+    social_for_summary = social
+    logger.info("🎯 Twitter 相关性过滤: 已禁用（使用抓取阶段时间窗口过滤结果）")
+
+    # ── 上下文增强（最近三天六期：摘要+跟踪 + 上轮跟踪事项）────────────────────
+    previous_report_context = load_previous_report_context(
+        date_str,
+        report_type,
+        max_chars=max(2400, int(os.environ.get("REPORT_PREVIOUS_CONTEXT_MAX_CHARS", "5600") or 5600)),
+    )
+    previous_track_context = load_previous_next_track_context(
+        date_str,
+        report_type,
+        max_chars=max(1200, int(os.environ.get("REPORT_PREVIOUS_TRACK_MAX_CHARS", "2200") or 2200)),
+    )
+    previous_context = "\n\n".join(
+        [chunk for chunk in (previous_report_context, previous_track_context) if str(chunk or "").strip()]
+    ).strip()
+    if previous_context:
+        logger.info("🧩 已加载历史上下文（最近三天六期摘要/跟踪 + 上轮跟踪事项）")
+    else:
+        logger.info("🧩 未找到可用历史上下文")
+    flow_trace_set_raw_material("previous_context", previous_context)
+    flow_trace_event(
+        "previous_context_ready",
+        {
+            "has_previous_context": bool(previous_context),
+            "length": len(previous_context),
+        },
+    )
 
     # ── AI 分析 ──────────────────────────────────
     ai_summary = ""
@@ -4467,7 +6952,7 @@ def main():
         else:
             ai_summary = run_ai_analysis(
                 market=market,
-                social=social,
+                social=social_for_summary,
                 news=news,
                 api_key=api_key,
                 api_base=api_base,
@@ -4482,45 +6967,35 @@ def main():
             )
     else:
         ai_summary = "> ℹ️ 本次使用 `--no-ai` 参数，已跳过 DeepSeek 分析。\n"
-    ai_summary, ai_footnote_section, ai_ref_records = convert_ai_source_tags_to_clickable_refs(
+    ai_summary = sanitize_source_id_tags(ai_summary)
+    ai_summary = normalize_inline_source_id_links(ai_summary)
+    ai_summary, _, ai_ref_records = convert_ai_source_tags_to_clickable_refs(
         ai_summary,
         market=market,
-        social=social,
+        social=social_for_summary,
         news=news,
         web_context=web_context,
     )
-    citation_check_section = generate_citation_verification_section(ai_summary, ai_ref_records)
+    ai_summary = canonicalize_source_id_markdown_links(ai_summary, ai_ref_records)
+    flow_trace_set_output("ai_summary", ai_summary)
+    flow_trace_set_output("ai_ref_records", ai_ref_records)
+    flow_trace_event(
+        "ai_summary_ready",
+        {
+            "ai_enabled": bool(not args.no_ai and api_key),
+            "ai_summary_length": len(ai_summary),
+            "deepseek_calls": len(FLOW_TRACE_STATE.get("deepseek_calls", []) or []),
+        },
+    )
     
     # ── 生成完整 Markdown ──────────────────────
     report_parts = []
-    
-    # 检查休市状态
-    is_weekend_flag, market_status = is_weekend(date_str)
-    market_status_badge = "⚠️ A股休市" if is_weekend_flag else "✅ 正常交易"
-    
-    # 标题
     generated_at_bj = now_beijing()
-    report_parts.append(f"# 📰 finradar {report_label}")
-    report_parts.append(f"**{iso_date}** | {report_label} | 覆盖时段: {time_range} | 市场状态: {market_status_badge}")
-    report_parts.append(f"生成时间: {generated_at_bj.strftime('%Y-%m-%d %H:%M')}（北京时间）\n")
-    if is_weekend_flag:
-        report_parts.append(f"**⚠️ 注意：今日为周末，A股休市，部分市场数据可能缺失或未更新**\n")
-    report_parts.append("---\n")
+    next_track_items = parse_next_track_items(ai_summary, max_items=5)
 
-    health_alert_section = generate_source_health_alert_section(
-        social=social,
-        report_type=report_type,
-        date_str=date_str,
-    )
-    if health_alert_section:
-        report_parts.append(health_alert_section)
-    
-    # AI 分析摘要
-    report_parts.append("# 🤖 AI 分析摘要\n")
+    # 顶部仅保留详细 AI 分析（不再插入前置简报）
+    report_parts.append("# 🤖 详细 AI 分析\n")
     report_parts.append(ai_summary)
-    if ai_footnote_section:
-        report_parts.append(ai_footnote_section)
-    report_parts.append(citation_check_section)
     if spec_enabled:
         report_parts.append(
             generate_speculation_brief_section(
@@ -4530,18 +7005,17 @@ def main():
             )
         )
     report_parts.append(generate_web_context_section(web_context))
-    report_parts.append(
-        generate_ai_reference_section(
-            market,
-            social,
-            news,
-            report_type,
-            web_context=web_context,
-            used_refs=ai_ref_records,
-        )
+
+    health_alert_section = generate_source_health_alert_section(
+        social=social,
+        report_type=report_type,
+        date_str=date_str,
     )
+    if health_alert_section:
+        report_parts.append(health_alert_section)
+
     report_parts.append("\n---\n")
-    
+
     # 原始数据
     report_parts.append("# 📋 原始数据\n")
     report_parts.append("<a id=\"raw-market-data\"></a>")
@@ -4549,13 +7023,13 @@ def main():
     report_parts.append(generate_raw_twitter_section(social))
     report_parts.append(generate_raw_wechat_section(social))
     report_parts.append(generate_raw_news_section(news))
-    report_parts.append(generate_source_link_index_section(market, social, news, web_context=web_context))
-    
+
     # 页脚
     report_parts.append("---\n")
     report_parts.append(f"*报告由 finradar 自动生成 | {generated_at_bj.strftime('%Y-%m-%d %H:%M:%S')}（北京时间）*\n")
     
     full_report = "\n".join(report_parts)
+    flow_trace_set_output("final_report_markdown", full_report)
     
     # ── 保存 ──────────────────────────────────
     OUTPUT_REPORT.mkdir(parents=True, exist_ok=True)
@@ -4568,9 +7042,34 @@ def main():
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(full_report)
+    flow_trace_set_output("report_path", str(output_path))
+    flow_trace_set_output("report_size_bytes", output_path.stat().st_size)
+
+    # 记录本次已使用条目（跨次去重）与下一轮跟踪事项
+    try:
+        persist_report_used_records(
+            records=dedup_records,
+            date_str=date_str,
+            report_type=report_type,
+            anchor=report_anchor_datetime(date_str, report_type),
+        )
+    except Exception as e:
+        logger.warning("⚠️ 写入跨次去重记录失败: %s", e)
+
+    try:
+        save_next_track_state(date_str=date_str, report_type=report_type, items=next_track_items)
+    except Exception as e:
+        logger.warning("⚠️ 写入下一轮跟踪状态失败: %s", e)
     
     logger.info(f"✅ 报告已保存: {output_path}")
     logger.info(f"   文件大小: {output_path.stat().st_size / 1024:.1f} KB")
+
+    try:
+        saved_trace_path = dump_flow_trace(trace_output_path)
+        if saved_trace_path is not None:
+            logger.info("🧪 链路追踪已保存: %s", saved_trace_path)
+    except Exception as e:
+        logger.warning("⚠️ 写入链路追踪失败: %s", e)
     
     return str(output_path)
 
